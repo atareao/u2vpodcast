@@ -64,7 +64,7 @@ impl YouTube {
     }
 
     #[async_recursion]
-    pub async fn get_videos(&self, channel_id: String, after: Option<String>,
+    pub async fn get_videos(&self, channel_id: &str, after: Option<String>,
             next_token: Option<String>) ->Vec<Video>{
         println!("{} - {}", &self.key, &channel_id);
         let mut result: Vec<Video> = Vec::new();

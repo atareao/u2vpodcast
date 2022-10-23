@@ -2,18 +2,27 @@ use actix_web;
 use actix_web::{App, HttpServer, web::{self, Data}, dev::ServiceRequest,
     middleware::Logger, Error};
 use dotenv::dotenv;
+use std::{thread, time};
 use std::{env, path::Path};
 use sqlx::{sqlite::SqlitePoolOptions, migrate::{Migrator, MigrateDatabase}};
 use env_logger::Env;
+use models::{youtube::YouTube, channel::Channel, episode::Episode};
+use tokio;
 
 mod models;
 mod routes;
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
     let port = env::var("PORT").expect("PORT not set");
+    let sleep_time: u64 = env::var("SLEEP_TIME").unwrap_or("86400".to_string())
+        .parse()
+        .unwrap();
+    let key = std::env::var("YT_KEY").expect("YT_KEY not set");
+    let channel_id = std::env::var("YT_CHANNEL").expect("YT_CHANNEL not set");
 
     if !sqlx::Sqlite::database_exists(&db_url).await.unwrap(){
         sqlx::Sqlite::create_database(&db_url).await.unwrap();
@@ -41,6 +50,20 @@ async fn main() -> std::io::Result<()> {
         .unwrap();
 
     env_logger::init_from_env(Env::default().default_filter_or("info"));
+
+    let pool2 = pool.clone();
+    tokio::spawn(async move {
+        loop {
+            let after = Some("2022-10-19T20:20:03Z".to_string());
+            let yt = YouTube::new(&key);
+            let channels = Channel::read_all(&Data::new(pool2.clone())).await;
+            let videos = yt.get_videos(&channel_id, after, None).await;
+            for video in &videos{
+                println!("{}", video);
+            }
+            tokio::time::sleep(time::Duration::from_secs(sleep_time)).await;
+        }
+    });
 
     HttpServer::new(move || {
         App::new()
