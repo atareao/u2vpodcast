@@ -20,5 +20,5 @@ CREATE TABLE IF NOT EXISTS episodes(
     published_at DATETIME NOT NULL,
     image TEXT NOT NULL,
     listen BOOLEAN NOT NULL,
-    UNIQUE(channeld_id, yt_id)
+    UNIQUE(channel_id, yt_id)
 );
