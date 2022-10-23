@@ -1,6 +1,6 @@
 use actix_web::web;
 use sqlx::{sqlite::{SqlitePool, SqliteRow}, Error, query, Row};
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -11,7 +11,7 @@ pub struct Episode {
     description: String,
     yt_id: String,
     link: String,
-    published_at: NaiveDateTime,
+    published_at: DateTime<Utc>,
     image: String,
     listen: bool,
 }
@@ -23,7 +23,7 @@ pub struct NewEpisode {
     description: String,
     yt_id: String,
     link: String,
-    published_at: NaiveDateTime,
+    published_at: DateTime<Utc>,
     image: String,
     listen: bool,
 }

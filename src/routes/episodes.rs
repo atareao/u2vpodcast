@@ -6,6 +6,7 @@ use crate::models::episode::{Episode, NewEpisode};
 
 #[post("/episodes")]
 pub async fn create(pool: web::Data<SqlitePool>, body: String) -> Result<HttpResponse, Error>{
+    println!("{}", &body);
     let new: NewEpisode = serde_json::from_str(&body).unwrap();
     Episode::create(&pool, &new)
         .await
