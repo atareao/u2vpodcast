@@ -1,14 +1,13 @@
 use actix_web::{delete, get, post, put, web, Error, HttpResponse,
-    http::StatusCode, error::ErrorNotFound};
-use serde_json::Value;
+    error::ErrorNotFound};
 use sqlx::SqlitePool;
-use crate::models::channel::Channel;
+use crate::models::channel::{Channel, NewChannel};
 
 
 #[post("/channels")]
 pub async fn create(pool: web::Data<SqlitePool>, body: String) -> Result<HttpResponse, Error>{
-    let content: Value = serde_json::from_str(&body).unwrap();
-    Channel::create(&pool, content)
+    let new: NewChannel = serde_json::from_str(&body).unwrap();
+    Channel::create(&pool, &new)
         .await
         .map(|item| HttpResponse::Ok().json(item))
         .map_err(|e| ErrorNotFound(e))
@@ -33,8 +32,8 @@ pub async fn read(pool: web::Data<SqlitePool>, path: web::Path<i64>) -> Result<H
 
 #[put("/channels")]
 pub async fn update(pool: web::Data<SqlitePool>, body: String) -> Result<HttpResponse, Error>{
-    let content: Value = serde_json::from_str(&body).unwrap();
-    Channel::update(&pool, content)
+    let channel: Channel = serde_json::from_str(&body).unwrap();
+    Channel::update(&pool, channel)
         .await
         .map(|item| HttpResponse::Ok().json(item))
         .map_err(|e| ErrorNotFound(e))
