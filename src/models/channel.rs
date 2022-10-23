@@ -1,5 +1,4 @@
 use actix_web::web;
-use serde_json::Value;
 use serde::{Serialize, Deserialize};
 use sqlx::{sqlite::{SqlitePool, SqliteRow}, Error, query, Row};
 use chrono::{DateTime, Utc};

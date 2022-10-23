@@ -7,12 +7,12 @@ use serde::{Serialize, Deserialize};
 pub struct Episode {
     id: i64,
     channel_id: i64,
-    title: String,
-    description: String,
-    yt_id: String,
-    link: String,
-    published_at: DateTime<Utc>,
-    image: String,
+    pub title: String,
+    pub description: String,
+    pub yt_id: String,
+    pub link: String,
+    pub published_at: DateTime<Utc>,
+    pub image: String,
     listen: bool,
 }
 
