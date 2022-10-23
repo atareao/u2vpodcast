@@ -1,4 +1,8 @@
+# GENERAL
+
 GET http://localhost:{{PORT}}
+
+# CHANNELS
 
 GET http://localhost:{{PORT}}/channels
 
@@ -15,4 +19,27 @@ Content-Type: application/json
 
 
 DELETE http://localhost:{{PORT}}/channels/1
+
+# EPISODES
+
+GET http://localhost:{{PORT}}/episodes
+
+GET http://localhost:{{PORT}}/episodes/1
+
+POST http://localhost:{{PORT}}/episodes
+Content-Type: application/json
+
+{
+    "channel_id": 1,
+    "title": "título",
+    "description": "description",
+    "yt_id": "1234",
+    "link": "https://atareao.es",
+    "published_at": "2022-08-22T10:20:00.000Z",
+    "image": "https://atareao.es/image",
+    "listen": false
+}
+
+
+DELETE http://localhost:{{PORT}}/episodes/1
 
