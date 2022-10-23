@@ -1,0 +1,18 @@
+GET http://localhost:{{PORT}}
+
+GET http://localhost:{{PORT}}/channels
+
+GET http://localhost:{{PORT}}/channels/1
+
+POST http://localhost:{{PORT}}/channels
+Content-Type: application/json
+
+{
+    "yt_id": "1234",
+    "title": "título",
+    "last": "2022-08-22T10:20:00Z"
+}
+
+
+DELETE http://localhost:{{PORT}}/channels/1
+
