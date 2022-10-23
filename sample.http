@@ -24,13 +24,13 @@ DELETE http://localhost:{{PORT}}/channels/1
 
 GET http://localhost:{{PORT}}/episodes
 
-GET http://localhost:{{PORT}}/episodes/1
+GET http://localhost:{{PORT}}/episodes/2
 
 POST http://localhost:{{PORT}}/episodes
 Content-Type: application/json
 
 {
-    "channel_id": 1,
+    "channel_id": 2,
     "title": "título",
     "description": "description",
     "yt_id": "1234",
@@ -43,3 +43,6 @@ Content-Type: application/json
 
 DELETE http://localhost:{{PORT}}/episodes/1
 
+# FEED
+
+GET http://localhost:{{PORT}}/rss

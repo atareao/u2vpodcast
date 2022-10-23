@@ -47,6 +47,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .app_data(Data::new(pool.clone()))
             .service(routes::main::root)
+            .service(routes::main::rss)
             .service(routes::channels::read)
             .service(routes::channels::read_all)
             .service(routes::channels::create)
