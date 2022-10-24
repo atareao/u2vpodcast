@@ -3,9 +3,9 @@ use serde::{Serialize, Deserialize};
 use sqlx::{sqlite::{SqlitePool, SqliteRow}, Error, query, Row};
 use chrono::{DateTime, Utc};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
-    id: i64,
+    pub id: i64,
     pub yt_id: String,
     title: String,
     pub last: DateTime<Utc>,
@@ -17,6 +17,7 @@ pub struct NewChannel {
     title: String,
     last: DateTime<Utc>,
 }
+
 
 impl Channel{
     pub async fn create(pool: &web::Data<SqlitePool>, new: &NewChannel) -> Result<Channel, Error>{
@@ -60,8 +61,8 @@ impl Channel{
     }
 
     pub async fn update(pool: &web::Data<SqlitePool>, channel: Channel) -> Result<Channel, Error>{
-        let sql = "UPDATE channesl SET yt_id = $2, title = $3,
-            last = $4 FROM episodes channels id = $1";
+        let sql = "UPDATE channels SET yt_id = $2, title = $3,
+            last = $4 WHERE id = $1";
         query(sql)
             .bind(channel.id)
             .bind(channel.yt_id)
