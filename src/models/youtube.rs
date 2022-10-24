@@ -18,15 +18,15 @@ const YTURL: &'static str = "https://www.youtube.com";
                          "published_at": item['snippet']['publishedAt']}
 */
 
-#[derive(Debug)]
+#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct Video {
-    title: String,
-    description: String,
-    yt_id: String,
-    link: String,
-    published_at: String,
-    image: String,
-    channel: String,
+    pub title: String,
+    pub description: String,
+    pub yt_id: String,
+    pub link: String,
+    pub published_at: String,
+    pub image: String,
+    pub channel: String,
 }
 
 impl Video {
@@ -148,6 +148,7 @@ impl YouTube {
             println!("{:?}", response);
             println!("{}", response.status());
         }
+        result.sort_by(|a, b| a.published_at.cmp(&b.published_at));
         result
     }
 }
