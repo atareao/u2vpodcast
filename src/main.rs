@@ -84,12 +84,13 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
+
 async fn do_the_work(pool: &SqlitePool, key: &str){
     let yt = YouTube::new(&key);
     let channels = Channel::read_all(&Data::new(pool.clone())).await.unwrap();
     for channel in channels{
         let channel_id = channel.yt_id;
-        let after = Some(channel.last.to_string());
+        let after = Some(channel.last.to_rfc3339_opts(chrono::SecondsFormat::Secs, true));
         let videos = yt.get_videos(&channel_id, after, None).await;
         for video in &videos{
             println!("{}", video);
