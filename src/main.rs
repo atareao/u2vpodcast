@@ -1,13 +1,13 @@
 use actix_web;
-use actix_web::{App, HttpServer, web::{self, Data}, dev::ServiceRequest,
-    middleware::Logger, Error};
+use actix_web::{App, HttpServer, web::Data, middleware::Logger};
 use dotenv::dotenv;
 use sqlx::SqlitePool;
-use std::{thread, time};
+use std::time;
 use std::{env, path::Path};
 use sqlx::{sqlite::SqlitePoolOptions, migrate::{Migrator, MigrateDatabase}};
 use env_logger::Env;
-use models::{youtube::YouTube, channel::Channel, episode::Episode};
+use models::{youtube::YouTube, channel::Channel, episode::{Episode,
+    NewEpisode}, ytdlp::Ytdlp};
 use tokio;
 
 mod models;
@@ -24,6 +24,8 @@ async fn main() -> std::io::Result<()> {
         .unwrap();
     let key = std::env::var("YT_KEY").expect("YT_KEY not set");
     let channel_id = std::env::var("YT_CHANNEL").expect("YT_CHANNEL not set");
+    let cookies = std::env::var("COOKIES").expect("COOKIES not set");
+    let folder = std::env::var("FOLDER").expect("FOLDER not set");
 
     if !sqlx::Sqlite::database_exists(&db_url).await.unwrap(){
         sqlx::Sqlite::create_database(&db_url).await.unwrap();
@@ -55,7 +57,7 @@ async fn main() -> std::io::Result<()> {
     let pool2 = pool.clone();
     tokio::spawn(async move {
         loop {
-            do_the_work(&pool2, &key).await;
+            do_the_work(&pool2, &key, &cookies, &folder).await;
             tokio::time::sleep(time::Duration::from_secs(sleep_time)).await;
         }
     });
@@ -85,15 +87,31 @@ async fn main() -> std::io::Result<()> {
 }
 
 
-async fn do_the_work(pool: &SqlitePool, key: &str){
+async fn do_the_work(pool: &SqlitePool, key: &str, cookies: &str, folder: &str){
     let yt = YouTube::new(&key);
+    let ytdlp = Ytdlp::new("yt-dlp", cookies);
     let channels = Channel::read_all(&Data::new(pool.clone())).await.unwrap();
-    for channel in channels{
-        let channel_id = channel.yt_id;
+    for mut channel in channels{
         let after = Some(channel.last.to_rfc3339_opts(chrono::SecondsFormat::Secs, true));
-        let videos = yt.get_videos(&channel_id, after, None).await;
+        let channel_id = channel.id;
+        let mut last = channel.last;
+        let videos = yt.get_videos(&channel.yt_id, after, None).await;
         for video in &videos{
-            println!("{}", video);
+            let filename = format!("{}/{}.mp3", folder, &video.yt_id);
+            let salida = ytdlp.download(&video.yt_id, &filename).await;
+            if salida.success() {
+                let new = NewEpisode::new(channel_id, &video);
+                let episode = Episode::create(&Data::new(pool.clone()), &new).await.unwrap();
+                if last < episode.published_at{
+                    last = episode.published_at;
+                }
+            }else{
+                break;
+            }
+        }
+        if last != channel.last{
+            channel.last = last;
+            Channel::update(&Data::new(pool.clone()), channel).await.unwrap();
         }
     }
 }
