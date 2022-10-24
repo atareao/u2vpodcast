@@ -1,7 +1,9 @@
 use actix_web::web;
 use sqlx::{sqlite::{SqlitePool, SqliteRow}, Error, query, Row};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, FixedOffset};
 use serde::{Serialize, Deserialize};
+
+use super::youtube::Video;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Episode {
@@ -26,6 +28,25 @@ pub struct NewEpisode {
     published_at: DateTime<Utc>,
     image: String,
     listen: bool,
+}
+
+impl NewEpisode{
+    pub fn new(channel_id: i64, video: &Video) -> Self{
+        let published_at: DateTime<Utc> = DateTime::parse_from_rfc3339(&video.published_at)
+            .unwrap()
+            .try_into()
+            .unwrap();
+        Self {
+            channel_id,
+            title: video.title.to_string(),
+            description: video.description.to_string(),
+            yt_id: video.yt_id.to_string(),
+            link: video.link.to_string(),
+            published_at,
+            image: video.image.to_string(),
+            listen: false,
+        }
+    }
 }
 
 impl Episode{
