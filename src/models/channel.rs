@@ -6,9 +6,9 @@ use chrono::{DateTime, Utc};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Channel {
     id: i64,
-    yt_id: String,
+    pub yt_id: String,
     title: String,
-    last: DateTime<Utc>,
+    pub last: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
