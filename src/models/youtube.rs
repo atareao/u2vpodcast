@@ -165,7 +165,7 @@ mod tests{
         let channel_id = std::env::var("YT_CHANNEL").unwrap();
         let after = Some("2022-10-19T20:20:03Z".to_string());
         let yt = YouTube::new(&key);
-        let videos = yt.get_videos(channel_id, after, None).await;
+        let videos = yt.get_videos(&channel_id, after, None).await;
         for video in &videos{
             println!("{}", video);
         }
