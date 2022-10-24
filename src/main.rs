@@ -2,6 +2,7 @@ use actix_web;
 use actix_web::{App, HttpServer, web::{self, Data}, dev::ServiceRequest,
     middleware::Logger, Error};
 use dotenv::dotenv;
+use sqlx::SqlitePool;
 use std::{thread, time};
 use std::{env, path::Path};
 use sqlx::{sqlite::SqlitePoolOptions, migrate::{Migrator, MigrateDatabase}};
@@ -54,13 +55,7 @@ async fn main() -> std::io::Result<()> {
     let pool2 = pool.clone();
     tokio::spawn(async move {
         loop {
-            let after = Some("2022-10-19T20:20:03Z".to_string());
-            let yt = YouTube::new(&key);
-            let channels = Channel::read_all(&Data::new(pool2.clone())).await;
-            let videos = yt.get_videos(&channel_id, after, None).await;
-            for video in &videos{
-                println!("{}", video);
-            }
+            do_the_work(&pool2, &key).await;
             tokio::time::sleep(time::Duration::from_secs(sleep_time)).await;
         }
     });
@@ -87,4 +82,17 @@ async fn main() -> std::io::Result<()> {
     .unwrap()
     .run()
     .await
+}
+
+async fn do_the_work(pool: &SqlitePool, key: &str){
+    let yt = YouTube::new(&key);
+    let channels = Channel::read_all(&Data::new(pool.clone())).await.unwrap();
+    for channel in channels{
+        let channel_id = channel.yt_id;
+        let after = Some(channel.last.to_string());
+        let videos = yt.get_videos(&channel_id, after, None).await;
+        for video in &videos{
+            println!("{}", video);
+        }
+    }
 }

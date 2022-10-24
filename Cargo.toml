@@ -24,4 +24,4 @@ reqwest = "0.11"
 async-recursion = "1.0"
 actix-rt = "2.7"
 rss = "2.0"
-tokio = "1.21"
+tokio = { vesrion = "1.21", features = ["full"]}
