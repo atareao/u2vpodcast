@@ -5,16 +5,16 @@ use rss::{ChannelBuilder, ItemBuilder, extension::itunes::ITunesItemExtensionBui
 
 pub struct RSS{
     title: String,
-    link: String,
     description: String,
+    url: String,
 }
 
 impl RSS{
-    pub fn new(title: &str, link: &str, description: &str) -> Self{
+    pub fn new(title: &str, description: &str, url: &str) -> Self{
         Self{
             title: title.to_string(),
-            link: link.to_string(),
             description: description.to_string(),
+            url: url.to_string(),
         }
     }
 
@@ -22,11 +22,12 @@ impl RSS{
         let episodes = Episode::read_all(pool).await.unwrap();
         let mut items = Vec::new();
         for episode in episodes{
+            let enclosure = format!("{}/{}.mp3", self.url, episode.yt_id);
             let itunes = ITunesItemExtensionBuilder::default()
                 .image(Some(episode.image))
                 .build();
             let enclosure = EnclosureBuilder::default()
-                .url(episode.link)
+                .url(&enclosure)
                 .build();
             let guid = GuidBuilder::default()
                 .value(episode.yt_id)
@@ -41,10 +42,11 @@ impl RSS{
                 .build();
             items.push(item);
         }
+        let link = format!("{}/rss", self.url);
         let channel = ChannelBuilder::default()
             .title(&self.title)
-            .link(&self.link)
             .description(&self.description)
+            .link(&link)
             .items(items)
             .build();
 
