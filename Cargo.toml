@@ -24,4 +24,5 @@ reqwest = "0.11"
 async-recursion = "1.0"
 actix-rt = "2.7"
 rss = "2.0"
-tokio = { vesrion = "1.21", features = ["full"]}
+tokio = { version = "1.21", features = ["full"]}
+dav-server = { version = "0.5", features = ["actix-compat"]}
