@@ -1,8 +1,9 @@
 use sqlx::sqlite::SqlitePool;
 use actix_web::{web, get, HttpResponse, Error, http::StatusCode, error::ErrorBadRequest};
 use serde_json::Value;
+use std::env;
 
-use crate::models::{response::Response, rss::RSS};
+use crate::models::{response::Response, rss::RSS, channel::{self, Channel}};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct Simple{
@@ -29,7 +30,10 @@ pub async fn root() -> Result<HttpResponse, Error>{
 
 #[get("/rss")]
 pub async fn rss(pool: web::Data<SqlitePool>) -> Result<HttpResponse, Error>{
-    let rss = RSS::new("Titulo", "Enlace", "Descripción");
+    let title = env::var("TITLE").unwrap();
+    let description = env::var("DESCRIPTION").unwrap();
+    let url = env::var("URL").unwrap();
+    let rss = RSS::new(&title, &description, &url);
     rss.get_feed(&pool)
         .await
         .map(|item| HttpResponse::Ok().body(item))
