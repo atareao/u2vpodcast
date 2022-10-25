@@ -1,4 +1,4 @@
-use actix_web;
+use actix_web::{self, web};
 use actix_web::{App, HttpServer, web::Data, middleware::Logger};
 use dotenv::dotenv;
 use sqlx::SqlitePool;
@@ -9,9 +9,20 @@ use env_logger::Env;
 use models::{youtube::YouTube, channel::Channel, episode::{Episode,
     NewEpisode}, ytdlp::Ytdlp};
 use tokio;
+use dav_server::{fakels::FakeLs, localfs::LocalFs, DavConfig, DavHandler, actix::{DavRequest, DavResponse}};
 
 mod models;
 mod routes;
+
+pub async fn dav_handler(req: DavRequest, davhandler: Data<DavHandler>) -> DavResponse{
+    if let Some(prefix) = req.prefix(){
+        let config = DavConfig::new().strip_prefix(prefix);
+        davhandler.handle_with(config, req.request).await.into()
+    }else{
+        davhandler.handle(req.request).await.into()
+    }
+
+}
 
 
 #[actix_web::main]
@@ -23,7 +34,11 @@ async fn main() -> std::io::Result<()> {
         .parse()
         .unwrap();
     let key = std::env::var("YT_KEY").expect("YT_KEY not set");
-    let channel_id = std::env::var("YT_CHANNEL").expect("YT_CHANNEL not set");
+
+    let _title = std::env::var("TITLE").expect("TITLE not set");
+    let _description = std::env::var("DESCRIPTION").expect("DESCRIPTION not set");
+    let _url = std::env::var("URL").expect("URL not set");
+
     let cookies = std::env::var("COOKIES").expect("COOKIES not set");
     let folder = std::env::var("FOLDER").expect("FOLDER not set");
 
@@ -54,6 +69,11 @@ async fn main() -> std::io::Result<()> {
 
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
+    let dav_server = DavHandler::builder()
+        .filesystem(LocalFs::new(&folder, false, false, false))
+        .locksystem(FakeLs::new())
+        .build_handler();
+
     let pool2 = pool.clone();
     tokio::spawn(async move {
         loop {
@@ -66,6 +86,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(Logger::default())
             .app_data(Data::new(pool.clone()))
+            .app_data(Data::new(dav_server.clone()))
             .service(routes::main::root)
             .service(routes::main::rss)
             .service(routes::channels::read)
@@ -78,6 +99,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::episodes::create)
             .service(routes::episodes::update)
             .service(routes::episodes::delete)
+            .service(web::resource("/{tail:.*}").to(dav_handler))
     })
     .workers(2)
     .bind(format!("0.0.0.0:{}", &port))
