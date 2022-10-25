@@ -40,6 +40,7 @@ ARG APP=ytpodcast
 RUN apk add --update --no-cache \
             su-exec~=0.2-r1 \
             tzdata~=2022c-r0 \
+            ffmpeg~=5.0 \
             yt-dlp~=2022.05.18-r0 &&\
     rm -rf /var/cache/apk && \
     rm -rf /var/lib/app/lists*
@@ -49,6 +50,7 @@ RUN apk add --update --no-cache \
 WORKDIR /app
 
 COPY entrypoint.sh /app/
+COPY migrations/ /app/migrations/
 # Copy our build
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/$APP /app/
 
