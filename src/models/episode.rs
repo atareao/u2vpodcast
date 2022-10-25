@@ -1,6 +1,6 @@
 use actix_web::web;
 use sqlx::{sqlite::{SqlitePool, SqliteRow}, Error, query, Row};
-use chrono::{DateTime, Utc, FixedOffset};
+use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 
 use super::youtube::Video;

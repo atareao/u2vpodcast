@@ -3,7 +3,7 @@ use actix_web::{web, get, HttpResponse, Error, http::StatusCode, error::ErrorBad
 use serde_json::Value;
 use std::env;
 
-use crate::models::{response::Response, rss::RSS, channel::{self, Channel}};
+use crate::models::{response::Response, rss::RSS};
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct Simple{
