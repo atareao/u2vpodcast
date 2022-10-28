@@ -21,15 +21,19 @@ pub struct NewChannel {
 
 impl Channel{
     pub async fn create(pool: &web::Data<SqlitePool>, new: &NewChannel) -> Result<Channel, Error>{
-        let sql = "INSERT INTO channels (yt_id, title, last) VALUES ($1, $2, $3);";
-        let id = query(sql)
+        let sql = "INSERT INTO channels (yt_id, title, last) VALUES ($1, $2, $3) RETURNING id, yt_id, title, last;";
+        query(sql)
             .bind(&new.yt_id)
             .bind(&new.title)
             .bind(&new.last)
-            .execute(pool.get_ref())
-            .await?
-        .last_insert_rowid();
-        Self::read(pool, id).await
+            .map(|row: SqliteRow| Channel {
+                id: row.get("id"),
+                yt_id: row.get("yt_id"),
+                title: row.get("title"),
+                last: row.get("last"),
+            })
+            .fetch_one(pool.get_ref())
+            .await
     }
 
     pub async fn read(pool: &web::Data<SqlitePool>, id: i64) -> Result<Channel, Error>{
@@ -62,24 +66,33 @@ impl Channel{
 
     pub async fn update(pool: &web::Data<SqlitePool>, channel: Channel) -> Result<Channel, Error>{
         let sql = "UPDATE channels SET yt_id = $2, title = $3,
-            last = $4 WHERE id = $1";
+            last = $4 WHERE id = $1 RETURNING id, yt_id, title, last;";
         query(sql)
             .bind(channel.id)
             .bind(channel.yt_id)
             .bind(channel.title)
             .bind(channel.last)
-            .execute(pool.get_ref())
-            .await?;
-        Self::read(pool, channel.id).await
+            .map(|row: SqliteRow| Channel {
+                id: row.get("id"),
+                yt_id: row.get("yt_id"),
+                title: row.get("title"),
+                last: row.get("last"),
+            })
+            .fetch_one(pool.get_ref())
+            .await
     }
 
     pub async fn delete(pool: web::Data<SqlitePool>, id: i64) -> Result<Channel, Error>{
-        let channel = Self::read(&pool, id).await?;
-        let sql = "DELETE from channels WHERE id = $1";
+        let sql = "DELETE from channels WHERE id = $1 RETURNING id, yt_id, title, last;";
         query(sql)
             .bind(id)
-            .execute(pool.get_ref())
-            .await?;
-        Ok(channel)
+            .map(|row: SqliteRow| Channel {
+                id: row.get("id"),
+                yt_id: row.get("yt_id"),
+                title: row.get("title"),
+                last: row.get("last"),
+            })
+            .fetch_one(pool.get_ref())
+            .await
     }
 }
