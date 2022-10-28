@@ -20,18 +20,23 @@ pub struct NewChannel {
 
 
 impl Channel{
+    fn from_row(row: SqliteRow) -> Channel{
+        Channel {
+            id: row.get("id"),
+            yt_id: row.get("yt_id"),
+            title: row.get("title"),
+            last: row.get("last"),
+        }
+    }
+
     pub async fn create(pool: &web::Data<SqlitePool>, new: &NewChannel) -> Result<Channel, Error>{
-        let sql = "INSERT INTO channels (yt_id, title, last) VALUES ($1, $2, $3) RETURNING id, yt_id, title, last;";
+        let sql = "INSERT INTO channels (yt_id, title, last)
+                   VALUES ($1, $2, $3) RETURNING id, yt_id, title, last;";
         query(sql)
             .bind(&new.yt_id)
             .bind(&new.title)
             .bind(&new.last)
-            .map(|row: SqliteRow| Channel {
-                id: row.get("id"),
-                yt_id: row.get("yt_id"),
-                title: row.get("title"),
-                last: row.get("last"),
-            })
+            .map(Self::from_row)
             .fetch_one(pool.get_ref())
             .await
     }
@@ -40,26 +45,15 @@ impl Channel{
         let sql = "SELECT id, yt_id, title, last FROM channels WHERE id = $1";
         query(sql)
             .bind(id)
-            .map(|row: SqliteRow| Channel{
-                id: row.get("id"),
-                yt_id: row.get("yt_id"),
-                title: row.get("title"),
-                last: row.get("last"),
-            })
+            .map(Self::from_row)
             .fetch_one(pool.get_ref())
             .await
     }
 
     pub async fn read_all(pool: &web::Data<SqlitePool>) -> Result<Vec<Channel>, Error>{
         let sql = "SELECT id, yt_id, title, last FROM channels";
-        
         query(sql)
-            .map(|row: SqliteRow| Channel{
-                id: row.get("id"),
-                yt_id: row.get("yt_id"),
-                title: row.get("title"),
-                last: row.get("last"),
-            })
+            .map(Self::from_row)
             .fetch_all(pool.get_ref())
             .await
     }
@@ -72,26 +66,17 @@ impl Channel{
             .bind(channel.yt_id)
             .bind(channel.title)
             .bind(channel.last)
-            .map(|row: SqliteRow| Channel {
-                id: row.get("id"),
-                yt_id: row.get("yt_id"),
-                title: row.get("title"),
-                last: row.get("last"),
-            })
+            .map(Self::from_row)
             .fetch_one(pool.get_ref())
             .await
     }
 
     pub async fn delete(pool: web::Data<SqlitePool>, id: i64) -> Result<Channel, Error>{
-        let sql = "DELETE from channels WHERE id = $1 RETURNING id, yt_id, title, last;";
+        let sql = "DELETE from channels WHERE id = $1 RETURNING id, yt_id,
+                   title, last;";
         query(sql)
             .bind(id)
-            .map(|row: SqliteRow| Channel {
-                id: row.get("id"),
-                yt_id: row.get("yt_id"),
-                title: row.get("title"),
-                last: row.get("last"),
-            })
+            .map(Self::from_row)
             .fetch_one(pool.get_ref())
             .await
     }
