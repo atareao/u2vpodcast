@@ -1,16 +1,43 @@
-author  := "atareao"
-name    := `grep -oP '^name\s*=\s*"\K([^"]*)' Cargo.toml`
-version := `grep -oP '^version\s*=\s*"\K([^"]*)' Cargo.toml`
+user    := "atareao"
+name    := `basename ${PWD}`
+version := `git tag -l  | tail -n1`
 
 build:
-    docker build -t "{{author}}/{{name}}:v{{version}}" .
+    echo {{version}}
+    echo {{name}}
+    docker build -t {{user}}/{{name}}:{{version}} .
 
-latest:
-    docker image tag "{{author}}/{{name}}:v{{version}}" "{{author}}/{{name}}":latest
-    docker push "{{author}}/{{name}}:latest"
+tag:
+    docker tag {{user}}/{{name}}:{{version}} {{user}}/{{name}}:latest
 
 push:
-    docker push "{{author}}/{{name}}:v{{version}}"
+    docker push {{user}}/{{name}}:{{version}}
+    docker push {{user}}/{{name}}:latest
+
+buildx:
+    #!/usr/bin/env bash
+    #--platform linux/arm/v7,linux/arm64/v8,linux/amd64 \
+    docker buildx build \
+           --push \
+           --platform linux/arm/v7,linux/arm64/v8,linux/amd64 \
+           --tag {{user}}/{{name}}:{{version}} .
 
 run:
-    docker run -it --rm --init --env-file .env --name "{{name}}" "{{author}}/{{name}}:v{{version}}"
+    docker run --rm \
+               --init \
+               --name croni \
+               --init \
+               --env_file croni.env \
+               -v ${PWD}/crontab:/crontab \
+               {{user}}/{{name}}:{{version}}
+
+sh:
+    docker run --rm \
+               -it \
+               --name croni \
+               --init \
+               --env-file croni.env \
+               -v ${PWD}/crontab:/crontab \
+               {{user}}/{{name}}:{{version}} \
+               sh
+
