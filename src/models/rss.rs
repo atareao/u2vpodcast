@@ -1,8 +1,9 @@
-use actix_web::web;
+use serde::Deserialize;
 use sqlx::{sqlite::SqlitePool, Error};
 use super::episode::Episode;
-use rss::{ChannelBuilder, ItemBuilder, extension::itunes::ITunesItemExtensionBuilder, EnclosureBuilder, GuidBuilder};
+use super::rss::{ChannelBuilder, ItemBuilder, extension::itunes::ITunesItemExtensionBuilder, EnclosureBuilder, GuidBuilder};
 
+#[derive(Deserialize)]
 pub struct RSS{
     title: String,
     description: String,
