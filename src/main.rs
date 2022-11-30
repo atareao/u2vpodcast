@@ -1,35 +1,45 @@
-use actix_web::{self, web};
-use actix_web::{App, HttpServer, web::Data, middleware::Logger};
 use dotenv::dotenv;
 use sqlx::SqlitePool;
 use std::time;
 use std::{env, path::Path};
 use sqlx::{sqlite::SqlitePoolOptions, migrate::{Migrator, MigrateDatabase}};
-use env_logger::Env;
 use models::{youtube::YouTube, channel::Channel, episode::{Episode,
     NewEpisode}, ytdlp::Ytdlp};
 use tokio;
-use dav_server::{fakels::FakeLs, localfs::LocalFs, DavConfig, DavHandler, actix::{DavRequest, DavResponse}};
+use axum::{
+    routing::{get, post},
+    http::StatusCode,
+    response::IntoResponse,
+    Json, Router,
+};
+use std::net::SocketAddr;
+use tower::{BoxError, ServiceBuilder};
+use tower_http::{
+    auth::RequireAuthorizationLayer, compression::CompressionLayer, limit::RequestBodyLimitLayer,
+    trace::TraceLayer,
+};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod models;
 mod routes;
+mod http;
+mod config;
 
-pub async fn dav_handler(req: DavRequest, davhandler: Data<DavHandler>) -> DavResponse{
-    if let Some(prefix) = req.prefix(){
-        let config = DavConfig::new().strip_prefix(prefix);
-        davhandler.handle_with(config, req.request).await.into()
-    }else{
-        davhandler.handle(req.request).await.into()
-    }
-
-}
-
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
+#[tokio::main]
+async fn main(){
     dotenv().ok();
+
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::EnvFilter::new(
+            std::env::var("RUST_LOG")
+            .unwrap_or_else(|_| "example_key_value_store=debug,tower_http=debug".into()),
+        ))
+        .with(tracing_subscriber::fmt::layer())
+        .init();
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
-    let port = env::var("PORT").expect("PORT not set");
+    let port: u16 = env::var("PORT").expect("PORT not set")
+        .parse()
+        .unwrap();
     let sleep_time: u64 = env::var("SLEEP_TIME").unwrap_or("86400".to_string())
         .parse()
         .unwrap();
@@ -67,12 +77,6 @@ async fn main() -> std::io::Result<()> {
         .await
         .unwrap();
 
-    env_logger::init_from_env(Env::default().default_filter_or("info"));
-
-    let dav_server = DavHandler::builder()
-        .filesystem(LocalFs::new(&folder, false, false, false))
-        .locksystem(FakeLs::new())
-        .build_handler();
 
     let pool2 = pool.clone();
     tokio::spawn(async move {
@@ -81,6 +85,18 @@ async fn main() -> std::io::Result<()> {
             tokio::time::sleep(time::Duration::from_secs(sleep_time)).await;
         }
     });
+
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+
+    let app = Router::new()
+        .route("/", get(routes::main::root));
+
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
+    
+    /*
 
     HttpServer::new(move || {
         App::new()
@@ -99,13 +115,13 @@ async fn main() -> std::io::Result<()> {
             .service(routes::episodes::create)
             .service(routes::episodes::update)
             .service(routes::episodes::delete)
-            .service(web::resource("/{tail:.*}").to(dav_handler))
     })
     .workers(2)
     .bind(format!("0.0.0.0:{}", &port))
     .unwrap()
     .run()
     .await
+    */
 }
 
 
