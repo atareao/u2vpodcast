@@ -1,5 +1,7 @@
 use dotenv::dotenv;
 use sqlx::SqlitePool;
+use tracing_subscriber::EnvFilter;
+use std::str::FromStr;
 use std::time;
 use std::{env, path::Path};
 use sqlx::{sqlite::SqlitePoolOptions, migrate::{Migrator, MigrateDatabase}};
@@ -13,12 +15,14 @@ use axum::{
     Json, Router,
 };
 use std::net::SocketAddr;
+use std::{fs, process};
 use tower::{BoxError, ServiceBuilder};
 use tower_http::{
     auth::RequireAuthorizationLayer, compression::CompressionLayer, limit::RequestBodyLimitLayer,
     trace::TraceLayer,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use crate::config::Configuration;
 
 mod models;
 mod routes;
@@ -27,33 +31,28 @@ mod config;
 
 #[tokio::main]
 async fn main(){
-    dotenv().ok();
+    let content = match fs::read_to_string("config.yml")
+        .await {
+            Ok(value) => value,
+            Err(e) => {
+                println!("Error with config file `config.yml`: {}",
+                    e.to_string());
+                process::exit(0);
+            }
+        };
+    let configuration = Configuration::new(&content)
+        .expect("Someting went wrong");
+
 
     tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG")
-            .unwrap_or_else(|_| "example_key_value_store=debug,tower_http=debug".into()),
-        ))
+        .with(EnvFilter::from_str(configuration.get_log_level()))
         .with(tracing_subscriber::fmt::layer())
         .init();
-    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL not set");
-    let port: u16 = env::var("PORT").expect("PORT not set")
-        .parse()
-        .unwrap();
-    let sleep_time: u64 = env::var("SLEEP_TIME").unwrap_or("86400".to_string())
-        .parse()
-        .unwrap();
-    let key = std::env::var("YT_KEY").expect("YT_KEY not set");
+    let db_url = configuration.get_db_url();
+    let port = configuration.get_port();
 
-    let _title = std::env::var("TITLE").expect("TITLE not set");
-    let _description = std::env::var("DESCRIPTION").expect("DESCRIPTION not set");
-    let _url = std::env::var("URL").expect("URL not set");
-
-    let cookies = std::env::var("COOKIES").expect("COOKIES not set");
-    let folder = std::env::var("FOLDER").expect("FOLDER not set");
-
-    if !sqlx::Sqlite::database_exists(&db_url).await.unwrap(){
-        sqlx::Sqlite::create_database(&db_url).await.unwrap();
+    if !sqlx::Sqlite::database_exists(db_url).await.unwrap(){
+        sqlx::Sqlite::create_database(db_url).await.unwrap();
     }
 
     let migrations = if env::var("RUST_ENV") == Ok("production".to_string()){
@@ -66,7 +65,7 @@ async fn main(){
 
     let pool = SqlitePoolOptions::new()
         .max_connections(2)
-        .connect(&db_url)
+        .connect(db_url)
         .await
         .expect("Pool failed");
 
@@ -78,9 +77,14 @@ async fn main(){
         .unwrap();
 
 
+    let cookies = configuration.get_cookies();
+    let folder = configuration.get_folder();
+    let sleep_time = configuration.get_sleep_time();
     let pool2 = pool.clone();
     tokio::spawn(async move {
         loop {
+        
+
             do_the_work(&pool2, &key, &cookies, &folder).await;
             tokio::time::sleep(time::Duration::from_secs(sleep_time)).await;
         }
