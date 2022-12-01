@@ -1,5 +1,4 @@
 use crate::http::{ApiContext, Result};
-use anyhow::Context;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash};
 use axum::extract::Extension;
@@ -24,42 +23,23 @@ struct UserBody<T> {
     user: T,
 }
 
-#[derive(serde::Deserialize)]
-struct NewUser {
-    username: String,
-    email: String,
-    password: String,
-}
-
-#[derive(serde::Deserialize)]
-struct LoginUser {
-    email: String,
-    password: String,
-}
-
 #[derive(serde::Deserialize, Default, PartialEq, Eq)]
 #[serde(default)] // fill in any missing fields with `..UpdateUser::default()`
-struct UpdateUser {
-    email: Option<String>,
+struct LoginUpdateNewUser {
     username: Option<String>,
     password: Option<String>,
-    bio: Option<String>,
-    image: Option<String>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct User {
-    email: String,
     token: String,
     username: String,
-    bio: String,
-    image: Option<String>,
 }
 
 // https://realworld-docs.netlify.app/docs/specs/backend-specs/endpoints#registration
 async fn create_user(
     ctx: Extension<ApiContext>,
-    Json(req): Json<UserBody<NewUser>>,
+    Json(req): Json<UserBody<LoginUpdateNewUser>>,
 ) -> Result<Json<UserBody<User>>> {
     let password_hash = hash_password(req.user.password).await?;
 
@@ -70,9 +50,8 @@ async fn create_user(
     // to move the query to a separate module.
     let user_id = sqlx::query_scalar!(
         // language=PostgreSQL
-        r#"insert into "user" (username, email, password_hash) values ($1, $2, $3) returning user_id"#,
+        r#"insert into "user" (username, password_hash) values ($1, $2, $3) returning user_id"#,
         req.user.username,
-        req.user.email,
         password_hash
     )
     .fetch_one(&ctx.db)
@@ -86,11 +65,8 @@ async fn create_user(
 
     Ok(Json(UserBody {
         user: User {
-            email: req.user.email,
             token: AuthUser { user_id }.to_jwt(&ctx),
             username: req.user.username,
-            bio: "".to_string(),
-            image: None,
         },
     }))
 }
@@ -98,7 +74,7 @@ async fn create_user(
 // https://realworld-docs.netlify.app/docs/specs/backend-specs/endpoints#authentication
 async fn login_user(
     ctx: Extension<ApiContext>,
-    Json(req): Json<UserBody<LoginUser>>,
+    Json(req): Json<UserBody<LoginUpdateNewUser>>,
 ) -> Result<Json<UserBody<User>>> {
     let user = sqlx::query!(
         r#"
@@ -115,14 +91,11 @@ async fn login_user(
 
     Ok(Json(UserBody {
         user: User {
-            email: user.email,
             token: AuthUser {
                 user_id: user.user_id,
             }
             .to_jwt(&ctx),
             username: user.username,
-            bio: user.bio,
-            image: user.image,
         },
     }))
 }
@@ -141,7 +114,6 @@ async fn get_current_user(
 
     Ok(Json(UserBody {
         user: User {
-            email: user.email,
             // The spec doesn't state whether we're supposed to return the same token we were passed,
             // or generate a new one. Generating a new one is easier the way the code is structured.
             //
@@ -149,8 +121,6 @@ async fn get_current_user(
             // updates its token based on this response.
             token: auth_user.to_jwt(&ctx),
             username: user.username,
-            bio: user.bio,
-            image: user.image,
         },
     }))
 }
@@ -161,9 +131,9 @@ async fn get_current_user(
 async fn update_user(
     auth_user: AuthUser,
     ctx: Extension<ApiContext>,
-    Json(req): Json<UserBody<UpdateUser>>,
+    Json(req): Json<UserBody<LoginUpdateNewUser>>,
 ) -> Result<Json<UserBody<User>>> {
-    if req.user == UpdateUser::default() {
+    if req.user == LoginUpdateNewUser::default() {
         // If there's no fields to update, these two routes are effectively identical.
         return get_current_user(auth_user, ctx).await;
     }
@@ -180,37 +150,25 @@ async fn update_user(
         // language=PostgreSQL
         r#"
             update "user"
-            set email = coalesce($1, "user".email),
-                username = coalesce($2, "user".username),
-                password_hash = coalesce($3, "user".password_hash),
-                bio = coalesce($4, "user".bio),
-                image = coalesce($5, "user".image)
-            where user_id = $6
-            returning email, username, bio, image
+            set username = coalesce($1, "user".username),
+                password_hash = coalesce($2, "user".password_hash),
+            where user_id = $3
+            returning username
         "#,
-        req.user.email,
         req.user.username,
         password_hash,
-        req.user.bio,
-        req.user.image,
         auth_user.user_id
     )
     .fetch_one(&ctx.db)
     .await
     .on_constraint("user_username_key", |_| {
         Error::unprocessable_entity([("username", "username taken")])
-    })
-    .on_constraint("user_email_key", |_| {
-        Error::unprocessable_entity([("email", "email taken")])
     })?;
 
     Ok(Json(UserBody {
         user: User {
-            email: user.email,
             token: auth_user.to_jwt(&ctx),
             username: user.username,
-            bio: user.bio,
-            image: user.image,
         },
     }))
 }
