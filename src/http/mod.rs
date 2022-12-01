@@ -15,14 +15,30 @@ pub mod error;
 /// verifies `<token>` as a JWT and checks the signature,
 /// then deserializes the information it contains.
 pub mod extractor;
+pub use error::{Error, ResultExt};
 
+pub type Result<T, E = Error> = std::result::Result<T, E>;
+
+/// The core type through which handler functions can access common API state.
+///
+/// This can be accessed by adding a parameter `Extension<ApiContext>` to a handler function's
+/// parameters.
+///
+/// In other projects I've passed this stuff as separate objects, e.g.
+/// using a separate actix-web `Data` extractor for each of `Config`, `PgPool`, etc.
+/// It just ends up being kind of annoying that way, but does have the whole
+/// "pass only what you need where you need it" angle.
+///
+/// It may not be a bad idea if you need your API to be more modular (turn routes
+/// on and off, and disable any unused extension objects) but it's really up to a
+/// judgement call.
 #[derive(Clone)]
-struct Context {
+struct ApiContext {
     config: Arc<Configuration>,
-    db: SqlitePool,
+    pool: SqlitePool,
 }
 
-pub async fn serve(config: Configuration, db: SqlitePool) -> anyhow::Result<()> {
+pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()> {
     // Bootstrapping an API is both more intuitive with Axum than Actix-web but also
     // a bit more confusing at the same time.
     //
@@ -34,9 +50,9 @@ pub async fn serve(config: Configuration, db: SqlitePool) -> anyhow::Result<()> 
     // letting Tokio do it.
     let app = api_router().layer(
         ServiceBuilder::new()
-            .layer(Extension(Context {
+            .layer(Extension(ApiContext {
                 config: Arc::new(config),
-                db,
+                pool,
             }))
             // Enables logging. Use `RUST_LOG=tower_http=debug`
             .layer(TraceLayer::new_for_http()),
