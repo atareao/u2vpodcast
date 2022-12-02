@@ -2,7 +2,7 @@ use crate::http::{ApiContext, Result};
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash};
 use axum::extract::Extension;
-use axum::routing::{get, post};
+use axum::routing::post;
 use axum::{Json, Router};
 
 use crate::http::error::{Error, ResultExt};
@@ -12,9 +12,11 @@ pub fn router() -> Router {
     // By having each module responsible for setting up its own routing,
     // it makes the root module a lot cleaner.
     Router::new()
-        .route("/api/users", post(create_user))
-        .route("/api/users/login", post(login_user))
-        .route("/api/user", get(get_current_user).put(update_user))
+        .route("/api/v1/users",
+            post(create_user)
+            .get(get_current_user)
+            .put(update_user))
+        .route("/api/v1/users/login", post(login_user))
 }
 
 /// A wrapper type for all requests/responses from these routes.
@@ -48,7 +50,7 @@ async fn create_user(
     //
     // Sometimes queries just get too darn big, though. In that case it may be a good idea
     // to move the query to a separate module.
-    let user_id = sqlx::query_scalar!(
+    let id = sqlx::query_scalar!(
         // language=PostgreSQL
         r#"INSERT INTO users (username, hashed_password) VALUES ($1, $2)
             RETURNING id"#,
@@ -63,7 +65,7 @@ async fn create_user(
 
     Ok(Json(UserBody {
         user: User {
-            token: AuthUser { user_id }.to_jwt(&ctx),
+            token: AuthUser { id }.to_jwt(&ctx),
             username: req.user.username,
         },
     }))
@@ -134,7 +136,7 @@ async fn update_user(
     }
 
     // WTB `Option::map_async()`
-    let password_hash = if let Some(password) = req.user.password {
+    let hashed_password = if let Some(password) = req.user.password {
         Some(hash_password(password).await?)
     } else {
         None
@@ -144,15 +146,15 @@ async fn update_user(
         // This is how we do optional updates of fields without needing a separate query for each.
         // language=PostgreSQL
         r#"
-            update "user"
-            set username = coalesce($1, "user".username),
-                password_hash = coalesce($2, "user".password_hash),
-            where user_id = $3
-            returning username
+            UPDATE users
+            SET username = COALESCE($1, users.username),
+                hashed_password = COALESCE($2, users.hashed_password)
+            WHERE id = $3
+            RETURNING username
         "#,
         req.user.username,
-        password_hash,
-        auth_user.user_id
+        hashed_password,
+        auth_user.id
     )
     .fetch_one(&ctx.db)
     .await
@@ -197,4 +199,3 @@ async fn verify_password(password: String, password_hash: String) -> Result<()> 
     .await
     .context("panic in verifying password hash")??)
 }
-
