@@ -50,7 +50,8 @@ async fn create_user(
     // to move the query to a separate module.
     let user_id = sqlx::query_scalar!(
         // language=PostgreSQL
-        r#"insert into "user" (username, password_hash) values ($1, $2, $3) returning user_id"#,
+        r#"INSERT INTO users (username, hashed_password) VALUES ($1, $2)
+            RETURNING id"#,
         req.user.username,
         password_hash
     )
@@ -58,10 +59,7 @@ async fn create_user(
     .await
     .on_constraint("user_username_key", |_| {
         Error::unprocessable_entity([("username", "username taken")])
-    })
-    .on_constraint("user_email_key", |_| {
-        Error::unprocessable_entity([("email", "email taken")])
-    })?;
+    });
 
     Ok(Json(UserBody {
         user: User {
@@ -77,11 +75,8 @@ async fn login_user(
     Json(req): Json<UserBody<LoginUpdateNewUser>>,
 ) -> Result<Json<UserBody<User>>> {
     let user = sqlx::query!(
-        r#"
-            select user_id, email, username, bio, image, password_hash 
-            from "user" where email = $1
-        "#,
-        req.user.email,
+        r#"SELECT id, username, hashed_password FROM users WHERE username = $1"#,
+        req.user.username,
     )
     .fetch_optional(&ctx.db)
     .await?
@@ -92,7 +87,7 @@ async fn login_user(
     Ok(Json(UserBody {
         user: User {
             token: AuthUser {
-                user_id: user.user_id,
+                id: user.id,
             }
             .to_jwt(&ctx),
             username: user.username,
@@ -106,8 +101,8 @@ async fn get_current_user(
     ctx: Extension<ApiContext>,
 ) -> Result<Json<UserBody<User>>> {
     let user = sqlx::query!(
-        r#"select email, username, bio, image from "user" where user_id = $1"#,
-        auth_user.user_id
+        r#"SELECT username FROM users WHERE id = $1"#,
+        auth_user.id
     )
     .fetch_one(&ctx.db)
     .await?;
