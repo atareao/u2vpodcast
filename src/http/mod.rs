@@ -9,6 +9,8 @@ use tower::ServiceBuilder;
 
 /// Defines a common error type to use for all request handlers, compliant with the Realworld spec.
 pub mod users;
+pub mod channels;
+pub mod episodes;
 pub mod error;
 /// Contains definitions for application-specific parameters to handler functions,
 /// such as `AuthUser` which checks for the `Authorization: Token <token>` header in the request,
@@ -19,6 +21,13 @@ pub use error::{Error, ResultExt};
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
+pub struct BodyItem<T>{
+    item: T,
+}
+
+pub struct BodyItems<T>{
+    items: Vec<T>,
+}
 /// The core type through which handler functions can access common API state.
 ///
 /// This can be accessed by adding a parameter `Extension<ApiContext>` to a handler function's
