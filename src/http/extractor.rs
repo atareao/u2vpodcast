@@ -1,17 +1,23 @@
 use crate::http::error::Error;
-use axum::body::Body;
-use axum::extract::{Extension, FromRequest, RequestParts};
+use axum::{
+    async_trait,
+    extract::FromRequest,
+    body::{Body, Bytes},
+    http::{
+        header::HeaderValue,
+        Request,
+    },
+    Extension,
+};
 
 use crate::http::ApiContext;
-use async_trait::async_trait;
 use axum::http::header::AUTHORIZATION;
-use axum::http::HeaderValue;
-use hmac::{Hmac, NewMac};
+use hmac::Hmac;
 use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha384;
-use time::OffsetDateTime;
+use time::{Duration, OffsetDateTime};
 
-const DEFAULT_SESSION_LENGTH: time::Duration = time::Duration::weeks(2);
+const DEFAULT_SESSION_LENGTH: Duration = Duration::weeks(2);
 
 // Ideally the Realworld spec would use the `Bearer` scheme as that's relatively standard
 // and has parsers available, but it's really not that hard to parse anyway.
@@ -42,7 +48,7 @@ struct AuthUserClaims {
 
 impl AuthUser {
     pub(in crate::http) fn to_jwt(&self, ctx: &ApiContext) -> String {
-        let hmac = Hmac::<Sha384>::new_from_slice(ctx.config.hmac_key.as_bytes())
+        let hmac = Hmac::<Sha384>::new_from_slice(ctx.config.get_hmac_key().as_bytes())
             .expect("HMAC-SHA-384 can accept any key length");
 
         AuthUserClaims {
@@ -56,12 +62,12 @@ impl AuthUser {
     /// Attempt to parse `Self` from an `Authorization` header.
     fn from_authorization(ctx: &ApiContext, auth_header: &HeaderValue) -> Result<Self, Error> {
         let auth_header = auth_header.to_str().map_err(|_| {
-            log::debug!("Authorization header is not UTF-8");
+            tracing::debug!("Authorization header is not UTF-8");
             Error::Unauthorized
         })?;
 
         if !auth_header.starts_with(SCHEME_PREFIX) {
-            log::debug!(
+            tracing::debug!(
                 "Authorization header is using the wrong scheme: {:?}",
                 auth_header
             );
@@ -72,7 +78,7 @@ impl AuthUser {
 
         let jwt =
             jwt::Token::<jwt::Header, AuthUserClaims, _>::parse_unverified(token).map_err(|e| {
-                log::debug!(
+                tracing::debug!(
                     "failed to parse Authorization header {:?}: {}",
                     auth_header,
                     e
@@ -90,7 +96,7 @@ impl AuthUser {
         // algorithm declared in the token matches the signing algorithm you're verifying with.
         // The `jwt` crate does.
         let jwt = jwt.verify_with_key(&hmac).map_err(|e| {
-            log::debug!("JWT failed to verify: {}", e);
+            tracing::debug!("JWT failed to verify: {}", e);
             Error::Unauthorized
         })?;
 
@@ -121,7 +127,7 @@ impl AuthUser {
         // token on the frontend.
 
         if claims.exp < OffsetDateTime::now_utc().unix_timestamp() {
-            log::debug!("token expired");
+            tracing::debug!("token expired");
             return Err(Error::Unauthorized);
         }
 
@@ -146,18 +152,23 @@ impl MaybeAuthUser {
 // out of it that you couldn't write your own middleware for, except with a bunch of extra
 // boilerplate.
 #[async_trait]
-impl FromRequest for AuthUser {
+impl<S, B> FromRequest<S, B> for AuthUser
+where
+    Bytes: FromRequest<S, B>,
+    B: Send + 'static,
+    S: Send + Sync,
+{
     type Rejection = Error;
 
-    async fn from_request(req: &mut RequestParts<Body>) -> Result<Self, Self::Rejection> {
-        let ctx: Extension<ApiContext> = Extension::from_request(req)
+    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+        let ctx: Extension<ApiContext> = Extension::from_request(req, state)
             .await
             .expect("BUG: ApiContext was not added as an extension");
 
         // Get the value of the `Authorization` header, if it was sent at all.
         let auth_header = req
             .headers()
-            .ok_or(Error::Unauthorized)?
+            //.ok_or(Error::Unauthorized)?
             .get(AUTHORIZATION)
             .ok_or(Error::Unauthorized)?;
 
@@ -166,11 +177,16 @@ impl FromRequest for AuthUser {
 }
 
 #[async_trait]
-impl FromRequest for MaybeAuthUser {
+impl<S, B> FromRequest<S, B> for MaybeAuthUser 
+where
+    Bytes: FromRequest<S, B>,
+    B: Send + 'static,
+    S: Send + Sync,
+{
     type Rejection = Error;
 
-    async fn from_request(req: &mut RequestParts<Body>) -> Result<Self, Self::Rejection> {
-        let ctx: Extension<ApiContext> = Extension::from_request(req)
+    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
+        let ctx: Extension<ApiContext> = Extension::from_request(req, state)
             .await
             .expect("BUG: ApiContext was not added as an extension");
 
