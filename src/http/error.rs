@@ -5,6 +5,7 @@ use axum::{
 use axum::http::header::WWW_AUTHENTICATE;
 use axum::http::{HeaderMap, HeaderValue};
 use axum::Json;
+use serde_json::json;
 use sqlx::error::DatabaseError;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -213,6 +214,30 @@ where
             }
             e => e,
         })
+    }
+}
+
+pub enum DBError{
+    InternalError(String),
+    NotFoundError(String),
+}
+
+impl IntoResponse for DBError{
+
+    fn into_response(self) -> Response{
+         let (status, error_message) = match self {
+            DBError::InternalError(msg) => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error")
+            }
+            DBError::NotFoundError(msg) => {
+                (StatusCode::NOT_FOUND, "Not Found")
+            }
+        };
+        let body = Json(json!({
+            "error": error_message,
+        }));
+
+        (status, body).into_response()
     }
 }
 
