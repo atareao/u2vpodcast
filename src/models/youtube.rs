@@ -159,7 +159,7 @@ mod tests{
 
     use super::YouTube;
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn test_get_videos(){
         dotenv().ok();
         let key = std::env::var("YT_KEY").unwrap();
