@@ -1,3 +1,5 @@
+use std::io::Read;
+
 use tokio::process::Command;
 
 pub struct Ytdlp{
@@ -12,16 +14,20 @@ impl Ytdlp {
             cookies: cookies.to_string(),
         }
     }
-    pub async fn get_latest(&self, channel: &str, days: i32) -> Option<String>{
+    pub async fn get_latest(&self, channel: &str, days: i32) -> Result<String, anyhow::Error>{
         let url = format!("https://www.youtube.com/c/{}", channel);
         let elapsed = format!("today-{}days", days);
         let mut args = vec!["--dateafter", &elapsed, "--dump-json",
             "--break-on-reject"];
         args.push(&url);
-        Command::new(&self.path)
+        let stdout = Command::new(&self.path)
             .args(&args)
             .output()
-
+            .await
+            .map_err(|e| anyhow::anyhow!("Error"))
+            .unwrap()
+            .stdout;
+        Ok(std::str::from_utf8(&stdout).unwrap().to_string())
     }
 
     pub async fn download(&self, id: &str, output: &str) -> std::process::ExitStatus{
