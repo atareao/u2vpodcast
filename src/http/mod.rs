@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, net::{SocketAddr, Ipv4Addr}};
 use sqlx::SqlitePool;
 use axum::{Extension, Router};
 use crate::config::Configuration;
@@ -8,10 +8,11 @@ use tower::ServiceBuilder;
 // Utility modules.
 
 /// Defines a common error type to use for all request handlers, compliant with the Realworld spec.
-pub mod users;
-pub mod channels;
-pub mod episodes;
+pub mod user;
+pub mod channel;
+pub mod episode;
 pub mod error;
+pub mod rss;
 /// Contains definitions for application-specific parameters to handler functions,
 /// such as `AuthUser` which checks for the `Authorization: Token <token>` header in the request,
 /// verifies `<token>` as a JWT and checks the signature,
@@ -60,7 +61,7 @@ pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()
     let app = api_router().layer(
         ServiceBuilder::new()
             .layer(Extension(ApiContext {
-                config: Arc::new(config),
+                config: Arc::new(config.clone()),
                 pool,
             }))
             // Enables logging. Use `RUST_LOG=tower_http=debug`
@@ -71,15 +72,17 @@ pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()
     //
     // Note that any port below 1024 needs superuser privileges to bind on Linux,
     // so 80 isn't usually used as a default for that reason.
-    axum::Server::bind(format!("0.0.0.0:{}", config.get_port()))
+    axum::Server::bind(
+        &SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), config.get_port()))
         .serve(app.into_make_service())
         .await
-        .context("error running HTTP server")
+        .map_err(|err| anyhow::anyhow!("Can't init"))
+    
 }
 
 fn api_router() -> Router {
     // This is the order that the modules were authored in.
-    users::router()
-        .merge(profiles::router())
-        .merge(articles::router())
+    user::router()
+        .merge(episode::router())
+        .merge(channel::router())
 }
