@@ -10,9 +10,12 @@ rust-version = "1.60"
 
 [dependencies]
 # Core dependencies: runtime, HTTP framework and database client.
-tokio = { version = "1.22", features = ["macros", "rt-multi-thread"] }
+futures = "0.3"
+tokio = { version = "1.22", features = ["full"] }
 axum = { version = "0.6" }
 sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "sqlite", "macros", "offline", "chrono"]}
+
+async-recursion = "1.0"
 
 # State of the art password hashing
 argon2 = "0.4"
@@ -21,14 +24,25 @@ argon2 = "0.4"
 tower = "0.4"
 tower-http = { version = "0.3.0", features = [ "trace" ] }
 
+reqwest = "0.11"
+
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Utility
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"
+serde_json = "1.0"
 anyhow = "1"
 dotenv = "0.15"
 rand = "0.8"
 thiserror = "1.0"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+time = "0.3"
+async-trait = "0.1"
+hmac = "0.12"
+jwt = "0.16"
+sha2 = "0.10"
+
+# RSS
+rss = "2.0"

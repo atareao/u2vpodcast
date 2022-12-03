@@ -1,37 +1,21 @@
-use dotenv::dotenv;
 use sqlx::SqlitePool;
 use tracing_subscriber::EnvFilter;
 use std::str::FromStr;
 use std::time;
 use std::{env, path::Path};
 use sqlx::{sqlite::SqlitePoolOptions, migrate::{Migrator, MigrateDatabase}};
-use models::{youtube::YouTube, channel::Channel, episode::{Episode,
-    NewEpisode}, ytdlp::Ytdlp};
 use tokio;
-use axum::{
-    routing::{get, post},
-    http::StatusCode,
-    response::IntoResponse,
-    Json, Router,
-};
-use std::net::SocketAddr;
-use std::{fs, process};
-use tower::{BoxError, ServiceBuilder};
-use tower_http::{
-    auth::RequireAuthorizationLayer, compression::CompressionLayer, limit::RequestBodyLimitLayer,
-    trace::TraceLayer,
-};
+use std::process;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::config::Configuration;
 
 mod models;
-mod routes;
 mod http;
 mod config;
 
 #[tokio::main]
 async fn main(){
-    let content = match fs::read_to_string("config.yml")
+    let content = match tokio::fs::read_to_string("config.yml")
         .await {
             Ok(value) => value,
             Err(e) => {
@@ -45,7 +29,7 @@ async fn main(){
 
 
     tracing_subscriber::registry()
-        .with(EnvFilter::from_str(configuration.get_log_level()))
+        .with(EnvFilter::from_str(configuration.get_log_level()).unwrap())
         .with(tracing_subscriber::fmt::layer())
         .init();
     let db_url = configuration.get_db_url();
@@ -79,27 +63,16 @@ async fn main(){
 
     let cookies = configuration.get_cookies();
     let folder = configuration.get_folder();
-    let sleep_time = configuration.get_sleep_time();
+    let sleep_time: u64 = configuration.get_sleep_time().into();
     let pool2 = pool.clone();
     tokio::spawn(async move {
         loop {
-        
-
+            let key = "";
             do_the_work(&pool2, &key, &cookies, &folder).await;
             tokio::time::sleep(time::Duration::from_secs(sleep_time)).await;
         }
     });
-
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-
-    let app = Router::new()
-        .route("/", get(routes::main::root));
-
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
-    
+    http::serve(configuration, pool).await.unwrap();
     /*
 
     HttpServer::new(move || {
@@ -130,6 +103,7 @@ async fn main(){
 
 
 async fn do_the_work(pool: &SqlitePool, key: &str, cookies: &str, folder: &str){
+    /*
     let yt = YouTube::new(&key);
     let ytdlp = Ytdlp::new("yt-dlp", cookies);
     let channels = Channel::read_all(&Data::new(pool.clone())).await.unwrap();
@@ -156,4 +130,5 @@ async fn do_the_work(pool: &SqlitePool, key: &str, cookies: &str, folder: &str){
             Channel::update(&Data::new(pool.clone()), channel).await.unwrap();
         }
     }
+    */
 }

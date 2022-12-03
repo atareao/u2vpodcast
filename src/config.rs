@@ -1,7 +1,7 @@
 use serde_yaml::Error;
 use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Configuration{
     log_level: String,
     db_url: String,
