@@ -2,7 +2,7 @@ use crate::http::error::Error;
 use axum::{
     async_trait,
     extract::FromRequest,
-    body::{Body, Bytes},
+    body::Bytes,
     http::{
         header::HeaderValue,
         Request,
@@ -12,10 +12,12 @@ use axum::{
 
 use crate::http::ApiContext;
 use axum::http::header::AUTHORIZATION;
-use hmac::Hmac;
+use hmac::{Hmac, digest::KeyInit};
 use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha384;
 use time::{Duration, OffsetDateTime};
+
+type HmacSha384 = Hmac<Sha384>;
 
 const DEFAULT_SESSION_LENGTH: Duration = Duration::weeks(2);
 
@@ -48,7 +50,7 @@ struct AuthUserClaims {
 
 impl AuthUser {
     pub(in crate::http) fn to_jwt(&self, ctx: &ApiContext) -> String {
-        let hmac = Hmac::<Sha384>::new_from_slice(ctx.config.get_hmac_key().as_bytes())
+        let hmac = HmacSha384::new_from_slice(ctx.config.get_hmac_key().as_bytes())
             .expect("HMAC-SHA-384 can accept any key length");
 
         AuthUserClaims {
@@ -89,7 +91,7 @@ impl AuthUser {
         // Realworld doesn't specify the signing algorithm for use with the JWT tokens
         // so we picked SHA-384 (HS-384) as the HMAC, as it is more difficult to brute-force
         // than SHA-256 (recommended by the JWT spec) at the cost of a slightly larger token.
-        let hmac = Hmac::<Sha384>::new_from_slice(ctx.config.hmac_key.as_bytes())
+        let hmac = HmacSha384::new_from_slice(ctx.config.get_hmac_key().as_bytes())
             .expect("HMAC-SHA-384 can accept any key length");
 
         // When choosing a JWT implementation, be sure to check that it validates that the signing
@@ -150,6 +152,7 @@ impl MaybeAuthUser {
 // There's the `::custom()` constructor to provide your own validator but it basically
 // requires parsing the `Authorization` header by-hand anyway so you really don't get anything
 // out of it that you couldn't write your own middleware for, except with a bunch of extra
+/*
 // boilerplate.
 #[async_trait]
 impl<S, B> FromRequest<S, B> for AuthUser
@@ -175,7 +178,6 @@ where
         Self::from_authorization(&ctx, auth_header)
     }
 }
-
 #[async_trait]
 impl<S, B> FromRequest<S, B> for MaybeAuthUser 
 where
@@ -201,4 +203,4 @@ where
         ))
     }
 }
-
+*/
