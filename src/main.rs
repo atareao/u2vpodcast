@@ -61,14 +61,14 @@ async fn main(){
         .unwrap();
 
 
-    let cookies = configuration.get_cookies();
-    let folder = configuration.get_folder();
-    let sleep_time: u64 = configuration.get_sleep_time().into();
+    let configuration2 = configuration.clone();
     let pool2 = pool.clone();
     tokio::spawn(async move {
         loop {
             let key = "";
-            do_the_work(&pool2, &key, &cookies, &folder).await;
+            let folder = configuration2.get_folder();
+            let sleep_time: u64 = configuration2.get_sleep_time().into();
+            do_the_work(&pool2, &key, &folder).await;
             tokio::time::sleep(time::Duration::from_secs(sleep_time)).await;
         }
     });
@@ -102,7 +102,7 @@ async fn main(){
 }
 
 
-async fn do_the_work(pool: &SqlitePool, key: &str, cookies: &str, folder: &str){
+async fn do_the_work(pool: &SqlitePool, key: &str, folder: &str){
     /*
     let yt = YouTube::new(&key);
     let ytdlp = Ytdlp::new("yt-dlp", cookies);
