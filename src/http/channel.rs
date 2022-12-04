@@ -13,12 +13,12 @@ use crate::models::channel::{Channel, NewChannel};
 
 pub fn router() -> Router {
     Router::new()
-        .route("api/v1/channels",
+        .route("/api/v1/channels",
             post(create)
             .get(read_all)
             .put(update)
         )
-        .route("api/v1/channels/:id",
+        .route("/api/v1/channels/:id",
             get(read)
             .delete(delete)
         )

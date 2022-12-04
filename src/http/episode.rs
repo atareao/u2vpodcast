@@ -13,12 +13,12 @@ use crate::models::episode::{Episode, NewEpisode};
 
 pub fn router() -> Router {
     Router::new()
-        .route("api/v1/episodes",
+        .route("/api/v1/episodes",
             post(create)
             .get(read_all)
             .put(update)
         )
-        .route("api/v1/episodes/:id",
+        .route("/api/v1/episodes/:id",
             get(read)
             .delete(delete)
         )
