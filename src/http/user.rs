@@ -1,35 +1,28 @@
-use crate::http::{ApiContext, Result};
+use crate::http::ApiContext;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash};
 use axum::extract::Extension;
 use axum::routing::post;
 use axum::{Json, Router};
 
-use crate::http::error::{Error, ResultExt};
+use crate::http::error;
 use crate::http::extractor::AuthUser;
+
+use super::ResultExt;
 
 pub fn router() -> Router {
     // By having each module responsible for setting up its own routing,
     // it makes the root module a lot cleaner.
     Router::new()
         .route("/api/v1/users",
-            post(create_user)
-            .get(get_current_user)
-            .put(update_user))
+            post(create_user))
         .route("/api/v1/users/login", post(login_user))
 }
 
-/// A wrapper type for all requests/responses from these routes.
-#[derive(serde::Serialize, serde::Deserialize)]
-struct UserBody<T> {
-    user: T,
-}
-
 #[derive(serde::Deserialize, Default, PartialEq, Eq)]
-#[serde(default)] // fill in any missing fields with `..UpdateUser::default()`
 struct LoginUpdateNewUser {
-    username: Option<String>,
-    password: Option<String>,
+    username: String,
+    password: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -41,9 +34,9 @@ struct User {
 // https://realworld-docs.netlify.app/docs/specs/backend-specs/endpoints#registration
 async fn create_user(
     ctx: Extension<ApiContext>,
-    Json(req): Json<UserBody<LoginUpdateNewUser>>,
-) -> Result<Json<UserBody<User>>> {
-    let password_hash = hash_password(req.user.password).await?;
+    Json(req): Json<LoginUpdateNewUser>,
+) -> Result<Json<User>, error::Error> {
+    let password_hash = hash_password(req.password).await?;
 
     // I personally prefer using queries inline in request handlers as it's easier to understand the
     // query's semantics in the wider context of where it's invoked.
@@ -54,46 +47,43 @@ async fn create_user(
         // language=PostgreSQL
         r#"INSERT INTO users (username, hashed_password) VALUES ($1, $2)
             RETURNING id"#,
-        req.user.username,
+        req.username,
         password_hash
     )
-    .fetch_one(&ctx.db)
+    .fetch_one(&ctx.pool)
     .await
     .on_constraint("user_username_key", |_| {
-        Error::unprocessable_entity([("username", "username taken")])
-    });
+        error::Error::unprocessable_entity([("username", "username taken")])
+    })
+    .unwrap();
 
-    Ok(Json(UserBody {
-        user: User {
-            token: AuthUser { id }.to_jwt(&ctx),
-            username: req.user.username,
-        },
+    Ok(Json(User {
+        token: AuthUser { id }.to_jwt(&ctx),
+        username: req.username,
     }))
 }
 
 // https://realworld-docs.netlify.app/docs/specs/backend-specs/endpoints#authentication
 async fn login_user(
     ctx: Extension<ApiContext>,
-    Json(req): Json<UserBody<LoginUpdateNewUser>>,
-) -> Result<Json<UserBody<User>>> {
+    Json(req): Json<LoginUpdateNewUser>,
+) -> Result<Json<User>, error::Error> {
     let user = sqlx::query!(
         r#"SELECT id, username, hashed_password FROM users WHERE username = $1"#,
-        req.user.username,
+        req.username,
     )
-    .fetch_optional(&ctx.db)
+    .fetch_optional(&ctx.pool)
     .await?
-    .ok_or(Error::unprocessable_entity([("email", "does not exist")]))?;
+    .ok_or(error::Error::unprocessable_entity([("email", "does not exist")]))?;
 
-    verify_password(req.user.password, user.password_hash).await?;
+    //verify_password(req.user.password, user.password_hash).await?;
 
-    Ok(Json(UserBody {
-        user: User {
+    Ok(Json(User {
             token: AuthUser {
                 id: user.id,
             }
             .to_jwt(&ctx),
             username: user.username,
-        },
     }))
 }
 
@@ -101,16 +91,15 @@ async fn login_user(
 async fn get_current_user(
     auth_user: AuthUser,
     ctx: Extension<ApiContext>,
-) -> Result<Json<UserBody<User>>> {
+) -> Result<Json<User>, error::Error> {
     let user = sqlx::query!(
         r#"SELECT username FROM users WHERE id = $1"#,
         auth_user.id
     )
-    .fetch_one(&ctx.db)
+    .fetch_one(&ctx.pool)
     .await?;
 
-    Ok(Json(UserBody {
-        user: User {
+    Ok(Json(User {
             // The spec doesn't state whether we're supposed to return the same token we were passed,
             // or generate a new one. Generating a new one is easier the way the code is structured.
             //
@@ -118,7 +107,6 @@ async fn get_current_user(
             // updates its token based on this response.
             token: auth_user.to_jwt(&ctx),
             username: user.username,
-        },
     }))
 }
 
@@ -128,15 +116,14 @@ async fn get_current_user(
 async fn update_user(
     auth_user: AuthUser,
     ctx: Extension<ApiContext>,
-    Json(req): Json<UserBody<LoginUpdateNewUser>>,
-) -> Result<Json<UserBody<User>>> {
-    if req.user == LoginUpdateNewUser::default() {
-        // If there's no fields to update, these two routes are effectively identical.
-        return get_current_user(auth_user, ctx).await;
-    }
+    Json(req): Json<LoginUpdateNewUser>,
+) -> Result<Json<User>, error::Error> {
+    //if req.username == auth_user.id  {
+    //    // If there's no fields to update, these two routes are effectively identical.
+    //    return get_current_user(auth_user, ctx).await;
+    //}
 
-    // WTB `Option::map_async()`
-    let hashed_password = if let Some(password) = req.user.password {
+    let hashed_password = if let password = req.password {
         Some(hash_password(password).await?)
     } else {
         None
@@ -152,28 +139,26 @@ async fn update_user(
             WHERE id = $3
             RETURNING username
         "#,
-        req.user.username,
+        req.username,
         hashed_password,
         auth_user.id
     )
-    .fetch_one(&ctx.db)
+    .fetch_one(&ctx.pool)
     .await
     .on_constraint("user_username_key", |_| {
-        Error::unprocessable_entity([("username", "username taken")])
+        error::Error::unprocessable_entity([("username", "username taken")])
     })?;
 
-    Ok(Json(UserBody {
-        user: User {
-            token: auth_user.to_jwt(&ctx),
-            username: user.username,
-        },
+    Ok(Json(User {
+        token: auth_user.to_jwt(&ctx),
+        username: user.username.unwrap(),
     }))
 }
 
-async fn hash_password(password: String) -> Result<String> {
+async fn hash_password(password: String) -> Result<String, error::Error> {
     // Argon2 hashing is designed to be computationally intensive,
     // so we need to do this on a blocking thread.
-    Ok(tokio::task::spawn_blocking(move || -> Result<String> {
+    tokio::task::spawn_blocking(move || -> Result<String, error::Error> {
         let salt = SaltString::generate(rand::thread_rng());
         Ok(
             PasswordHash::generate(Argon2::default(), password, salt.as_str())
@@ -182,20 +167,20 @@ async fn hash_password(password: String) -> Result<String> {
         )
     })
     .await
-    .context("panic in generating password hash")??)
+    .unwrap()
 }
 
-async fn verify_password(password: String, password_hash: String) -> Result<()> {
-    Ok(tokio::task::spawn_blocking(move || -> Result<()> {
+async fn verify_password(password: String, password_hash: String) -> Result<(), error::Error> {
+    tokio::task::spawn_blocking(move || -> Result<(), error::Error> {
         let hash = PasswordHash::new(&password_hash)
             .map_err(|e| anyhow::anyhow!("invalid password hash: {}", e))?;
 
         hash.verify_password(&[&Argon2::default()], password)
             .map_err(|e| match e {
-                argon2::password_hash::Error::Password => Error::Unauthorized,
+                argon2::password_hash::Error::Password => error::Error::Unauthorized,
                 _ => anyhow::anyhow!("failed to verify password hash: {}", e).into(),
             })
     })
     .await
-    .context("panic in verifying password hash")??)
+    .unwrap()
 }
