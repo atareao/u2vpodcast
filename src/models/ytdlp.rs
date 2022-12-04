@@ -1,10 +1,19 @@
-use std::io::Read;
-
 use tokio::process::Command;
+use serde::{Serialize, Deserialize};
+use chrono::{DateTime, Utc};
 
 pub struct Ytdlp{
     path: String,
     cookies: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct YtVideo{
+    id: String,
+    title: String,
+    description: String,
+    thumbnail: String,
+    upload_date: String,
 }
 
 impl Ytdlp {
@@ -14,7 +23,7 @@ impl Ytdlp {
             cookies: cookies.to_string(),
         }
     }
-    pub async fn get_latest(&self, channel: &str, days: i32) -> Result<String, anyhow::Error>{
+    pub async fn get_latest(&self, channel: &str, days: i32) -> Result<Vec<YtVideo>, anyhow::Error>{
         let url = format!("https://www.youtube.com/c/{}", channel);
         let elapsed = format!("today-{}days", days);
         let mut args = vec!["--dateafter", &elapsed, "--dump-json",
@@ -27,7 +36,15 @@ impl Ytdlp {
             .map_err(|e| anyhow::anyhow!("Error"))
             .unwrap()
             .stdout;
-        Ok(std::str::from_utf8(&stdout).unwrap().to_string())
+        let mut result = std::str::from_utf8(&stdout)
+            .unwrap()
+            .split('\n')
+            .collect::<Vec<&str>>()
+            .join(",");
+        result.pop();
+        let content = format!("[{}]", result);
+        let ytvideos: Vec<YtVideo> = serde_json::from_str(&content).unwrap();
+        Ok(ytvideos)
     }
 
     pub async fn download(&self, id: &str, output: &str) -> std::process::ExitStatus{
@@ -50,11 +67,44 @@ impl Ytdlp {
 }
 
 #[tokio::test]
+async fn test_e(){
+    let ytdlp = Ytdlp::new("yt-dlp", "cookies.txt");
+    let salida = ytdlp.get_latest("error", 0).await;
+    match salida{
+        Ok(videos) => {
+            assert!(videos.len() == 0);
+        },
+        Err(e) => {
+            println!("{:?}", e);
+        }
+    }
+}
+#[tokio::test]
+async fn test_0(){
+    let ytdlp = Ytdlp::new("yt-dlp", "cookies.txt");
+    let salida = ytdlp.get_latest("atareao", 0).await;
+    match salida{
+        Ok(videos) => {
+            assert!(videos.len() == 0);
+        },
+        Err(e) => {
+            println!("{:?}", e);
+        }
+    }
+}
+#[tokio::test]
 async fn test_info(){
     let ytdlp = Ytdlp::new("yt-dlp", "cookies.txt");
-    let salida = ytdlp.get_latest("atareao", 2).await;
-    println!("{:?}", salida);
-    assert!(true);
+    let salida = ytdlp.get_latest("atareao", 5).await;
+    match salida{
+        Ok(videos) => {
+            println!("{:?}", videos.get(0).unwrap());
+            assert!(videos.len() > 0);
+        },
+        Err(e) => {
+            println!("{:?}", e);
+        }
+    }
 }
 
 async fn test_ytdlp(){
