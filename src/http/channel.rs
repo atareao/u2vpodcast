@@ -8,7 +8,7 @@ use axum::{
 };
 
 use crate::http::ApiContext;
-use super::error::Error;
+use super::error::{ResultExt, Error};
 use crate::models::channel::{Channel, NewChannel};
 
 pub fn router() -> Router {
@@ -33,6 +33,7 @@ async fn create(
         .await
         .map_err(|error| Error::Sqlx(error))
         .map(|channel| Json(channel))
+        //.on_db_error(|e| Error::unprocessable_entity([("error", e.to_string())]))
 }
 
 async fn read(

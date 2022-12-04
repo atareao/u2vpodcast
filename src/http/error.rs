@@ -151,7 +151,18 @@ impl IntoResponse for Error {
             }
 
             Self::Sqlx(ref e) => {
+                let status_code = match e {
+                    sqlx::error::Error::RowNotFound => StatusCode::NOT_FOUND,
+                    sqlx::error::Error::Database(e) => {
+                        StatusCode::CONFLICT
+                    }
+                    _ => self.status_code(),
+                };
                 tracing::error!("SQLx error: {:?}", e);
+                tracing::error!("SQLx error. Descruotu: {:?}", e.to_string());
+                return(
+                    status_code,
+                    e.to_string()).into_response();
             }
 
             Self::Anyhow(ref e) => {
@@ -192,6 +203,11 @@ pub trait ResultExt<T> {
     /// transform the error.
     ///
     /// Otherwise, the result is passed through unchanged.
+    fn on_db_error(
+        self,
+        f: impl FnOnce(Box<dyn DatabaseError>) -> Error,
+    ) -> Result<T, Error>;
+
     fn on_constraint(
         self,
         name: &str,
@@ -203,6 +219,17 @@ impl<T, E> ResultExt<T> for Result<T, E>
 where
     E: Into<Error>,
 {
+    fn on_db_error(
+        self,
+        map_err: impl FnOnce(Box<dyn DatabaseError>) -> Error,
+    ) -> Result<T, Error> {
+        self.map_err(|e| match e.into() {
+            Error::Sqlx(sqlx::Error::Database(dbe)) =>{
+                map_err(dbe)
+            },
+            e => e,
+        })
+    }
     fn on_constraint(
         self,
         name: &str,
