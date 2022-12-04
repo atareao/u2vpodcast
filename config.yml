@@ -1,0 +1,12 @@
+log_level: info
+db_url: sqlite:ytpodcast.db
+port: 8080
+sleep_time: 1
+username: username
+password: password
+title: title
+description: description
+url: https://servidor
+cookies: cookies.txt
+folder: /tmp
+hmac_key: mak
