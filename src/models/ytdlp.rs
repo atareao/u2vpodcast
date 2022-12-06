@@ -23,8 +23,8 @@ impl Ytdlp {
             cookies: cookies.to_string(),
         }
     }
-    pub async fn get_latest(&self, channel: &str, days: i32) -> Result<Vec<YtVideo>, anyhow::Error>{
-        let url = format!("https://www.youtube.com/c/{}", channel);
+    pub async fn get_latest(&self, channel: &str, days: i64) -> Result<Vec<YtVideo>, anyhow::Error>{
+        let url = format!("https://www.youtube.com/channel/{}", channel);
         let elapsed = format!("today-{}days", days);
         let mut args = vec!["--dateafter", &elapsed, "--dump-json",
             "--break-on-reject"];
@@ -33,7 +33,7 @@ impl Ytdlp {
             .args(&args)
             .output()
             .await
-            .map_err(|e| anyhow::anyhow!("Error"))
+            .map_err(|e| anyhow::anyhow!("Error: {}", e))
             .unwrap()
             .stdout;
         let mut result = std::str::from_utf8(&stdout)
@@ -43,6 +43,7 @@ impl Ytdlp {
             .join(",");
         result.pop();
         let content = format!("[{}]", result);
+        tracing::info!("{}", &content);
         let ytvideos: Vec<YtVideo> = serde_json::from_str(&content).unwrap();
         Ok(ytvideos)
     }
