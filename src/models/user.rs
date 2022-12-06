@@ -20,8 +20,8 @@ impl User{
     fn from_row(row: SqliteRow) -> User{
         User {
             id: row.get("id"),
-            username: row.get("yt_id"),
-            hashed_password: row.get("path"),
+            username: row.get("username"),
+            hashed_password: row.get("hashed_password"),
         }
     }
     pub async fn create(pool: &SqlitePool, username: &str, hashed_password: &str,
@@ -37,7 +37,7 @@ impl User{
     }
 
     pub async fn read(pool: &SqlitePool, id: i64) -> Result<User, sqlx::Error>{
-        let sql = "SELECT * FROM channels WHERE id = $1";
+        let sql = "SELECT * FROM users WHERE id = $1";
         query(sql)
             .bind(id)
             .map(Self::from_row)
@@ -46,7 +46,7 @@ impl User{
     }
 
     pub async fn search_by_username(pool: &SqlitePool, username: &str) -> Result<User, sqlx::Error>{
-        let sql = "SELECT * FROM channels WHERE username = $1";
+        let sql = "SELECT * FROM users WHERE username = $1";
         query(sql)
             .bind(username)
             .map(Self::from_row)

@@ -45,7 +45,7 @@ impl Episode{
     ) -> Result<Episode, sqlx::Error>{
         let sql = "INSERT INTO episodes (channel_id, title, description, yt_id,
                    published_at, image, listen)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;";
+                   VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;";
         query(sql)
             .bind(channel_id)
             .bind(title)
