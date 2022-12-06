@@ -1,7 +1,5 @@
 use serde::{Serialize, Deserialize};
 use sqlx::{sqlite::{SqlitePool, SqliteRow}, query, Row};
-use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHash};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
@@ -26,9 +24,8 @@ impl User{
             hashed_password: row.get("path"),
         }
     }
-    pub async fn create(pool: &SqlitePool, username: &str, password: &str,
+    pub async fn create(pool: &SqlitePool, username: &str, hashed_password: &str,
             ) -> Result<User, sqlx::Error>{
-        let hashed_password = hash_password(password.to_string()).await.unwrap();
         let sql = "INSERT INTO users (username, hashed_password)
                    VALUES ($1, $2) RETURNING * ;";
         query(sql)
@@ -47,47 +44,38 @@ impl User{
             .fetch_one(pool)
             .await
     }
-}
 
-#[derive(thiserror::Error, Debug)]
-pub enum HashError {
-    /// Return `401 Unauthorized`
-    #[error("authentication required")]
-    Unauthorized,
-    #[error("failed to generate password hash")]
-    Failed,
-    #[error("invalid password hash")]
-    Invalid,
-    #[error("invalid password hash")]
-    InvalidPassword,
-}
+    pub async fn search_by_username(pool: &SqlitePool, username: &str) -> Result<User, sqlx::Error>{
+        let sql = "SELECT * FROM channels WHERE username = $1";
+        query(sql)
+            .bind(username)
+            .map(Self::from_row)
+            .fetch_one(pool)
+            .await
+    }
 
-async fn hash_password(password: String) -> Result<String, HashError> {
-    // Argon2 hashing is designed to be computationally intensive,
-    // so we need to do this on a blocking thread.
-    tokio::task::spawn_blocking(move || -> Result<String, HashError> {
-        let salt = SaltString::generate(rand::thread_rng());
-        Ok(
-            PasswordHash::generate(Argon2::default(), password, salt.as_str())
-                .map_err(|e| HashError::Failed).unwrap()
-                .to_string(),
-        )
-    })
-    .await
-    .map_err(|e| HashError::Failed)?
-}
+    pub async fn update(pool: &SqlitePool, user: User) -> Result<User, sqlx::Error>{
+        let sql = "UPDATE users 
+                    SET username = COALESCE($1, users.username),
+                       hashed_password = COALESCE($2, users.hashed_password)
+                    WHERE id = $3
+                    RETURNING *;";
+        query(sql)
+            .bind(user.username)
+            .bind(user.hashed_password)
+            .bind(user.id)
+            .map(Self::from_row)
+            .fetch_one(pool)
+            .await
+    }
 
-async fn verify_password(password: String, password_hash: String) -> Result<(), HashError> {
-    tokio::task::spawn_blocking(move || -> Result<(), HashError> {
-        let hash = PasswordHash::new(&password_hash)
-            .map_err(|e| HashError::Invalid)?;
-
-        hash.verify_password(&[&Argon2::default()], password)
-            .map_err(|e| match e {
-                argon2::password_hash::Error::Password => HashError::Unauthorized,
-                _ => HashError::InvalidPassword,
-            })
-    })
-    .await
-    .map_err(|e| HashError::Failed)?
+    pub async fn delete(pool: &SqlitePool, id: i64) -> Result<User, sqlx::Error>{
+        let sql = "DELETE from users WHERE id = $1
+                   RETURNING *;";
+        query(sql)
+            .bind(id)
+            .map(Self::from_row)
+            .fetch_one(pool)
+            .await
+    }
 }
