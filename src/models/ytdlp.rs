@@ -1,6 +1,5 @@
 use tokio::process::Command;
 use serde::{Serialize, Deserialize};
-use chrono::{DateTime, Utc};
 
 pub struct Ytdlp{
     path: String,
@@ -23,8 +22,7 @@ impl Ytdlp {
             cookies: cookies.to_string(),
         }
     }
-    pub async fn get_latest(&self, channel: &str, days: i64) -> Result<Vec<YtVideo>, anyhow::Error>{
-        let url = format!("https://www.youtube.com/channel/{}", channel);
+    pub async fn get_latest(&self, url: &str, days: i64) -> Result<Vec<YtVideo>, anyhow::Error>{
         let elapsed = format!("today-{}days", days);
         let mut args = vec!["--dateafter", &elapsed, "--dump-json",
             "--break-on-reject"];

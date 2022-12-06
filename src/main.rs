@@ -8,7 +8,7 @@ use std::time;
 use std::{env, path::Path};
 use sqlx::{sqlite::SqlitePoolOptions, migrate::{Migrator, MigrateDatabase}};
 use tokio;
-use chrono::{DateTime, Utc, Datelike};
+use chrono::{DateTime, Utc, naive::{NaiveDate, NaiveDateTime}};
 use std::process;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::config::Configuration;
@@ -89,7 +89,7 @@ async fn do_the_work(pool: &SqlitePool, ytdlp_path: &str, folder: &str, cookies:
         tracing::info!("Getting new videos for channel: {}", a_channel);
         let days = (now.timestamp() - a_channel.last.timestamp())/86400;
         tracing::info!("Number of days: {}", days);
-        match ytdlp.get_latest(&a_channel.yt_id, days).await{
+        match ytdlp.get_latest(&a_channel.url, days).await{
             Ok(ytvideos) => {
                 tracing::info!("Getting {} videos", ytvideos.len());
                 for ytvideo in ytvideos{
@@ -101,12 +101,12 @@ async fn do_the_work(pool: &SqlitePool, ytdlp_path: &str, folder: &str, cookies:
                         let title = &ytvideo.title;
                         let description = &ytvideo.description;
                         let yt_id = &ytvideo.id;
-                        let link = "";
-                        let published_at = DateTime::from_str(&ytvideo.upload_date).unwrap();
+                        tracing::info!("{}", &ytvideo.upload_date);
+                        let published_at = parse_date(&ytvideo.upload_date);
                         let image = &ytvideo.thumbnail;
                         let listen = false;
                         match Episode::create(pool, channel_id, title,
-                                description, yt_id, link, &published_at, image,
+                                description, yt_id, &published_at, image,
                                 listen).await{
                             Ok(episode) => {
                                 let mut n_channel = a_channel.clone();
@@ -136,4 +136,13 @@ async fn do_the_work(pool: &SqlitePool, ytdlp_path: &str, folder: &str, cookies:
             Err(e) => tracing::error!("{}", e),
         }
     }
+}
+
+fn parse_date(date: &str) -> DateTime<Utc>{
+    let format = "%Y%m%d";
+    let naive_date = NaiveDate::parse_from_str(date, format).unwrap();
+    // Add some default time to convert it into a NaiveDateTime
+    let naive_datetime: NaiveDateTime = naive_date.and_hms(0,0,0);
+    // Add a timezone to the object to convert it into a DateTime<UTC>
+    DateTime::<Utc>::from_utc(naive_datetime, Utc)
 }

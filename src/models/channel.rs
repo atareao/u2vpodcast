@@ -6,7 +6,7 @@ use std::fmt;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
     pub id: i64,
-    pub yt_id: String,
+    pub url: String,
     pub path: String,
     pub title: String,
     pub description: String,
@@ -15,13 +15,13 @@ pub struct Channel {
 
 impl fmt::Display for Channel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({}, {})", self.id, self.yt_id)
+        write!(f, "({}, {})", self.id, self.url)
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NewChannel {
-    pub yt_id: String,
+    pub url: String,
     pub path: String,
     pub title: String,
     pub description: String,
@@ -33,19 +33,19 @@ impl Channel{
     fn from_row(row: SqliteRow) -> Channel{
         Channel {
             id: row.get("id"),
-            yt_id: row.get("yt_id"),
+            url: row.get("url"),
             path: row.get("path"),
             title: row.get("title"),
             description: row.get("description"),
             last: row.get("last"),
         }
     }
-    pub async fn create(pool: &SqlitePool, yt_id: &str, path: &str,
+    pub async fn create(pool: &SqlitePool, url: &str, path: &str,
             title: &str, description: &str, last: &DateTime<Utc>) -> Result<Channel, sqlx::Error>{
-        let sql = "INSERT INTO channels (yt_id, path, title, description, last)
+        let sql = "INSERT INTO channels (url, path, title, description, last)
                    VALUES ($1, $2, $3, $4, $5) RETURNING * ;";
         query(sql)
-            .bind(yt_id)
+            .bind(url)
             .bind(path)
             .bind(title)
             .bind(description)
@@ -85,7 +85,7 @@ impl Channel{
         ->Result<Channel, sqlx::Error>{
         let sql = "UPDATE channels
             SET
-                yt_id = COALESCE($2, yt_id),
+                url = COALESCE($2, url),
                 path = COALESCE($3, path),
                 title = COALESCE($4, title),
                 description = COALESCE($5, description),
@@ -93,7 +93,7 @@ impl Channel{
             WHERE id = $1 RETURNING *;";
         query(sql)
             .bind(channel.id)
-            .bind(channel.yt_id)
+            .bind(channel.url)
             .bind(channel.path)
             .bind(channel.title)
             .bind(channel.description)
