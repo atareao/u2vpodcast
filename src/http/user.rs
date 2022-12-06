@@ -7,15 +7,17 @@ use axum::{Json, Router};
 
 use crate::http::error;
 use crate::http::extractor::AuthUser;
+use crate::models::user::User;
 
-use super::ResultExt;
 
 pub fn router() -> Router {
     // By having each module responsible for setting up its own routing,
     // it makes the root module a lot cleaner.
     Router::new()
         .route("/api/v1/users",
-            post(create_user))
+            post(create_user)
+            //.put(update_user)
+            )
         .route("/api/v1/users/login", post(login_user))
 }
 
@@ -26,7 +28,7 @@ struct LoginUpdateNewUser {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
-struct User {
+struct TokenUser {
     token: String,
     username: String,
 }
@@ -35,50 +37,31 @@ struct User {
 async fn create_user(
     ctx: Extension<ApiContext>,
     Json(req): Json<LoginUpdateNewUser>,
-) -> Result<Json<User>, error::Error> {
-    let password_hash = hash_password(req.password).await?;
+) -> Result<Json<TokenUser>, error::Error> {
+    let username = req.username;
+    let hashed_password = hash_password(req.password).await?;
 
-    // I personally prefer using queries inline in request handlers as it's easier to understand the
-    // query's semantics in the wider context of where it's invoked.
-    //
-    // Sometimes queries just get too darn big, though. In that case it may be a good idea
-    // to move the query to a separate module.
-    let id = sqlx::query_scalar!(
-        // language=PostgreSQL
-        r#"INSERT INTO users (username, hashed_password) VALUES ($1, $2)
-            RETURNING id"#,
-        req.username,
-        password_hash
-    )
-    .fetch_one(&ctx.pool)
-    .await
-    .on_constraint("user_username_key", |_| {
-        error::Error::unprocessable_entity([("username", "username taken")])
-    })
-    .unwrap();
+    let user = User::create(&ctx.pool, &username, &hashed_password)
+        .await
+        .unwrap();
 
-    Ok(Json(User {
-        token: AuthUser { id }.to_jwt(&ctx),
-        username: req.username,
+    Ok(Json(TokenUser {
+        token: AuthUser { id: user.id }.to_jwt(&ctx),
+        username: user.username,
     }))
 }
 
-// https://realworld-docs.netlify.app/docs/specs/backend-specs/endpoints#authentication
 async fn login_user(
     ctx: Extension<ApiContext>,
     Json(req): Json<LoginUpdateNewUser>,
-) -> Result<Json<User>, error::Error> {
-    let user = sqlx::query!(
-        r#"SELECT id, username, hashed_password FROM users WHERE username = $1"#,
-        req.username,
-    )
-    .fetch_optional(&ctx.pool)
-    .await?
-    .ok_or(error::Error::unprocessable_entity([("email", "does not exist")]))?;
+) -> Result<Json<TokenUser>, error::Error> {
+    let user = User::search_by_username(&ctx.pool, &req.username)
+        .await
+        .unwrap();
 
-    //verify_password(req.user.password, user.password_hash).await?;
+    verify_password(req.password, user.hashed_password).await?;
 
-    Ok(Json(User {
+    Ok(Json(TokenUser {
             token: AuthUser {
                 id: user.id,
             }
@@ -87,24 +70,15 @@ async fn login_user(
     }))
 }
 
-// https://realworld-docs.netlify.app/docs/specs/backend-specs/endpoints#get-current-user
 async fn get_current_user(
     auth_user: AuthUser,
     ctx: Extension<ApiContext>,
-) -> Result<Json<User>, error::Error> {
-    let user = sqlx::query!(
-        r#"SELECT username FROM users WHERE id = $1"#,
-        auth_user.id
-    )
-    .fetch_one(&ctx.pool)
-    .await?;
+) -> Result<Json<TokenUser>, error::Error> {
+    let user = User::read(&ctx.pool, auth_user.id)
+        .await
+        .unwrap();
 
-    Ok(Json(User {
-            // The spec doesn't state whether we're supposed to return the same token we were passed,
-            // or generate a new one. Generating a new one is easier the way the code is structured.
-            //
-            // This has the side-effect of automatically refreshing the session if the frontend
-            // updates its token based on this response.
+    Ok(Json(TokenUser {
             token: auth_user.to_jwt(&ctx),
             username: user.username,
     }))
@@ -117,41 +91,22 @@ async fn update_user(
     auth_user: AuthUser,
     ctx: Extension<ApiContext>,
     Json(req): Json<LoginUpdateNewUser>,
-) -> Result<Json<User>, error::Error> {
-    //if req.username == auth_user.id  {
-    //    // If there's no fields to update, these two routes are effectively identical.
-    //    return get_current_user(auth_user, ctx).await;
-    //}
-
-    let hashed_password = if let password = req.password {
-        Some(hash_password(password).await?)
-    } else {
-        None
-    };
-
-    let user = sqlx::query!(
-        // This is how we do optional updates of fields without needing a separate query for each.
-        // language=PostgreSQL
-        r#"
-            UPDATE users
-            SET username = COALESCE($1, users.username),
-                hashed_password = COALESCE($2, users.hashed_password)
-            WHERE id = $3
-            RETURNING username
-        "#,
-        req.username,
-        hashed_password,
-        auth_user.id
-    )
-    .fetch_one(&ctx.pool)
-    .await
-    .on_constraint("user_username_key", |_| {
-        error::Error::unprocessable_entity([("username", "username taken")])
-    })?;
-
-    Ok(Json(User {
+) -> Result<Json<TokenUser>, error::Error> {
+    let username = req.username;
+    let hashed_password = hash_password(req.password)
+        .await
+        .unwrap();
+    let mut user = User::read(&ctx.pool, auth_user.id)
+        .await
+        .unwrap();
+    if username != user.username || hashed_password != user.hashed_password{
+        user.username = username;
+        user.hashed_password = hashed_password;
+        user = User::update(&ctx.pool, user).await.unwrap();
+    }
+    Ok(Json(TokenUser {
         token: auth_user.to_jwt(&ctx),
-        username: user.username.unwrap(),
+        username: user.username,
     }))
 }
 
