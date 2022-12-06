@@ -29,8 +29,8 @@ async fn create(
     extract::Json(episode): extract::Json<NewEpisode>,
 ) -> impl IntoResponse{
     Episode::create(&ctx.pool, episode.channel_id, &episode.title,
-            &episode.description, &episode.yt_id, &episode.link, 
-            &episode.published_at, &episode.image, episode.listen)
+            &episode.description, &episode.yt_id, &episode.published_at,
+            &episode.image, episode.listen)
         .await
         .map_err(|error| Error::Sqlx(error))
         .map(|episode| Json(episode))
