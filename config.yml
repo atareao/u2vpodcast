@@ -10,3 +10,4 @@ url: https://servidor
 cookies: cookies.txt
 folder: /tmp
 hmac_key: mak
+ytdlp_path: /usr/bin/yt-dlp

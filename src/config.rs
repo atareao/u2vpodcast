@@ -15,6 +15,7 @@ pub struct Configuration{
     cookies: String,
     folder: String,
     hmac_key: String,
+    ytdlp_path:String,
 }
 
 impl Configuration {
@@ -56,5 +57,8 @@ impl Configuration {
     }
     pub fn get_hmac_key(&self) -> &str{
         &self.hmac_key
+    }
+    pub fn get_ytdlp_path(&self) -> &str{
+        &self.ytdlp_path
     }
 }
