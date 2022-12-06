@@ -86,6 +86,8 @@ async fn do_the_work(pool: &SqlitePool, ytdlp_path: &str, folder: &str, cookies:
     let channels = Channel::read_all(pool).await.unwrap();
     let now = Utc::now();
     for a_channel in channels{
+        tokio::fs::create_dir_all(format!("{}/{}", folder, &a_channel.path))
+            .await;
         tracing::info!("Getting new videos for channel: {}", a_channel);
         let days = (now.timestamp() - a_channel.last.timestamp())/86400;
         tracing::info!("Number of days: {}", days);
@@ -94,7 +96,7 @@ async fn do_the_work(pool: &SqlitePool, ytdlp_path: &str, folder: &str, cookies:
                 tracing::info!("Getting {} videos", ytvideos.len());
                 for ytvideo in ytvideos{
                     tracing::info!("Downloading video: {:?}", ytvideo);
-                    let filename = format!("{}/{}.mp3", folder, &ytvideo.id);
+                    let filename = format!("{}/{}/{}.mp3", folder, &a_channel.path, &ytvideo.id);
                     let salida = ytdlp.download(&ytvideo.id, &filename).await;
                     if salida.success() {
                         let channel_id = a_channel.id;
