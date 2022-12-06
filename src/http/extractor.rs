@@ -3,6 +3,8 @@ use axum::{
     async_trait,
     extract::FromRequest,
     body::Bytes,
+    response::Response,
+    middleware::Next,
     http::{
         header::{
             HeaderValue,
@@ -11,14 +13,13 @@ use axum::{
         StatusCode,
         Request,
     },
-    middleware::Next,
-    response::{IntoResponse, Response},
     Extension,
 };
 use tower::{Service, Layer};
 use std::task::{Context, Poll};
 
 use crate::http::ApiContext;
+use crate::models::user::User;
 use hmac::{Hmac, digest::KeyInit};
 use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha384;
@@ -209,9 +210,10 @@ where
         ))
     }
 }
+/*
 
 #[derive(Clone)]
-struct AuthLayer{
+pub struct AuthLayer{
     config: Configuration,
 }
 
@@ -231,7 +233,6 @@ impl<S> Layer<S> for AuthLayer{
         }
     }
 }
-/*
 async fn auth<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, StatusCode> {
     let auth_header = req.headers()
         .get(AUTHORIZATION)
@@ -251,6 +252,9 @@ async fn auth<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, StatusC
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
+}
+
+async fn authorize_current_user(auth_header: HeaderValue) -> Option<User>{
 }
 
 impl<S, B> Service<Request<B>> for AuthService<S>

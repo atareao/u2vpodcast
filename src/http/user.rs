@@ -16,6 +16,7 @@ pub fn router() -> Router {
     Router::new()
         .route("/api/v1/users",
             post(create_user)
+            //.get(get_current_user)
             //.put(update_user)
             )
         .route("/api/v1/users/login", post(login_user))
