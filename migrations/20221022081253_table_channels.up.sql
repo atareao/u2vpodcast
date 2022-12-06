@@ -10,6 +10,6 @@ CREATE TABLE IF NOT EXISTS channels(
     path TEXT NOT NULL UNIQUE,
     title TEXT NOT NULL,
     description TEXT NOT NULL,
-    yt_id TEXT NOT NULL UNIQUE,
+    url TEXT NOT NULL UNIQUE,
     last DATETIME NOT NULL
 );
