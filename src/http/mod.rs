@@ -65,7 +65,7 @@ pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()
                 pool,
             }))
             // Enables logging. Use `RUST_LOG=tower_http=debug`
-            .layer(TraceLayer::new_for_http()),
+            .layer(TraceLayer::new_for_http())
     );
 
     // We use 8080 as our default HTTP server port, it's pretty easy to remember.

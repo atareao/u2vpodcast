@@ -8,7 +8,7 @@ use axum::{
 };
 
 use crate::http::ApiContext;
-use super::error::{ResultExt, Error};
+use super::{error::Error, extractor::AuthUser};
 use crate::models::channel::{Channel, NewChannel};
 
 pub fn router() -> Router {
@@ -25,10 +25,11 @@ pub fn router() -> Router {
 }
 
 async fn create(
+    auth_user: AuthUser,
     ctx: Extension<ApiContext>,
     extract::Json(req): extract::Json<NewChannel>,
 ) -> impl IntoResponse{
-    Channel::create( &ctx.pool, &req.yt_id, &req.path, &req.title,
+    Channel::create( &ctx.pool, &req.url, &req.path, &req.title,
             &req.description, &req.last)
         .await
         .map_err(|error| Error::Sqlx(error))
@@ -47,6 +48,7 @@ async fn read(
 }
 
 async fn read_all(
+    auth_user: AuthUser,
     ctx: Extension<ApiContext>,
 ) -> impl IntoResponse{
     Channel::read_all(&ctx.pool)

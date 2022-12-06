@@ -1,25 +1,20 @@
 use crate::{http::error::Error, config::Configuration};
 use axum::{
     async_trait,
-    extract::FromRequest,
+    extract::{FromRequest, FromRequestParts},
     body::Bytes,
-    response::Response,
-    middleware::Next,
     http::{
         header::{
             HeaderValue,
             AUTHORIZATION,
         },
-        StatusCode,
         Request,
+        request::Parts,
     },
-    Extension,
+    Extension, RequestPartsExt,
 };
-use tower::{Service, Layer};
-use std::task::{Context, Poll};
 
 use crate::http::ApiContext;
-use crate::models::user::User;
 use hmac::{Hmac, digest::KeyInit};
 use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha384;
@@ -162,22 +157,17 @@ impl MaybeAuthUser {
 // out of it that you couldn't write your own middleware for, except with a bunch of extra
 // boilerplate.
 #[async_trait]
-impl<S, B> FromRequest<S, B> for AuthUser
+impl<S> FromRequestParts<S> for AuthUser
 where
-    Bytes: FromRequest<S, B>,
-    B: Send + 'static,
     S: Send + Sync,
 {
     type Rejection = Error;
 
-    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {
-        let headers = req.headers().clone();
-        let ctx: Extension<ApiContext> = Extension::from_request(req, state)
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let Extension(ctx)= parts.extract::<Extension<ApiContext>>()
             .await
-            .expect("BUG: ApiContext was not added as an extension");
-
-        // Get the value of the `Authorization` header, if it was sent at all.
-        let auth_header = headers
+            .unwrap();
+        let auth_header = parts.headers
             .get(AUTHORIZATION)
             .ok_or(Error::Unauthorized)?;
 
@@ -210,81 +200,3 @@ where
         ))
     }
 }
-/*
-
-#[derive(Clone)]
-pub struct AuthLayer{
-    config: Configuration,
-}
-
-#[derive(Clone)]
-struct AuthService<S>{
-    inner: S,
-    config: Configuration,
-}
-
-impl<S> Layer<S> for AuthLayer{
-    type Service = AuthService<S>;
-
-    fn layer(&self, inner: S) -> Self::Service{
-        AuthService { 
-            inner,
-            config: self.config.clone(),
-        }
-    }
-}
-async fn auth<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, StatusCode> {
-    let auth_header = req.headers()
-        .get(AUTHORIZATION)
-        .and_then(|header| header.to_str().ok());
-
-    let auth_header = if let Some(auth_header) = auth_header {
-        auth_header
-    } else {
-        return Err(StatusCode::UNAUTHORIZED);
-    };
-
-    if let Some(current_user) = authorize_current_user(auth_header).await {
-        // insert the current user into a request extension so the handler can
-        // extract it
-        req.extensions_mut().insert(current_user);
-        Ok(next.run(req).await)
-    } else {
-        Err(StatusCode::UNAUTHORIZED)
-    }
-}
-
-async fn authorize_current_user(auth_header: HeaderValue) -> Option<User>{
-}
-
-impl<S, B> Service<Request<B>> for AuthService<S>
-where
-    S: Service<Request<B>>,
-{
-    type Response = S::Response;
-    type Error = S::Error;
-    type Future = S::Future;
-
-    fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
-        self.inner.poll_ready(cx)
-    }
-
-    fn call(&mut self, req: Request<B>) -> Self::Future {
-        // Do something with `self.state`.
-        //
-        // See `axum::RequestExt` for how to run extractors directly from
-        // a `Request`.
-        let auth_header = req.headers()
-            .get(AUTHORIZATION)
-            .and_then(|header| header.to_str().ok());
-
-        let auth_header = if let Some(auth_header) = auth_header {
-            auth_header
-        } else {
-            return Err(StatusCode::UNAUTHORIZED);
-        };
-
-        self.inner.call(req)
-    }
-}
-*/
