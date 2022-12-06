@@ -9,11 +9,11 @@ pub struct Ytdlp{
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct YtVideo{
-    id: String,
-    title: String,
-    description: String,
-    thumbnail: String,
-    upload_date: String,
+    pub id: String,
+    pub title: String,
+    pub description: String,
+    pub thumbnail: String,
+    pub upload_date: String,
 }
 
 impl Ytdlp {

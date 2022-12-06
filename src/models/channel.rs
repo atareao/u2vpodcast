@@ -3,7 +3,7 @@ use sqlx::{sqlite::{SqlitePool, SqliteRow}, query, Row};
 use chrono::{DateTime, Utc};
 use std::fmt;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
     pub id: i64,
     pub yt_id: String,
