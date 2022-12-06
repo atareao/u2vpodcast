@@ -2,6 +2,7 @@ use crate::http::ApiContext;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash};
 use axum::extract::Extension;
+use axum::response::IntoResponse;
 use axum::routing::post;
 use axum::{Json, Router};
 
@@ -16,8 +17,8 @@ pub fn router() -> Router {
     Router::new()
         .route("/api/v1/users",
             post(create_user)
-            //.get(get_current_user)
-            //.put(update_user)
+            .get(get_current_user)
+            .put(update_user)
             )
         .route("/api/v1/users/login", post(login_user))
 }
@@ -38,18 +39,19 @@ struct TokenUser {
 async fn create_user(
     ctx: Extension<ApiContext>,
     Json(req): Json<LoginUpdateNewUser>,
-) -> Result<Json<TokenUser>, error::Error> {
+) -> impl IntoResponse{
     let username = req.username;
-    let hashed_password = hash_password(req.password).await?;
-
-    let user = User::create(&ctx.pool, &username, &hashed_password)
+    let hashed_password = hash_password(req.password)
         .await
         .unwrap();
 
-    Ok(Json(TokenUser {
-        token: AuthUser { id: user.id }.to_jwt(&ctx),
-        username: user.username,
-    }))
+    User::create(&ctx.pool, &username, &hashed_password)
+        .await
+        .map_err(|error| error::Error::Sqlx(error))
+        .map(|user| Json(TokenUser {
+                token: AuthUser { id: user.id }.to_jwt(&ctx),
+                username: user.username,
+        }))
 }
 
 async fn login_user(
