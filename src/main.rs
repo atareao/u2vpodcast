@@ -1,3 +1,6 @@
+use http::episode;
+use models::episode::Episode;
+use models::ytdlp::Ytdlp;
 use sqlx::SqlitePool;
 use tracing_subscriber::EnvFilter;
 use std::str::FromStr;
@@ -5,9 +8,11 @@ use std::time;
 use std::{env, path::Path};
 use sqlx::{sqlite::SqlitePoolOptions, migrate::{Migrator, MigrateDatabase}};
 use tokio;
+use chrono::{DateTime, Utc, Datelike};
 use std::process;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::config::Configuration;
+use crate::models::channel::Channel;
 
 mod models;
 mod http;
@@ -61,48 +66,73 @@ async fn main(){
         .unwrap();
 
 
-    let configuration2 = configuration.clone();
+    let sleep_time: u64 = configuration.get_sleep_time().into();
+    let folder = configuration.get_folder().to_string();
+    let cookies = configuration.get_cookies().to_string();
     let pool2 = pool.clone();
     tokio::spawn(async move {
         loop {
-            let key = "";
-            let folder = configuration2.get_folder();
-            let sleep_time: u64 = configuration2.get_sleep_time().into();
-            do_the_work(&pool2, &key, &folder).await;
+            do_the_work(&pool2, &folder, &cookies).await;
             tokio::time::sleep(time::Duration::from_secs(sleep_time)).await;
         }
     });
     http::serve(configuration, pool).await.unwrap();
-    /*
-
-    HttpServer::new(move || {
-        App::new()
-            .wrap(Logger::default())
-            .app_data(Data::new(pool.clone()))
-            .app_data(Data::new(dav_server.clone()))
-            .service(routes::main::root)
-            .service(routes::main::rss)
-            .service(routes::channels::read)
-            .service(routes::channels::read_all)
-            .service(routes::channels::create)
-            .service(routes::channels::update)
-            .service(routes::channels::delete)
-            .service(routes::episodes::read)
-            .service(routes::episodes::read_all)
-            .service(routes::episodes::create)
-            .service(routes::episodes::update)
-            .service(routes::episodes::delete)
-    })
-    .workers(2)
-    .bind(format!("0.0.0.0:{}", &port))
-    .unwrap()
-    .run()
-    .await
-    */
 }
 
 
-async fn do_the_work(pool: &SqlitePool, key: &str, folder: &str){
+async fn do_the_work(pool: &SqlitePool, folder: &str, cookies: &str){
+    let ytdlp = Ytdlp::new(folder, cookies);
+    let channels = Channel::read_all(pool).await.unwrap();
+    let now = Utc::now();
+    for a_channel in channels{
+        let days: i32 = (now.day() - a_channel.last.day())
+            .try_into()
+            .unwrap();
+        match ytdlp.get_latest(&a_channel.yt_id, days).await{
+            Ok(ytvideos) => {
+                for ytvideo in ytvideos{
+                    let filename = format!("{}/{}.mp3", folder, &ytvideo.id);
+                    let salida = ytdlp.download(&ytvideo.id, &filename).await;
+                    if salida.success() {
+                        let channel_id = a_channel.id;
+                        let title = &ytvideo.title;
+                        let description = &ytvideo.description;
+                        let yt_id = &ytvideo.id;
+                        let link = "";
+                        let published_at = DateTime::from_str(&ytvideo.upload_date).unwrap();
+                        let image = &ytvideo.thumbnail;
+                        let listen = false;
+                        match Episode::create(pool, channel_id, title,
+                                description, yt_id, link, &published_at, image,
+                                listen).await{
+                            Ok(episode) => {
+                                let mut n_channel = a_channel.clone();
+                                n_channel.last = published_at;
+                                tracing::info!("saved {}", episode.yt_id);
+                                match Channel::update(pool, n_channel).await{
+                                    Ok(u_channel) => {
+                                        tracing::info!("update channel: {}", u_channel);
+                                    },
+                                    Err(e) => {
+                                        tracing::error!("{}", e);
+                                        break;
+                                    }
+                                }
+                            },
+                            Err(e) => {
+                                tracing::error!("{}", e);
+                                break;
+                            }
+                        }
+                    }else{
+                        tracing::error!("Cant download file {}", filename);
+                        break;
+                    }
+                }
+            },
+            Err(e) => tracing::error!("{}", e),
+        }
+            }
     /*
     let yt = YouTube::new(&key);
     let ytdlp = Ytdlp::new("yt-dlp", cookies);
