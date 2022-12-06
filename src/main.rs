@@ -69,10 +69,11 @@ async fn main(){
     let sleep_time: u64 = configuration.get_sleep_time().into();
     let folder = configuration.get_folder().to_string();
     let cookies = configuration.get_cookies().to_string();
+    let ytdlp_path = configuration.get_ytdlp_path().to_owned();
     let pool2 = pool.clone();
     tokio::spawn(async move {
         loop {
-            do_the_work(&pool2, &folder, &cookies).await;
+            do_the_work(&pool2, &ytdlp_path, &folder, &cookies).await;
             tokio::time::sleep(time::Duration::from_secs(sleep_time)).await;
         }
     });
@@ -80,17 +81,19 @@ async fn main(){
 }
 
 
-async fn do_the_work(pool: &SqlitePool, folder: &str, cookies: &str){
-    let ytdlp = Ytdlp::new(folder, cookies);
+async fn do_the_work(pool: &SqlitePool, ytdlp_path: &str, folder: &str, cookies: &str){
+    let ytdlp = Ytdlp::new(ytdlp_path, cookies);
     let channels = Channel::read_all(pool).await.unwrap();
     let now = Utc::now();
     for a_channel in channels{
-        let days: i32 = (now.day() - a_channel.last.day())
-            .try_into()
-            .unwrap();
+        tracing::info!("Getting new videos for channel: {}", a_channel);
+        let days = (now.timestamp() - a_channel.last.timestamp())/86400;
+        tracing::info!("Number of days: {}", days);
         match ytdlp.get_latest(&a_channel.yt_id, days).await{
             Ok(ytvideos) => {
+                tracing::info!("Getting {} videos", ytvideos.len());
                 for ytvideo in ytvideos{
+                    tracing::info!("Downloading video: {:?}", ytvideo);
                     let filename = format!("{}/{}.mp3", folder, &ytvideo.id);
                     let salida = ytdlp.download(&ytvideo.id, &filename).await;
                     if salida.success() {
@@ -132,33 +135,5 @@ async fn do_the_work(pool: &SqlitePool, folder: &str, cookies: &str){
             },
             Err(e) => tracing::error!("{}", e),
         }
-            }
-    /*
-    let yt = YouTube::new(&key);
-    let ytdlp = Ytdlp::new("yt-dlp", cookies);
-    let channels = Channel::read_all(&Data::new(pool.clone())).await.unwrap();
-    for mut channel in channels{
-        let after = Some(channel.last.to_rfc3339_opts(chrono::SecondsFormat::Secs, true));
-        let channel_id = channel.id;
-        let mut last = channel.last;
-        let videos = yt.get_videos(&channel.yt_id, after, None).await;
-        for video in &videos{
-            let filename = format!("{}/{}.mp3", folder, &video.yt_id);
-            let salida = ytdlp.download(&video.yt_id, &filename).await;
-            if salida.success() {
-                let new = NewEpisode::new(channel_id, &video);
-                let episode = Episode::create(&Data::new(pool.clone()), &new).await.unwrap();
-                if last < episode.published_at{
-                    last = episode.published_at;
-                }
-            }else{
-                break;
-            }
-        }
-        if last != channel.last{
-            channel.last = last;
-            Channel::update(&Data::new(pool.clone()), channel).await.unwrap();
-        }
     }
-    */
 }
