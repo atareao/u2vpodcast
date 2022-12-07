@@ -13,7 +13,7 @@ use super::{ApiContext, error};
 
 pub fn router() -> Router {
     Router::new()
-        .route("rss/:path",
+        .route("/rss/:path",
             get(feed)
         )
 }
