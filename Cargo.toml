@@ -44,6 +44,7 @@ hmac = "0.12"
 jwt = "0.16"
 sha2 = "0.10"
 mime_guess = "2"
+include_dir = "0.7"
 
 # RSS
 rss = "2.0"
