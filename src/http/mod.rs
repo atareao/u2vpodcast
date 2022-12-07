@@ -13,6 +13,7 @@ pub mod channel;
 pub mod episode;
 pub mod error;
 pub mod rss;
+pub mod estatic;
 /// Contains definitions for application-specific parameters to handler functions,
 /// such as `AuthUser` which checks for the `Authorization: Token <token>` header in the request,
 /// verifies `<token>` as a JWT and checks the signature,
@@ -58,7 +59,7 @@ pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()
     // It does look nicer than the mess of `move || {}` closures you have to do with Actix-web,
     // which, I suspect, largely has to do with how it manages its own worker threads instead of
     // letting Tokio do it.
-    let app = api_router().layer(
+    let app = api_router(&config).layer(
         ServiceBuilder::new()
             .layer(Extension(ApiContext {
                 config: Arc::new(config.clone()),
@@ -80,9 +81,12 @@ pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()
     
 }
 
-fn api_router() -> Router {
+fn api_router(config: &Configuration) -> Router {
     // This is the order that the modules were authored in.
+    let share = config.get_folder();
     user::router()
         .merge(episode::router())
         .merge(channel::router())
+        .merge(rss::router())
+        .merge(estatic::router(share))
 }
