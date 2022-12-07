@@ -88,5 +88,5 @@ fn api_router(config: &Configuration) -> Router {
         .merge(episode::router())
         .merge(channel::router())
         .merge(rss::router())
-        .merge(estatic::router(share))
+        .merge(estatic::router())
 }
