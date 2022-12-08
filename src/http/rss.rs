@@ -13,7 +13,7 @@ use super::{ApiContext, error};
 
 pub fn router() -> Router {
     Router::new()
-        .route("/rss/:path",
+        .route("/rss/:path/feed.xml",
             get(feed)
         )
 }
@@ -32,7 +32,7 @@ async fn feed(
         let episodes = Episode::read_all(&ctx.pool).await.unwrap();
         let mut items = Vec::new();
         for episode in episodes{
-            let enclosure = format!("{}/{}.mp3", ctx.config.get_url(), episode.yt_id);
+            let enclosure = format!("{}/media/{}/{}.mp3", ctx.config.get_url(), &path, episode.yt_id);
             let itunes = ITunesItemExtensionBuilder::default()
                 .image(Some(episode.image))
                 .build();
