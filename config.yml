@@ -6,7 +6,7 @@ username: username
 password: password
 title: title
 description: description
-url: https://servidor
+url: http://localhost:8080
 cookies: cookies.txt
 folder: /tmp
 hmac_key: mak
