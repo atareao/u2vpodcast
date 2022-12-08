@@ -50,3 +50,4 @@ include_dir = "0.7"
 rss = "2.0"
 
 # tera
+tera = "1"
