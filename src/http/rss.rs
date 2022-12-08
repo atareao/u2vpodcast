@@ -1,8 +1,9 @@
 use axum::{
+    http::{self, StatusCode},
     Router,
     Extension,
     extract::Path,
-    routing::get,
+    routing::get, response::{IntoResponse, Response},
 };
 use serde::Deserialize;
 use crate::models::{episode::Episode, channel::Channel};
@@ -27,8 +28,10 @@ pub struct RSS{
 async fn feed(
     ctx: Extension<ApiContext>,
     Path(path): Path<String>,
-) -> Result<String, error::Error>{
-        let channel = Channel::read_by_path(&ctx.pool, &path).await?;
+) -> impl IntoResponse{
+        let channel = Channel::read_by_path(&ctx.pool, &path)
+            .await
+            .unwrap();
         let episodes = Episode::read_all(&ctx.pool).await.unwrap();
         let mut items = Vec::new();
         for episode in episodes{
@@ -59,6 +62,11 @@ async fn feed(
             .link(&link)
             .items(items)
             .build();
-        Ok(channel_builder.to_string())
+        //Ok(channel_builder.to_string())
+        Response::builder()
+            .status(StatusCode::OK)
+            .header("Content-Type", "application/rss+xml")
+            .body(channel_builder.to_string())
+            .unwrap()
     }
 

@@ -19,6 +19,17 @@ use std::collections::HashMap;
 /// message in a plain text body, or a JSON body in the case of `UnprocessableEntity`.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+    #[error("read error")]
+    ReadError,
+    #[error("no name")]
+    NoName,
+    #[error("invalid value")]
+    InvalidValue,
+    #[error("missing details")]
+    MissingDetails,
+    #[error("passwords do not match")]
+    PasswordsDoNotMatch,
+
     /// Return `401 Unauthorized`
     #[error("authentication required")]
     Unauthorized,
@@ -106,8 +117,13 @@ impl Error {
     fn status_code(&self) -> StatusCode {
         match self {
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
+            Self::MissingDetails => StatusCode::UNAUTHORIZED,
             Self::Forbidden => StatusCode::FORBIDDEN,
             Self::NotFound => StatusCode::NOT_FOUND,
+            Self::ReadError => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::NoName => StatusCode::UNPROCESSABLE_ENTITY,
+            Self::InvalidValue => StatusCode::UNPROCESSABLE_ENTITY,
+            Self::PasswordsDoNotMatch => StatusCode::UNAUTHORIZED,
             Self::UnprocessableEntity { .. } => StatusCode::UNPROCESSABLE_ENTITY,
             Self::Sqlx(_) | Self::Anyhow(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
