@@ -48,3 +48,5 @@ include_dir = "0.7"
 
 # RSS
 rss = "2.0"
+
+# tera
