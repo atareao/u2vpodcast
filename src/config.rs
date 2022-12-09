@@ -6,7 +6,7 @@ pub struct Configuration{
     log_level: String,
     db_url: String,
     port: u16,
-    sleep_time: u16,
+    sleep_time: u32,
     username: String,
     password: String,
     title: String,
@@ -28,7 +28,7 @@ impl Configuration {
     pub fn get_db_url(&self) -> &str{
         &self.db_url
     }
-    pub fn get_sleep_time(&self) -> u16{
+    pub fn get_sleep_time(&self) -> u32{
         self.sleep_time
     }
     pub fn get_port(&self) -> u16{
