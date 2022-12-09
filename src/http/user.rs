@@ -33,6 +33,10 @@ pub fn router() -> Router {
             get(get_signup)
             .post(post_signup)
         )
+        .route("/signin",
+            get(get_signin)
+            .post(post_signin)
+        )
 }
 
 #[derive(serde::Deserialize, Default, PartialEq, Eq)]
@@ -142,17 +146,17 @@ async fn hash_password(password: String) -> Result<String, error::Error> {
 
 async fn verify_password(password: String, password_hash: String) -> Result<(), error::Error> {
     tokio::task::spawn_blocking(move || -> Result<(), error::Error> {
-        let hash = PasswordHash::new(&password_hash)
-            .map_err(|e| anyhow::anyhow!("invalid password hash: {}", e))?;
-
-        hash.verify_password(&[&Argon2::default()], password)
-            .map_err(|e| match e {
-                argon2::password_hash::Error::Password => error::Error::Unauthorized,
-                _ => anyhow::anyhow!("failed to verify password hash: {}", e).into(),
-            })
+        tracing::info!(password);
+        tracing::info!(password_hash);
+        match PasswordHash::new(&password_hash){
+            Ok(hash) => match hash.verify_password(&[&Argon2::default()], password){
+                Ok(_) => Ok(()),
+                Err(_) => Err(error::Error::InvalidValue), 
+            },
+            Err(e) => Err(error::Error::InvalidValue),
+        }
     })
-    .await
-    .unwrap()
+    .await.unwrap()
 }
 
 async fn get_signup(
@@ -163,6 +167,7 @@ async fn get_signup(
     context.insert("title", "Signup");
     Html(t.render("signup.html", &context).unwrap())
 }
+
 
 async fn post_signup(
     ctx: Extension<ApiContext>,
@@ -181,15 +186,59 @@ async fn post_signup(
         }else{
             match hash_password(password.to_string()).await{
                 Ok(hashed_password) =>{
-                    let user = User::create(&ctx.pool, username, &hashed_password).await.unwrap();
-                    let token = AuthUser {
-                        id: user.id,
+                    match User::create(&ctx.pool, username, &hashed_password).await{
+                        Ok(user) => {
+                            let token = AuthUser {
+                                id: user.id,
+                            }
+                            .to_jwt(&ctx);
+                            Ok(set_token(&token))
+                        },
+                        Err(e) => Err(error_page(&e)),
                     }
-                    .to_jwt(&ctx);
-                    Ok(set_token(&token))
                 },
                 Err(_) => Err(error_page(&error::Error::InvalidValue))
             }
+        }
+    } else {
+        Err(error_page(&error::Error::MissingDetails))
+    }
+}
+
+async fn get_signin(
+    ctx: Extension<ApiContext>,
+    t: Extension<Tera>
+) -> impl IntoResponse{
+    let mut context = Context::new();
+    context.insert("title", "Signin");
+    Html(t.render("signin.html", &context).unwrap())
+}
+
+async fn post_signin(
+    ctx: Extension<ApiContext>,
+    multipart: Multipart,
+) -> impl IntoResponse {
+    let data = parse_multipart(multipart)
+        .await
+        .map_err(|err| error_page(&err))?;
+    if let (Some(username), Some(password)) = (
+        data.get("username"),
+        data.get("password"),
+    ) {
+        match User::search_by_username(&ctx.pool, username).await{
+            Ok(user) => {
+                match verify_password(password.to_string(), user.hashed_password).await{
+                    Ok(_) => {
+                        let token = AuthUser {
+                            id: user.id,
+                        }
+                        .to_jwt(&ctx);
+                        Ok(set_token(&token))
+                    },
+                    Err(e) => Err(error_page(&e)),
+                }
+            },
+            Err(e) => Err(error_page(&e))
         }
     } else {
         Err(error_page(&error::Error::MissingDetails))
