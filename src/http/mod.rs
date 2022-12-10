@@ -1,9 +1,18 @@
 use std::{sync::Arc, net::{SocketAddr, Ipv4Addr}};
+use reqwest::header::HeaderName;
 use sqlx::SqlitePool;
-use axum::{Extension, Router};
+use axum::{
+    Extension,
+    Router,
+    response::Response,
+    middleware::{self, Next},
+    http::Request,
+    http::header::AUTHORIZATION,
+};
 use crate::config::Configuration;
 use tower_http::trace::TraceLayer;
 use tower::ServiceBuilder;
+use tower_cookies::CookieManagerLayer;
 use tera::Tera;
 
 pub mod user;
@@ -15,6 +24,7 @@ pub mod estatic;
 pub mod html;
 pub mod extractor;
 pub use error::{Error, ResultExt};
+
 
 #[derive(Clone)]
 struct ApiContext {
@@ -31,7 +41,7 @@ pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()
         },
     };
 
-    let app = api_router(&config).layer(
+    let app = api_router().layer(
         ServiceBuilder::new()
             .layer(Extension(ApiContext {
                 config: Arc::new(config.clone()),
@@ -40,6 +50,7 @@ pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()
             // Enables logging. Use `RUST_LOG=tower_http=debug`
             .layer(TraceLayer::new_for_http())
             .layer(Extension(tera))
+            .layer(CookieManagerLayer::new())
     );
 
     axum::Server::bind(
@@ -50,7 +61,7 @@ pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()
     
 }
 
-fn api_router(config: &Configuration) -> Router {
+fn api_router() -> Router {
     user::router()
         .merge(episode::router())
         .merge(channel::router())

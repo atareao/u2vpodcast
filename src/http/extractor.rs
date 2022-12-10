@@ -7,18 +7,22 @@ use axum::{
         header::{
             HeaderValue,
             AUTHORIZATION,
+            COOKIE,
         },
         Request,
         request::Parts,
+        StatusCode,
     },
     Extension, RequestPartsExt,
 };
+use tower_cookies::{Cookies, Cookie};
 
 use crate::http::ApiContext;
 use hmac::{Hmac, digest::KeyInit};
 use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha384;
 use time::{Duration, OffsetDateTime};
+use tower::{Layer, Service};
 
 type HmacSha384 = Hmac<Sha384>;
 
@@ -31,6 +35,7 @@ const SCHEME_PREFIX: &str = "Token ";
 /// Add this as a parameter to a handler function to require the user to be logged in.
 ///
 /// Parses a JWT from the `Authorization: Token <token>` header.
+#[derive(Debug, Clone)]
 pub struct AuthUser {
     pub id: i64,
 }
@@ -64,6 +69,35 @@ impl AuthUser {
         .expect("HMAC signing should be infallible")
     }
 
+    fn from_token(ctx: &ApiContext, token: &str) -> Result<Self, Error>{
+        let jwt =
+            jwt::Token::<jwt::Header, AuthUserClaims, _>::parse_unverified(token).map_err(|e| {
+                tracing::debug!(
+                    "failed to parse token {:?}: {}",
+                    token,
+                    e
+                );
+                Error::Unauthorized
+            })?;
+        let hmac = HmacSha384::new_from_slice(ctx.config.get_hmac_key().as_bytes())
+            .expect("HMAC-SHA-384 can accept any key length");
+        let jwt = jwt.verify_with_key(&hmac).map_err(|e| {
+            tracing::debug!("JWT failed to verify: {}", e);
+            Error::Unauthorized
+        })?;
+
+        let (_header, claims) = jwt.into();
+        if claims.exp < OffsetDateTime::now_utc().unix_timestamp() {
+            tracing::debug!("token expired");
+            return Err(Error::Unauthorized);
+        }
+
+        Ok(Self {
+            id: claims.id,
+        })
+
+    }
+
     /// Attempt to parse `Self` from an `Authorization` header.
     fn from_authorization(ctx: &ApiContext, auth_header: &HeaderValue) -> Result<Self, Error> {
         let auth_header = auth_header.to_str().map_err(|_| {
@@ -78,67 +112,8 @@ impl AuthUser {
             );
             return Err(Error::Unauthorized);
         }
-
         let token = &auth_header[SCHEME_PREFIX.len()..];
-
-        let jwt =
-            jwt::Token::<jwt::Header, AuthUserClaims, _>::parse_unverified(token).map_err(|e| {
-                tracing::debug!(
-                    "failed to parse Authorization header {:?}: {}",
-                    auth_header,
-                    e
-                );
-                Error::Unauthorized
-            })?;
-
-        // Realworld doesn't specify the signing algorithm for use with the JWT tokens
-        // so we picked SHA-384 (HS-384) as the HMAC, as it is more difficult to brute-force
-        // than SHA-256 (recommended by the JWT spec) at the cost of a slightly larger token.
-        let hmac = HmacSha384::new_from_slice(ctx.config.get_hmac_key().as_bytes())
-            .expect("HMAC-SHA-384 can accept any key length");
-
-        // When choosing a JWT implementation, be sure to check that it validates that the signing
-        // algorithm declared in the token matches the signing algorithm you're verifying with.
-        // The `jwt` crate does.
-        let jwt = jwt.verify_with_key(&hmac).map_err(|e| {
-            tracing::debug!("JWT failed to verify: {}", e);
-            Error::Unauthorized
-        })?;
-
-        let (_header, claims) = jwt.into();
-
-        // Because JWTs are stateless, we don't really have any mechanism here to invalidate them
-        // besides expiration. You probably want to add more checks, like ensuring the user ID
-        // exists and has not been deleted/banned/deactivated.
-        //
-        // You could also use the user's password hash as part of the keying material for the HMAC,
-        // so changing their password invalidates their existing sessions.
-        //
-        // In practice, Launchbadge has abandoned using JWTs for authenticating long-lived sessions,
-        // instead storing session data in Redis, which can be accessed quickly and so adds less
-        // overhead to every request compared to hitting Postgres, and allows tracking and
-        // invalidating individual sessions by simply deleting them from Redis.
-        //
-        // Technically, the Realworld spec isn't all that adamant about using JWTs and there
-        // may be some flexibility in using other kinds of tokens, depending on whether the frontend
-        // is expected to parse the token or just treat it as an opaque string.
-        //
-        // Also, if the consumer of your API is a browser, you probably want to put your session
-        // token in a cookie instead of the response body. By setting the `HttpOnly` flag, the cookie
-        // isn't exposed in the response to Javascript at all which, along with setting `Domain` and
-        // `SameSite`, prevents all kinds of session hijacking exploits.
-        //
-        // This also has the benefit of avoiding having to deal with securely storing the session
-        // token on the frontend.
-
-        if claims.exp < OffsetDateTime::now_utc().unix_timestamp() {
-            tracing::debug!("token expired");
-            return Err(Error::Unauthorized);
-        }
-
-        Ok(Self {
-            id: claims.id,
-        })
+        Self::from_token(ctx, token)
     }
 }
 
@@ -200,3 +175,32 @@ where
         ))
     }
 }
+
+#[derive(Debug)]
+pub struct ExtractAuthCookie(AuthUser);
+
+#[async_trait]
+impl<S> FromRequestParts<S> for ExtractAuthCookie
+where
+    S: Send + Sync,
+{
+    type Rejection = (StatusCode, &'static str);
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let Extension(ctx)= parts.extract::<Extension<ApiContext>>()
+            .await
+            .unwrap();
+        let cookies = Cookies::from_request_parts(parts, state).await?;
+        match cookies.get("ytpodcast"){
+            Some(cookie) => {
+                match AuthUser::from_token(&ctx, cookie.value()){
+                    Ok(auth_user) => Ok(ExtractAuthCookie(auth_user)),
+                    Err(_) => Err((StatusCode::NON_AUTHORITATIVE_INFORMATION, "Nada"))
+                }
+            },
+            None => Err((StatusCode::NON_AUTHORITATIVE_INFORMATION,
+                "`User-Agent` header is missing"))
+        }
+    }
+}
+

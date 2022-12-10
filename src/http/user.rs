@@ -1,4 +1,4 @@
-use crate::http::ApiContext;
+use crate::http::{ApiContext, channel};
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash};
 use axum::{
@@ -10,11 +10,12 @@ use axum::{
     http::StatusCode,
     body::Empty,
 };
+use tower_cookies::{Cookie, Cookies};
 
 use std::collections::HashMap;
 use crate::{
     http::{error, extractor::AuthUser},
-    models::user::User
+    models::user::User,
 };
 use tera::{Tera, Context};
 
@@ -33,9 +34,12 @@ pub fn router() -> Router {
             get(get_signup)
             .post(post_signup)
         )
-        .route("/signin",
-            get(get_signin)
-            .post(post_signin)
+        .route("/logout",
+            get(get_logout)
+        )
+        .route("/login",
+            get(get_login)
+            .post(post_login)
         )
 }
 
@@ -170,6 +174,7 @@ async fn get_signup(
 
 
 async fn post_signup(
+    cookies: Cookies,
     ctx: Extension<ApiContext>,
     multipart: Multipart,
 ) -> impl IntoResponse {
@@ -192,7 +197,7 @@ async fn post_signup(
                                 id: user.id,
                             }
                             .to_jwt(&ctx);
-                            Ok(set_token(&token))
+                            Ok(set_token(cookies, &token))
                         },
                         Err(e) => Err(error_page(&e)),
                     }
@@ -205,22 +210,24 @@ async fn post_signup(
     }
 }
 
-async fn get_signin(
+async fn get_login(
+    cookies: Cookies,
     ctx: Extension<ApiContext>,
     t: Extension<Tera>
 ) -> impl IntoResponse{
     let mut context = Context::new();
-    context.insert("title", "Signin");
-    Html(t.render("signin.html", &context).unwrap())
+    context.insert("title", "Login");
+    Html(t.render("login.html", &context).unwrap())
 }
 
-async fn post_signin(
+async fn post_login(
+    cookies: Cookies,
     ctx: Extension<ApiContext>,
     multipart: Multipart,
-) -> impl IntoResponse {
+) -> impl IntoResponse{
     let data = parse_multipart(multipart)
-        .await
-        .map_err(|err| error_page(&err))?;
+        .await.unwrap();
+    tracing::info!("{:?}", data);
     if let (Some(username), Some(password)) = (
         data.get("username"),
         data.get("password"),
@@ -233,7 +240,7 @@ async fn post_signin(
                             id: user.id,
                         }
                         .to_jwt(&ctx);
-                        Ok(set_token(&token))
+                        Ok(set_token(cookies, &token))
                     },
                     Err(e) => Err(error_page(&e)),
                 }
@@ -245,11 +252,26 @@ async fn post_signin(
     }
 }
 
-fn set_token(token: &str) -> impl IntoResponse{
+fn set_token(cookies: Cookies, token: &str) -> impl IntoResponse{
+    tracing::info!("post_login");
+    cookies.add(Cookie::new("ytpodcast", token.to_string()));
     Response::builder()
         .status(StatusCode::SEE_OTHER)
-        .header("Location", "/")
-        .header("Authorization", format!("token {}", token))
+        .header("Location", "/channels")
+        .body(Empty::new())
+        .unwrap()
+}
+
+async fn get_logout(
+    cookies: Cookies,
+    //ctx: Extension<ApiContext>,
+    //t: Extension<Tera>,
+) -> impl IntoResponse{
+    tracing::info!("logout");
+    cookies.add(Cookie::new("ytpodcast", "".to_string()));
+    Response::builder()
+        .status(StatusCode::SEE_OTHER)
+        .header("Location", "/channels")
         .body(Empty::new())
         .unwrap()
 }
