@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<ul>
+    {% for channel in channels %}
+    <li><a href="{{ channel.url }}">{{ channel.title }}</a></li>
+    {% endfor %}
+</ul>
+{% endblock content %}
+
