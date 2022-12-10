@@ -1,4 +1,4 @@
-use crate::http::{ApiContext, channel};
+use crate::http::ApiContext;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash};
 use axum::{
@@ -11,10 +11,10 @@ use axum::{
     body::Empty,
 };
 use tower_cookies::{Cookie, Cookies};
+use cookie;
 
-use std::collections::HashMap;
 use crate::{
-    http::{error, extractor::AuthUser},
+    http::{error, extractor::{AuthUser, parse_multipart}},
     models::user::User,
 };
 use tera::{Tera, Context};
@@ -211,8 +211,6 @@ async fn post_signup(
 }
 
 async fn get_login(
-    cookies: Cookies,
-    ctx: Extension<ApiContext>,
     t: Extension<Tera>
 ) -> impl IntoResponse{
     let mut context = Context::new();
@@ -254,7 +252,10 @@ async fn post_login(
 
 fn set_token(cookies: Cookies, token: &str) -> impl IntoResponse{
     tracing::info!("post_login");
-    cookies.add(Cookie::new("ytpodcast", token.to_string()));
+    let cookie = Cookie::build("ytpodcast", token.to_string())
+        .max_age(cookie::time::Duration::minutes(1))
+        .finish();
+    cookies.add(cookie);
     Response::builder()
         .status(StatusCode::SEE_OTHER)
         .header("Location", "/channels")
@@ -268,7 +269,10 @@ async fn get_logout(
     //t: Extension<Tera>,
 ) -> impl IntoResponse{
     tracing::info!("logout");
-    cookies.add(Cookie::new("ytpodcast", "".to_string()));
+    let cookie = Cookie::build("ytpodcast", "".to_string())
+        .max_age(cookie::time::Duration::minutes(0))
+        .finish();
+    cookies.add(cookie);
     Response::builder()
         .status(StatusCode::SEE_OTHER)
         .header("Location", "/channels")
@@ -276,26 +280,6 @@ async fn get_logout(
         .unwrap()
 }
 
-pub(crate) async fn parse_multipart(
-    mut multipart: Multipart,
-) -> Result<HashMap<String, String>, error::Error> {
-    let mut map = HashMap::new();
-    while let Some(field) = multipart
-        .next_field()
-        .await
-        .map_err(|_err| error::Error::ReadError)?
-    {
-        let name = field.name().ok_or(error::Error::NoName)?.to_string();
-
-        let data = field
-            .text()
-            .await
-            .map_err(|_| error::Error::InvalidValue)?;
-
-        map.insert(name, data);
-    }
-    Ok(map)
-}
 
 pub(crate) fn error_page(err: &dyn std::error::Error) -> impl IntoResponse {
     Response::builder()
