@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form action="/channel" enctype="multipart/form-data" method="post">
+    <label for="path">Path</label>
+    <input type="text" name="path" id="path" minlength="1" maxlength="20" placeholder="linux_y_tapas" pattern="[0-9a-zA-Z_]+" required>
+    <label for="title">Title</label>
+    <input type="text" name="title" id="title" minlength="1" maxlength="100" placeholder="Linux y Tapas" pattern="[0-9a-zA-Z\s_-]+" required>
+    <label for="description">Description</label>
+    <input type="text" name="description" id="description" minlength="1" maxlength="500" placeholder="Sobre Linux y tapas"pattern="[0-9a-zA-Z\s_-]+" required>
+    <label for="url">Url</label>
+    <input type="url" name="url" id="url" minlength="1" maxlength="500" placeholder="https://www.youtube.com/@linuxytapas2840/videos" pattern="https://.*" required>
+    <input type="submit" value="Submit">
+</form>
+{% endblock content %}
