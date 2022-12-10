@@ -11,9 +11,9 @@ rust-version = "1.60"
 [dependencies]
 # Core dependencies: runtime, HTTP framework and database client.
 futures = "0.3"
-tokio = { version = "1.22", features = ["full"] }
-axum = { version = "0.6" , features = ["multipart"]}
-sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "sqlite", "macros", "offline", "chrono"]}
+tokio = { version = "1.22", features = ["full", "time"] }
+sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "sqlite", "macros", "offline", "chrono"] }
+axum = { version = "0.6" , features = ["multipart"] }
 
 async-recursion = "1.0"
 
@@ -23,6 +23,7 @@ argon2 = "0.4"
 # Axum builds on the types in Tower
 tower = "0.4"
 tower-http = { version = "0.3.5", features = [ "trace", "fs" ] }
+tower-cookies = "0.8"
 
 reqwest = "0.11"
 
