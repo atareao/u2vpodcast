@@ -74,6 +74,7 @@ async fn main(){
     tokio::spawn(async move {
         loop {
             do_the_work(&pool2, &ytdlp_path, &folder, &cookies).await;
+            tracing::info!("Sleep time: {}", sleep_time);
             tokio::time::sleep(time::Duration::from_secs(sleep_time)).await;
         }
     });
