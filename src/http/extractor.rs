@@ -1,13 +1,12 @@
 use crate::{http::error::Error, config::Configuration};
 use axum::{
     async_trait,
-    extract::{FromRequest, FromRequestParts},
+    extract::{FromRequest, FromRequestParts, Multipart},
     body::Bytes,
     http::{
         header::{
             HeaderValue,
             AUTHORIZATION,
-            COOKIE,
         },
         Request,
         request::Parts,
@@ -15,14 +14,15 @@ use axum::{
     },
     Extension, RequestPartsExt,
 };
-use tower_cookies::{Cookies, Cookie};
+use tower_cookies::Cookies;
+use std::collections::HashMap;
+use crate::http::error;
 
 use crate::http::ApiContext;
 use hmac::{Hmac, digest::KeyInit};
 use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha384;
 use time::{Duration, OffsetDateTime};
-use tower::{Layer, Service};
 
 type HmacSha384 = Hmac<Sha384>;
 
@@ -204,3 +204,23 @@ where
     }
 }
 
+pub(crate) async fn parse_multipart(
+    mut multipart: Multipart,
+) -> Result<HashMap<String, String>, error::Error> {
+    let mut map = HashMap::new();
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|_err| error::Error::ReadError)?
+    {
+        let name = field.name().ok_or(error::Error::NoName)?.to_string();
+
+        let data = field
+            .text()
+            .await
+            .map_err(|_| error::Error::InvalidValue)?;
+
+        map.insert(name, data);
+    }
+    Ok(map)
+}

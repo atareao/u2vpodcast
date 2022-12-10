@@ -2,15 +2,26 @@ use axum::{
     Router,
     Json,
     Extension,
-    extract,
+    extract::{self, Multipart},
     routing::{get, post},
     response::{Html, IntoResponse, Response},
     http::StatusCode,
+    body::Empty,
 };
+use chrono::Utc;
 
-use crate::http::ApiContext;
-use super::{error::Error, extractor::{AuthUser, ExtractAuthCookie}};
-use crate::models::channel::{Channel, NewChannel};
+use crate::{
+    http::{
+        ApiContext,
+        error,
+        extractor::{
+            AuthUser,
+            ExtractAuthCookie,
+            parse_multipart
+        },
+    },
+    models::channel::{Channel, NewChannel}
+};
 use tera::{Tera, Context};
 
 pub fn router() -> Router {
@@ -27,6 +38,10 @@ pub fn router() -> Router {
         .route("/channels",
             get(read_all_html)
         )
+        .route("/channel",
+            get(create_get_html)
+            .post(create_post_html)
+        )
 }
 
 async fn create(
@@ -37,7 +52,7 @@ async fn create(
     Channel::create( &ctx.pool, &req.url, &req.path, &req.title,
             &req.description, &req.last)
         .await
-        .map_err(|error| Error::Sqlx(error))
+        .map_err(|error| error::Error::Sqlx(error))
         .map(|channel| Json(channel))
         //.on_db_error(|e| Error::unprocessable_entity([("error", e.to_string())]))
 }
@@ -48,7 +63,7 @@ async fn read(
 ) -> impl IntoResponse{
     Channel::read(&ctx.pool, id)
         .await
-        .map_err(|error| Error::Sqlx(error))
+        .map_err(|error| error::Error::Sqlx(error))
         .map(|channel| Json(channel))
 }
 
@@ -58,7 +73,7 @@ async fn read_all(
 ) -> impl IntoResponse{
     Channel::read_all(&ctx.pool)
         .await
-        .map_err(|error| Error::Sqlx(error))
+        .map_err(|error| error::Error::Sqlx(error))
         .map(|channels| Json(channels))
 }
 
@@ -68,7 +83,7 @@ async fn update(
 ) -> impl IntoResponse{
     Channel::update(&ctx.pool, channel)
         .await
-        .map_err(|error| Error::Sqlx(error))
+        .map_err(|error| error::Error::Sqlx(error))
         .map(|channel| Json(channel))
 }
 
@@ -78,7 +93,7 @@ async fn delete(
 ) -> impl IntoResponse{
         Channel::delete(&ctx.pool, id)
             .await
-            .map_err(|error| Error::Sqlx(error))
+            .map_err(|error| error::Error::Sqlx(error))
             .map(|channel| Json(channel))
 }
 
@@ -101,9 +116,51 @@ async fn read_all_html(
                 .body(t.render("channels.html", &context).unwrap())
                 .unwrap())
         },
-        Err(e) => Err(error_page(&Error::Sqlx(e))),
+        Err(e) => Err(error_page(&error::Error::Sqlx(e))),
     }
 }
+
+async fn create_get_html(
+    _auth_cookie: ExtractAuthCookie,
+    ctx: Extension<ApiContext>,
+    t: Extension<Tera>,
+) -> impl IntoResponse{
+    let mut context = Context::new();
+    context.insert("title", "New channel");
+    Html(t.render("channel.html", &context).unwrap())
+}
+
+async fn create_post_html(
+    _auth_cookie: ExtractAuthCookie,
+    ctx: Extension<ApiContext>,
+    multipart: Multipart,
+) -> impl IntoResponse{
+    let data = parse_multipart(multipart)
+        .await.unwrap();
+    tracing::info!("{:?}", data);
+    if let (Some(path), Some(title), Some(description), Some(url)) = (
+        data.get("path"),
+        data.get("title"),
+        data.get("description"),
+        data.get("url"),
+    ) {
+        let last = Utc::now();
+        match Channel::create(&ctx.pool, url, path, title, description, &last).await{
+            Ok(channel) => {
+                tracing::info!("{:?}", channel);
+                Ok(Response::builder()
+                    .status(StatusCode::SEE_OTHER)
+                    .header("Location", "/channels")
+                    .body(Empty::new())
+                    .unwrap())
+            },
+            Err(_e) => Err(error_page(&error::Error::MissingDetails)),
+        }
+    }else{
+        Err(error_page(&error::Error::MissingDetails))
+    }
+}
+
 pub(crate) fn error_page(err: &dyn std::error::Error) -> impl IntoResponse {
     Response::builder()
         .status(StatusCode::INTERNAL_SERVER_ERROR)
