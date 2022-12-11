@@ -7,6 +7,7 @@ pub struct Channel {
     url: String,
     title: String,
     description: String,
+    image: Option<String>,
 }
 
 impl Display for Channel {
@@ -25,6 +26,9 @@ impl Channel{
     }
     pub fn get_title(&self) -> &str{
         &self.title
+    }
+    pub fn get_image(&self) -> Option<String>{
+        self.image.clone()
     }
     pub fn get_description(&self) -> &str{
         &self.description

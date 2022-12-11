@@ -8,7 +8,7 @@ use axum::{
 use serde::Deserialize;
 use crate::models::{episode::Episode, channel::Channel};
 use rss::{ChannelBuilder, ItemBuilder,
-    extension::itunes::ITunesItemExtensionBuilder, 
+    extension::itunes::{ITunesItemExtensionBuilder, ITunesChannelExtensionBuilder}, 
     EnclosureBuilder, GuidBuilder};
 use super::{ApiContext, error::{self, YTPError}};
 
@@ -55,10 +55,14 @@ async fn feed(
             items.push(item);
         }
         let link = format!("{}/rss", ctx.config.get_url());
+        let itunes = ITunesChannelExtensionBuilder::default()
+            .image(channel.get_image())
+            .build();
         let channel_builder = ChannelBuilder::default()
             .title(channel.get_title().to_string())
             .description(channel.get_description().to_string())
             .link(&link)
+            .itunes_ext(Some(itunes))
             .items(items)
             .build();
         //Ok(channel_builder.to_string())
