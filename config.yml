@@ -1,14 +1,12 @@
 log_level: info
 db_url: sqlite:ytpodcast.db
 port: 8080
-sleep_time: 86400
+sleep_time: 1
 with_authentication: false
 username: username
 password: password
 url: http://localhost:8080
 cookies: cookies.txt
-folder: /tmp
-ytdlp_path: /usr/bin/yt-dlp
 channels:
   - url: https://www.youtube.com/@linuxytapas2840/videos
     title: Linux y Tapas
