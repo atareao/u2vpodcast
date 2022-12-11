@@ -11,3 +11,7 @@ cookies: cookies.txt
 folder: /tmp
 hmac_key: mak
 ytdlp_path: /usr/bin/yt-dlp
+channels:
+  - url: https://www.youtube.com/@linuxytapas2840/videos
+    title: Linux y Tapas
+    description: Linux y Tapas
