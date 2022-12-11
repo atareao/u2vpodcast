@@ -10,7 +10,7 @@ use crate::models::{episode::Episode, channel::Channel};
 use rss::{ChannelBuilder, ItemBuilder,
     extension::itunes::ITunesItemExtensionBuilder, 
     EnclosureBuilder, GuidBuilder};
-use super::{ApiContext, error};
+use super::{ApiContext, error::{self, YTPError}};
 
 pub fn router() -> Router {
     Router::new()
@@ -29,10 +29,9 @@ async fn feed(
     ctx: Extension<ApiContext>,
     Path(path): Path<String>,
 ) -> impl IntoResponse{
-        let channel = Channel::read_by_path(&ctx.pool, &path)
-            .await
-            .unwrap();
-        let episodes = Episode::read_all(&ctx.pool).await.unwrap();
+    tracing::info!("path: {}", path);
+    if let Some(channel) = ctx.config.get_channel(&path){
+        let episodes = Episode::read_all_in_channel(&ctx.pool, &channel.get_id()).await.unwrap();
         let mut items = Vec::new();
         for episode in episodes{
             let enclosure = format!("{}/media/{}/{}.mp3", ctx.config.get_url(), &path, episode.yt_id);
@@ -57,16 +56,19 @@ async fn feed(
         }
         let link = format!("{}/rss", ctx.config.get_url());
         let channel_builder = ChannelBuilder::default()
-            .title(&channel.title)
-            .description(&channel.description)
+            .title(channel.get_title().to_string())
+            .description(channel.get_description().to_string())
             .link(&link)
             .items(items)
             .build();
         //Ok(channel_builder.to_string())
         Response::builder()
             .status(StatusCode::OK)
-            .header("Content-Type", "application/rss+xml")
+            .header("Content-type", "application/rss+xml")
             .body(channel_builder.to_string())
             .unwrap()
+    }else{
+        YTPError::NotFound.get_response()
     }
+}
 
