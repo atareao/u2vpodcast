@@ -6,24 +6,23 @@ use axum::{
     Router,
     response::Response,
     middleware::{self, Next},
-    http::Request,
-    http::header::AUTHORIZATION,
+    http::{
+        Request,
+        header::AUTHORIZATION,
+        StatusCode
+    }
 };
 use crate::config::Configuration;
 use tower_http::trace::TraceLayer;
 use tower::ServiceBuilder;
-use tower_cookies::CookieManagerLayer;
-use tera::Tera;
+use tower::{Layer, Service};
+use std::task::{Context, Poll};
 
-pub mod user;
 pub mod channel;
 pub mod episode;
 pub mod error;
 pub mod rss;
 pub mod estatic;
-pub mod html;
-pub mod extractor;
-pub use error::{Error, ResultExt};
 
 
 #[derive(Clone)]
@@ -33,13 +32,6 @@ struct ApiContext {
 }
 
 pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()> {
-    let tera = match Tera::new("templates/**/*.html"){
-        Ok(t) => t,
-        Err(e) => {
-            tracing::error!("Error: {}", e);
-            std::process::exit(1);
-        },
-    };
 
     let app = api_router().layer(
         ServiceBuilder::new()
@@ -49,8 +41,6 @@ pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()
             }))
             // Enables logging. Use `RUST_LOG=tower_http=debug`
             .layer(TraceLayer::new_for_http())
-            .layer(Extension(tera))
-            .layer(CookieManagerLayer::new())
     );
 
     axum::Server::bind(
@@ -62,10 +52,33 @@ pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()
 }
 
 fn api_router() -> Router {
-    user::router()
+    channel::router()
         .merge(episode::router())
-        .merge(channel::router())
         .merge(rss::router())
         .merge(estatic::router())
-        .merge(html::router())
 }
+
+async fn auth<B>(req: Request<B>, next: Next<B>) -> Result<Response, StatusCode> {
+    let auth_header = req.headers()
+        .get(AUTHORIZATION)
+        .and_then(|header| header.to_str().ok());
+
+    let auth_header = if let Some(auth_header) = auth_header {
+        auth_header
+    } else {
+        return Err(StatusCode::UNAUTHORIZED);
+    };
+
+    if authorize_request(auth_header).await {
+        // insert the current user into a request extension so the handler can
+        // extract it
+        //req.extensions_mut().insert(current_user);
+        Ok(next.run(req).await)
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+async fn authorize_request(auth_token: &str) -> bool {
+    true
+}
+
