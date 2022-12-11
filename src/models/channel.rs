@@ -1,113 +1,34 @@
 use serde::{Serialize, Deserialize};
-use sqlx::{sqlite::{SqlitePool, SqliteRow}, query, Row};
-use chrono::{DateTime, Utc};
-use std::fmt;
+use std::fmt::{self, Display};
+use regex::Regex;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
-    pub id: i64,
-    pub url: String,
-    pub path: String,
-    pub title: String,
-    pub description: String,
-    pub last: DateTime<Utc>,
+    url: String,
+    title: String,
+    description: String,
 }
 
-impl fmt::Display for Channel {
+impl Display for Channel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({}, {})", self.id, self.url)
+        write!(f, "({}, {})", self.get_id(), self.url)
     }
 }
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct NewChannel {
-    pub url: String,
-    pub path: String,
-    pub title: String,
-    pub description: String,
-    pub last: DateTime<Utc>,
-}
-
 
 impl Channel{
-    fn from_row(row: SqliteRow) -> Channel{
-        Channel {
-            id: row.get("id"),
-            url: row.get("url"),
-            path: row.get("path"),
-            title: row.get("title"),
-            description: row.get("description"),
-            last: row.get("last"),
-        }
+    pub fn get_id(&self) -> String{
+        let re = Regex::new(r"[^a-zA-Z0-9_-]").unwrap();
+        re.replace_all(&self.get_title().to_lowercase(), "_").to_string()
     }
-    pub async fn create(pool: &SqlitePool, url: &str, path: &str,
-            title: &str, description: &str, last: &DateTime<Utc>) -> Result<Channel, sqlx::Error>{
-        let sql = "INSERT INTO channels (url, path, title, description, last)
-                   VALUES ($1, $2, $3, $4, $5) RETURNING * ;";
-        query(sql)
-            .bind(url)
-            .bind(path)
-            .bind(title)
-            .bind(description)
-            .bind(last)
-            .map(Self::from_row)
-            .fetch_one(pool)
-            .await
+    pub fn get_url(&self) -> &str{
+        &self.url
     }
-
-    pub async fn read(pool: &SqlitePool, id: i64) -> Result<Channel, sqlx::Error>{
-        let sql = "SELECT * FROM channels WHERE id = $1";
-        query(sql)
-            .bind(id)
-            .map(Self::from_row)
-            .fetch_one(pool)
-            .await
+    pub fn get_title(&self) -> &str{
+        &self.title
     }
-
-    pub async fn read_by_path(pool: &SqlitePool, path: &str) -> Result<Channel, sqlx::Error>{
-        let sql = "SELECT * FROM channels WHERE path = $1";
-        query(sql)
-            .bind(path)
-            .map(Self::from_row)
-            .fetch_one(pool)
-            .await
-    }
-
-    pub async fn read_all(pool: &SqlitePool) -> Result<Vec<Channel>, sqlx::Error>{
-        let sql = "SELECT * FROM channels";
-        query(sql)
-            .map(Self::from_row)
-            .fetch_all(pool)
-            .await
-    }
-
-    pub async fn update(pool: &SqlitePool, channel: Channel)
-        ->Result<Channel, sqlx::Error>{
-        let sql = "UPDATE channels
-            SET
-                url = COALESCE($2, url),
-                path = COALESCE($3, path),
-                title = COALESCE($4, title),
-                description = COALESCE($5, description),
-                last = COALESCE($6, last)
-            WHERE id = $1 RETURNING *;";
-        query(sql)
-            .bind(channel.id)
-            .bind(channel.url)
-            .bind(channel.path)
-            .bind(channel.title)
-            .bind(channel.description)
-            .bind(channel.last)
-            .map(Self::from_row)
-            .fetch_one(pool)
-            .await
-    }
-    pub async fn delete(pool: &SqlitePool, id: i64) -> Result<Channel, sqlx::Error>{
-        let sql = "DELETE FROM channels WHERE id = $1 RETURNING *;";
-        query(sql)
-            .bind(id)
-            .map(Self::from_row)
-            .fetch_one(pool)
-            .await
+    pub fn get_description(&self) -> &str{
+        &self.description
     }
 }
+
+
