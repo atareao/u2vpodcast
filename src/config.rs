@@ -1,5 +1,7 @@
-use serde_yaml::Error;
 use serde::{Serialize, Deserialize};
+use serde_yaml::Error;
+
+use crate::models::channel::Channel;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Configuration{
@@ -16,6 +18,7 @@ pub struct Configuration{
     folder: String,
     hmac_key: String,
     ytdlp_path:String,
+    channels: Vec<Channel>
 }
 
 impl Configuration {
@@ -60,5 +63,18 @@ impl Configuration {
     }
     pub fn get_ytdlp_path(&self) -> &str{
         &self.ytdlp_path
+    }
+    pub fn get_channels(&self) -> &Vec<Channel>{
+        &self.channels
+    }
+    pub fn get_channel(&self, id: &str) -> Option<Channel>{
+        tracing::info!("Searching: {}", id);
+        for channel in self.channels.as_slice(){
+            tracing::info!("{} : {}", channel.get_id(), id);
+            if channel.get_id() == id{
+                return Some(channel.clone())
+            }
+        }
+        None
     }
 }
