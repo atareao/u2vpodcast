@@ -64,7 +64,7 @@ async fn feed(
         //Ok(channel_builder.to_string())
         Response::builder()
             .status(StatusCode::OK)
-            .header("Content-type", "application/rss+xml")
+            .header("Content-type", "application/rss+xml; charset=utf-8")
             .body(channel_builder.to_string())
             .unwrap()
     }else{
