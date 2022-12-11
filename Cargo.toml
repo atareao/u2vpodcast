@@ -13,6 +13,7 @@ rust-version = "1.60"
 tokio = { version = "1.22", features = ["full", "time"] }
 sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "sqlite", "macros", "offline", "chrono"] }
 axum = { version = "0.6" , features = ["multipart"] }
+openssl = { version = "0.10", features = ["vendored"] }
 
 #async-recursion = "1.0"
 
