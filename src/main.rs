@@ -16,6 +16,9 @@ mod models;
 mod http;
 mod config;
 
+static FOLDER: &str = "/app/audios";
+static YTDLP: &str = "/usr/bin/yt-dlp";
+
 #[tokio::main]
 async fn main(){
     let configuration = read_configuration().await;
@@ -25,7 +28,6 @@ async fn main(){
         .with(tracing_subscriber::fmt::layer())
         .init();
     let db_url = configuration.get_db_url();
-    let port = configuration.get_port();
 
     if !sqlx::Sqlite::database_exists(db_url).await.unwrap(){
         sqlx::Sqlite::create_database(db_url).await.unwrap();
@@ -53,7 +55,7 @@ async fn main(){
         .unwrap();
 
 
-    let sleep_time: u64 = configuration.get_sleep_time().into();
+    let sleep_time: u64 = configuration.get_sleep_time() * 86400;
     let pool2 = pool.clone();
     tokio::spawn(async move {
         loop {
@@ -66,17 +68,16 @@ async fn main(){
 }
 
 
+#[allow(unused_must_use)]
 async fn do_the_work(pool: &SqlitePool){
     let configuration = &read_configuration().await;
-    let folder = configuration.get_folder();
     let cookies = configuration.get_cookies();
-    let ytdlp_path = configuration.get_ytdlp_path();
 
-    let ytdlp = Ytdlp::new(ytdlp_path, cookies);
+    let ytdlp = Ytdlp::new(YTDLP, cookies);
     let now = Utc::now();
     for a_channel in configuration.get_channels().as_slice(){
         let channel_id = &a_channel.get_id();
-        tokio::fs::create_dir_all(format!("{}/{}", folder, &a_channel.get_id()))
+        tokio::fs::create_dir_all(format!("{}/{}", FOLDER, &a_channel.get_id()))
             .await;
         tracing::info!("Getting new videos for channel: {}", a_channel);
         let last = if Episode::number_of_episodes(pool, channel_id).await > 0{
@@ -95,7 +96,7 @@ async fn do_the_work(pool: &SqlitePool){
                         continue;
                     }
                     tracing::info!("Downloading video: {:?}", ytvideo);
-                    let filename = format!("{}/{}/{}.mp3", folder, &a_channel.get_id(), &ytvideo.id);
+                    let filename = format!("{}/{}/{}.mp3", FOLDER, &a_channel.get_id(), &ytvideo.id);
                     let salida = ytdlp.download(&ytvideo.id, &filename).await;
                     if salida.success() {
                         let title = &ytvideo.title;

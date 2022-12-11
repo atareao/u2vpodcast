@@ -8,14 +8,12 @@ pub struct Configuration{
     log_level: String,
     db_url: String,
     port: u16,
-    sleep_time: u32,
+    sleep_time: u64,
     username: String,
     password: String,
     with_authentication: bool,
     url: String,
     cookies: String,
-    folder: String,
-    ytdlp_path:String,
     channels: Vec<Channel>
 }
 
@@ -29,7 +27,7 @@ impl Configuration {
     pub fn get_db_url(&self) -> &str{
         &self.db_url
     }
-    pub fn get_sleep_time(&self) -> u32{
+    pub fn get_sleep_time(&self) -> u64{
         self.sleep_time
     }
     pub fn get_port(&self) -> u16{
@@ -49,12 +47,6 @@ impl Configuration {
     }
     pub fn get_cookies(&self) -> &str{
         &self.cookies
-    }
-    pub fn get_folder(&self) -> &str{
-        &self.folder
-    }
-    pub fn get_ytdlp_path(&self) -> &str{
-        &self.ytdlp_path
     }
     pub fn get_channels(&self) -> &Vec<Channel>{
         &self.channels
