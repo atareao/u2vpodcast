@@ -2,6 +2,7 @@ log_level: info
 db_url: sqlite:ytpodcast.db
 port: 8080
 sleep_time: 86400
+with_authentication: false
 username: username
 password: password
 title: title

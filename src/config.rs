@@ -11,6 +11,7 @@ pub struct Configuration{
     sleep_time: u32,
     username: String,
     password: String,
+    with_authentication: bool,
     title: String,
     description: String,
     url: String,
@@ -36,6 +37,9 @@ impl Configuration {
     }
     pub fn get_port(&self) -> u16{
         self.port
+    }
+    pub fn is_with_authentication(&self) -> bool{
+        self.with_authentication
     }
     pub fn get_username(&self) -> &str{
         &self.username
