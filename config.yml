@@ -5,14 +5,12 @@ sleep_time: 86400
 with_authentication: false
 username: username
 password: password
-title: title
-description: description
 url: http://localhost:8080
 cookies: cookies.txt
 folder: /tmp
-hmac_key: mak
 ytdlp_path: /usr/bin/yt-dlp
 channels:
   - url: https://www.youtube.com/@linuxytapas2840/videos
     title: Linux y Tapas
     description: Linux y Tapas
+    image: https://yt3.googleusercontent.com/Q5_FzQWmSRc1d1gn0pFOcF7jhSwLZfwZt8zVTCe7eVsQRWO0PJazaRZF1mRGd-QMKWW3_HZPcg

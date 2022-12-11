@@ -12,12 +12,9 @@ pub struct Configuration{
     username: String,
     password: String,
     with_authentication: bool,
-    title: String,
-    description: String,
     url: String,
     cookies: String,
     folder: String,
-    hmac_key: String,
     ytdlp_path:String,
     channels: Vec<Channel>
 }
@@ -47,12 +44,6 @@ impl Configuration {
     pub fn get_password(&self) -> &str{
         &self.password
     }
-    pub fn get_title(&self) -> &str{
-        &self.title
-    }
-    pub fn get_description(&self) -> &str{
-        &self.description
-    }
     pub fn get_url(&self) -> &str{
         &self.url
     }
@@ -61,9 +52,6 @@ impl Configuration {
     }
     pub fn get_folder(&self) -> &str{
         &self.folder
-    }
-    pub fn get_hmac_key(&self) -> &str{
-        &self.hmac_key
     }
     pub fn get_ytdlp_path(&self) -> &str{
         &self.ytdlp_path
