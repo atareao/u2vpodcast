@@ -11,7 +11,7 @@
 --
 CREATE TABLE IF NOT EXISTS episodes(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    channel_id INTEGER NOT NULL,
+    channel_id TEXT NOT NULL,
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     yt_id TEXT NOT NULL,
