@@ -1,11 +1,11 @@
 use serde::{Serialize, Deserialize};
 use sqlx::{sqlite::{SqlitePool, SqliteRow}, query, Row};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, NaiveDateTime};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Episode {
     pub id: i64,
-    pub channel_id: i64,
+    pub channel_id: String,
     pub title: String,
     pub description: String,
     pub yt_id: String,
@@ -16,7 +16,7 @@ pub struct Episode {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NewEpisode {
-    pub channel_id: i64,
+    pub channel_id: String,
     pub title: String,
     pub description: String,
     pub yt_id: String,
@@ -39,7 +39,7 @@ impl Episode{
         }
     }
 
-    pub async fn create(pool: &SqlitePool, channel_id: i64, title: &str,
+    pub async fn create(pool: &SqlitePool, channel_id: &str, title: &str,
             description: &str, yt_id: &str,  published_at: &DateTime<Utc>,
             image: &str, listen: bool
     ) -> Result<Episode, sqlx::Error>{
@@ -59,6 +59,37 @@ impl Episode{
             .await
     }
 
+    pub async fn number_of_episodes(pool: &SqlitePool, channel_id: &str) -> i64{
+        let sql = "SELECT count(*) FROM episodes WHERE channel_id = $1";
+        match query(sql)
+            .bind(channel_id)
+            .map(|row: SqliteRow| -> i64 {row.get(0)})
+            .fetch_one(pool)
+            .await {
+                Ok(value) => value,
+                Err(e) => {
+                    tracing::info!("Error on exists {}", e);
+                    0
+                }
+            }
+    }
+
+    pub async fn exists(pool: &SqlitePool, channel_id: &str, yt_id: &str) -> bool{
+        let sql = "SELECT count(*) FROM episodes WHERE channel_id = $1 AND yt_id = $2";
+        match query(sql)
+            .bind(channel_id)
+            .bind(yt_id)
+            .map(|row: SqliteRow| -> i64 {row.get(0)})
+            .fetch_one(pool)
+            .await {
+                Ok(value) => value > 0,
+                Err(e) => {
+                    tracing::info!("Error on exists {}", e);
+                    false
+                }
+            }
+    }
+
     pub async fn read(pool: &SqlitePool, id: i64) -> Result<Vec<Episode>, sqlx::Error>{
         let sql = "SELECT * FROM episodes WHERE id = $1";
         query(sql)
@@ -74,6 +105,29 @@ impl Episode{
             .map(Self::from_row)
             .fetch_all(pool)
             .await
+    }
+    pub async fn read_all_in_channel(pool: &SqlitePool, channel_id: &str) -> Result<Vec<Episode>, sqlx::Error>{
+        let sql = "SELECT * FROM episodes WHERE channel_id = $1";
+        query(sql)
+            .bind(channel_id)
+            .map(Self::from_row)
+            .fetch_all(pool)
+            .await
+    }
+    pub async fn get_max_date(pool: &SqlitePool, channel_id: &str) -> DateTime<Utc>{
+        let sql = "SELECT MAX(published_at) as last_date FROM episodes WHERE channel_id = $1";
+        match query(sql)
+            .bind(channel_id)
+            .fetch_one(pool)
+            .await{
+                Ok(row) => {
+                    row.get(0)
+                }, 
+                Err(e) => {
+                    tracing::info!("Not last: {}", e);
+                    DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc)
+                }
+            }
     }
     pub async fn update(pool: &SqlitePool, episode: Episode) -> Result<Episode, sqlx::Error>{
         let sql = "UPDATE episodes SET channel_id = $2, title = $3,
