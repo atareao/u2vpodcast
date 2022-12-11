@@ -14,8 +14,10 @@ use axum::{
 
 #[derive(Debug)]
 pub enum YTPError {
+    #[allow(dead_code)]
     ReadError,
     NotFound,
+    #[allow(dead_code)]
     Unauthorized,
     Sqlx(String),
 }
@@ -32,6 +34,7 @@ impl YTPError{
             Self::ReadError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
+            #[allow(unused_variables)]
             Self::Sqlx(value) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

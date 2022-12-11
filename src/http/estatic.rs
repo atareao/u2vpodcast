@@ -12,7 +12,7 @@ use axum::{
 use mime_guess;
 use include_dir::{include_dir, Dir};
 
-static STATIC_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/media");
+static STATIC_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/audios");
 
 pub fn router() -> Router {
     Router::new()

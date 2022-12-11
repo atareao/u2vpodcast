@@ -106,6 +106,7 @@ async fn test_info(){
     }
 }
 
+#[tokio::test]
 async fn test_ytdlp(){
     let ytdlp = Ytdlp::new("yt-dlp", "cookies.txt");
     let salida = ytdlp.download("mWoJw5qD0eI", "/tmp/test.mp3").await;

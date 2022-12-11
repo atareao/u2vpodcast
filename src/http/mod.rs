@@ -47,7 +47,7 @@ pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()
         &SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), config.get_port()))
         .serve(app.into_make_service())
         .await
-        .map_err(|err| anyhow::anyhow!("Can't init"))
+        .map_err(|_err| anyhow::anyhow!("Can't init"))
     
 }
 

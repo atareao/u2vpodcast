@@ -1,28 +1,21 @@
 use axum::{
-    http::{self, StatusCode},
+    http::StatusCode,
     Router,
     Extension,
     extract::Path,
     routing::get, response::{IntoResponse, Response},
 };
-use serde::Deserialize;
-use crate::models::{episode::Episode, channel::Channel};
+use crate::models::episode::Episode;
 use rss::{ChannelBuilder, ItemBuilder,
     extension::itunes::{ITunesItemExtensionBuilder, ITunesChannelExtensionBuilder}, 
     EnclosureBuilder, GuidBuilder};
-use super::{ApiContext, error::{self, YTPError}};
+use super::{ApiContext, error::YTPError};
 
 pub fn router() -> Router {
     Router::new()
         .route("/rss/:path/feed.xml",
             get(feed)
         )
-}
-#[derive(Deserialize)]
-pub struct RSS{
-    title: String,
-    description: String,
-    url: String,
 }
 
 async fn feed(

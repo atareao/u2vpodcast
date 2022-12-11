@@ -129,6 +129,7 @@ impl Episode{
                 }
             }
     }
+    #[allow(dead_code)]
     pub async fn update(pool: &SqlitePool, episode: Episode) -> Result<Episode, sqlx::Error>{
         let sql = "UPDATE episodes SET channel_id = $2, title = $3,
                    description = $4, yt_id = $5, published_at = $6,
@@ -147,6 +148,7 @@ impl Episode{
             .fetch_one(pool)
             .await
     }
+    #[allow(dead_code)]
     pub async fn delete(pool: &SqlitePool, id: i64) -> Result<Episode, sqlx::Error>{
         let sql = "DELETE from episodes WHERE id = $1
                    RETURNING id, channel_id, title, description, yt_id,
