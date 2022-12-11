@@ -38,10 +38,10 @@ FROM alpine:3.16
 ARG APP=ytpodcast
 
 RUN apk add --update --no-cache \
-            su-exec~=0.2-r1 \
-            tzdata~=2022c-r0 \
+            su-exec~=0.2 \
+            tzdata~=2022 \
             ffmpeg~=5.0 \
-            yt-dlp~=2022.05.18-r0 &&\
+            yt-dlp~=2022 &&\
     rm -rf /var/cache/apk && \
     rm -rf /var/lib/app/lists*
 # Copy the user
