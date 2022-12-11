@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  ytpodcast:
+    image: atareao/ytpodcast:latest
+    container_name: ytpodcast
+    init: true
+    env_file:
+      - .env
+    restart: always
+    volumes:
+      - ./audios:/app/audios
+      - ./cookies.txt:/app/cookies.txt
+      - ./config.yml:/app/config.yml
+      - ./db:/app/db
+    networks:
+      - proxy
+    logging:
+      driver: journald
+
+networks:
+  proxy:
+    external: true
+
