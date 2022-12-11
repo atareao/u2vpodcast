@@ -13,7 +13,7 @@ use super::{ApiContext, error::YTPError};
 
 pub fn router() -> Router {
     Router::new()
-        .route("/rss/:path/feed.xml",
+        .route("/:path/feed.xml",
             get(feed)
         )
 }
@@ -30,6 +30,7 @@ async fn feed(
             let enclosure = format!("{}/media/{}/{}.mp3", ctx.config.get_url(), &path, episode.yt_id);
             let itunes = ITunesItemExtensionBuilder::default()
                 .image(Some(episode.image))
+                .summary(Some(episode.description.to_string()))
                 .build();
             let enclosure = EnclosureBuilder::default()
                 .url(&enclosure)
@@ -50,6 +51,7 @@ async fn feed(
         let link = format!("{}/rss", ctx.config.get_url());
         let itunes = ITunesChannelExtensionBuilder::default()
             .image(channel.get_image())
+            .summary(Some(channel.get_description().to_string()))
             .build();
         let channel_builder = ChannelBuilder::default()
             .title(channel.get_title().to_string())
@@ -58,7 +60,6 @@ async fn feed(
             .itunes_ext(Some(itunes))
             .items(items)
             .build();
-        //Ok(channel_builder.to_string())
         Response::builder()
             .status(StatusCode::OK)
             .header("Content-type", "application/rss+xml; charset=utf-8")
