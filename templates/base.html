@@ -1,16 +1,25 @@
 <!DOCTYPE html>
 <html lang="es">
     <head>
-        <meta charset="UTF-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{{ title }}</title>
-        <link rel="stylesheet" href="/media/pico.min.css">
+        {% block head %}
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+        <title>{% block title %}{% endblock title %}</title>
+        {% endblock head %}
     </head>
     <body>
+        <header class="container">
+            {% block header %}
+            {% endblock header %}
+        </header>
         <main class="container">
-            {% block content %}
-            {% endblock content %}
+            {% block main %}
+            {% endblock main %}
         </main>
+        <footer class="container">
+            {% block footer %}
+            {% endblock footer %}
+        </footer>
     </body>
 </html>
