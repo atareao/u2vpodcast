@@ -6,18 +6,36 @@
 A service to create your podcasts from your favourites YouTube Channels
 </div>
 
-***
+---
 
 ### Installation
+
+With docker-compose
+
 ```
-git clone git@github.com:atareao/ytpodcast.git
-cd ytpodcast
-cargo install
+mkdir audios db
 ```
 
+* Change `docker-compose` and copy `sample.env` to `.env`. Change `.env` as you need.
+* Create `cookies.txt` from your YouTube cookies.
+
+#### How do you cookies to work
+
+In order to extract cookies from browser use any conforming browser extension for exporting cookies.
+
+For example,
+
+* Chrome => https://chrome.google.com/webstore/detail/get-cookiestxt/bgaddhkoddajcdgocldbbfleckgcbcid/
+* Firefox => https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/
+
+### Configuration
+
+You need to modify `config.yml`. Change the params as you need, and add all the channels and YouTube list that you want
+
 ### Usage
+
 ```
-cargo run
+docker-compose up -d
 ```
 
 ### Contributing
