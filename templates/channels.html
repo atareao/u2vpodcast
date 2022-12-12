@@ -1,8 +1,9 @@
 {% extends "base.html" %}
-{% block tile %}Channels{% endblock title %}
+{% block title %}{{ title }}{% endblock title %}
 
 {% block main %}
 <ul>
+    <h1>{{ title }}</h1>
     {% for channel in channels %}
     <li><a href="{{ channel.url }}">{{ channel.title }}</a></li>
     {% endfor %}
