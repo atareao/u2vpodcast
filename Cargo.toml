@@ -19,6 +19,9 @@ openssl = { version = "0.10", features = ["vendored"] }
 tower = "0.4"
 tower-http = { version = "0.3.5", features = [ "trace", "fs" ] }
 
+# Templates
+tera = "1.17"
+
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 

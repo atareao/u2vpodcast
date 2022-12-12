@@ -16,12 +16,14 @@ use async_trait::async_trait;
 use crate::config::Configuration;
 use tower_http::trace::TraceLayer;
 use tower::ServiceBuilder;
+use tera::Tera;
 
 pub mod channel;
 pub mod episode;
 pub mod error;
 pub mod rss;
 pub mod estatic;
+pub mod root;
 
 
 #[derive(Clone)]
@@ -32,15 +34,25 @@ struct ApiContext {
 
 pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()> {
 
+    let tera = match Tera::new("templates/**/*.html") {
+        Ok(t) => t,
+        Err(e) => {
+            println!("Parsing error(s): {}", e);
+            ::std::process::exit(1);
+        }
+    };
     let app = api_router().layer(
-        ServiceBuilder::new()
-            .layer(Extension(ApiContext {
-                config: Arc::new(config.clone()),
-                pool,
-            }))
-            // Enables logging. Use `RUST_LOG=tower_http=debug`
-            .layer(TraceLayer::new_for_http())
-            .layer(from_extractor::<RequireAuth>())
+
+    ServiceBuilder::new()
+        .layer(Extension(ApiContext {
+            config: Arc::new(config.clone()),
+            pool,
+        }))
+        // Enables logging. Use `RUST_LOG=tower_http=debug`
+        .layer(TraceLayer::new_for_http())
+        .layer(from_extractor::<RequireAuth>())
+        .layer(Extension(tera))
+
     );
 
     axum::Server::bind(
@@ -56,6 +68,7 @@ fn api_router() -> Router {
         .merge(episode::router())
         .merge(rss::router())
         .merge(estatic::router())
+        .merge(root::router())
 }
 
 struct RequireAuth;
