@@ -19,6 +19,8 @@ mkdir audios db
 * Change `docker-compose` and copy `sample.env` to `.env`. Change `.env` as you need.
 * Create `cookies.txt` from your YouTube cookies.
 
+### Create cookies.txt
+
 #### How do you cookies to work
 
 In order to extract cookies from browser use any conforming browser extension for exporting cookies.
@@ -41,8 +43,11 @@ docker-compose up -d
 ### Contributing
 
 ### License
+
 This project is licensed under the MIT license
+
 ### Show your support
+
 Leave a ⭐ if you like this project
 
 ***
