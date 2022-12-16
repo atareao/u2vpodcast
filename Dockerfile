@@ -35,7 +35,7 @@ RUN cargo build  --target x86_64-unknown-linux-musl --release
 ###############################################################################
 FROM alpine:3.16
 
-ARG APP=ytpodcast
+ARG APP=u2vpodcast
 
 RUN apk add --update --no-cache \
             su-exec~=0.2 \
@@ -51,8 +51,9 @@ WORKDIR /app
 
 COPY entrypoint.sh /app/
 COPY migrations/ /app/migrations/
+COPY templates/ /app/templates/
 # Copy our build
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/$APP /app/
 
 ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
-CMD ["/app/ytpodcast"]
+CMD ["/app/u2vpodcast"]
