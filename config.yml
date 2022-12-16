@@ -5,7 +5,7 @@ sleep_time: 1
 with_authentication: false
 username: username
 password: password
-url: http://localhost:8080
+url: http://ytpodcast.enriquemorales.ml
 cookies: cookies.txt
 channels:
   - url: https://www.youtube.com/@linuxytapas2840/videos

@@ -39,6 +39,11 @@ You need to modify `config.yml`. Change the params as you need, and add all the 
 ```
 docker-compose up -d
 ```
+If you need to run [ytpodcast](https://github.com/atareao/ytpodcast) behind reverse proxy, like [caddy](https://github.com/caddyserver/caddy), run:
+
+```
+docker-compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+```
 
 ### Contributing
 
