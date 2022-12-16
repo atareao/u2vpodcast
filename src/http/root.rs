@@ -64,7 +64,9 @@ async fn get_podcast(
     let mut context = Context::new();
     match Episode::read_all_in_channel(&ctx.pool, &path).await{
         Ok(episodes) => {
+            let base_url = ctx.config.get_url();
             context.insert("title", &path);
+            context.insert("base_url", base_url);
             context.insert("episodes", &episodes);
             Html(t.render("podcast.html", &context).unwrap())
         },

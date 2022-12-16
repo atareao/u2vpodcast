@@ -10,13 +10,10 @@
     </tr>
     <tr>
         <td>
-            <audio data-role="audio-player"
-                   data-src="/media/{{ episode.channel_id }}/{{ episode.yt_id }}.mp3"
-                   data-show-loop="true"
-                   data-show-stop="true"
-                   data-show-volume="true"
-                   data-show-info="true">
+            <audio controls>
+                <source src="{{ base_url }}/media/{{ episode.channel_id }}/{{ episode.yt_id }}.mp3" type="audio/mpeg">
             </audio>
+        </td>
     </tr>
     {% endfor %}
 </table>
