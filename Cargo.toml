@@ -1,5 +1,5 @@
 [package]
-name = "u2vtpodcast"
+name = "u2vpodcast"
 version = "0.2.0"
 edition = "2021"
 license = "MIT"

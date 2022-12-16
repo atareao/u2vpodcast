@@ -1,11 +1,11 @@
 log_level: info
-db_url: sqlite:ytpodcast.db
+db_url: sqlite:u2vpodcast.db
 port: 8080
 sleep_time: 1
 with_authentication: false
 username: username
 password: password
-url: http://ytpodcast.enriquemorales.ml
+url: http://localhost:8080
 cookies: cookies.txt
 channels:
   - url: https://www.youtube.com/@linuxytapas2840/videos
