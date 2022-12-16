@@ -17,3 +17,4 @@ cookies.txt
 ytpodcast.db
 ytpodcast.db*
 media
+*.db*

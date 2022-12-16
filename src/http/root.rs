@@ -6,11 +6,13 @@ use axum::{
         IntoResponse,
         Html,
     },
-    http::header::{self, HeaderValue},
+    http::header::{self, HeaderValue}, extract::Path,
 };
 use tera::{Tera, Context};
 
-use crate:: http::ApiContext;
+use crate::{ http::ApiContext, models::episode::Episode};
+
+use super::error;
 
 pub fn router() -> Router {
     Router::new()
@@ -22,6 +24,9 @@ pub fn router() -> Router {
         )
         .route("/channels",
             get(get_channels)
+        )
+        .route("/channels/:path",
+            get(get_podcast)
         )
 }
 
@@ -49,4 +54,26 @@ async fn get_channels(
     let channels = ctx.config.get_channels();
     context.insert("channels", channels);
     Html(t.render("channels.html", &context).unwrap())
+}
+
+async fn get_podcast(
+    ctx: Extension<ApiContext>,
+    t: Extension<Tera>,
+    Path(path): Path<String>,
+) -> impl IntoResponse{
+    let mut context = Context::new();
+    match Episode::read_all_in_channel(&ctx.pool, &path).await{
+        Ok(episodes) => {
+            context.insert("title", &path);
+            context.insert("episodes", &episodes);
+            Html(t.render("podcast.html", &context).unwrap())
+        },
+        Err(_) => {
+            context.insert("title", "Channels");
+            let channels = ctx.config.get_channels();
+            context.insert("channels", channels);
+            Html(t.render("podcast.html", &context).unwrap())
+
+        }
+    }
 }

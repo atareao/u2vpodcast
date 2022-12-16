@@ -4,24 +4,19 @@
 {% block main %}
 <h1>{{ title }}</h1>
 <table>
-    <tr>
-        <th>id</th>
-        <th>title</th>
-        <th>url</th>
-    </tr>
     {% for episode in episodes %}
+    <tr>
+        <td>{{ episode.title }}</td>
+    </tr>
     <tr>
         <td>
             <audio data-role="audio-player"
-                   data-src="{{ episode.feed }}"
-                   data-show-loop="false"
-                   data-show-stop="false"
-                   data-show-volume="false"
-                   data-show-info="false">
+                   data-src="/media/{{ episode.channel_id }}/{{ episode.yt_id }}.mp3"
+                   data-show-loop="true"
+                   data-show-stop="true"
+                   data-show-volume="true"
+                   data-show-info="true">
             </audio>
-        <td>id</td>
-        <td><a href="{{ channel.url }}">{{ channel.title }}</a></td>
-        <td>{{ channel.url }}</td>
     </tr>
     {% endfor %}
 </table>
