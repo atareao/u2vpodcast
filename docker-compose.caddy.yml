@@ -1,7 +1,7 @@
 version: "3.7"
 
 services:
-  ytpodcast:
+  u2vpodcast:
     networks:
       - proxy
     labels:
