@@ -104,6 +104,11 @@ async fn do_the_work(pool: &SqlitePool){
                         let yt_id = &ytvideo.id;
                         tracing::info!("{}", &ytvideo.upload_date);
                         let published_at = parse_date(&ytvideo.upload_date);
+                        filetime::set_file_mtime(
+                            &filename,
+                            filetime::FileTime::from_unix_time(
+                                published_at.timestamp(), 0)
+                        );
                         let image = &ytvideo.thumbnail;
                         let listen = false;
                         match Episode::create(pool, channel_id, title,
