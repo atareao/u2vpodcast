@@ -31,6 +31,8 @@ async fn feed(
             let itunes = ITunesItemExtensionBuilder::default()
                 .image(Some(episode.image))
                 .summary(Some(episode.description.to_string()))
+                .explicit(Some("No".to_string()))
+                .episode_type(Some("Full".to_string()))
                 .build();
             let enclosure = EnclosureBuilder::default()
                 .url(&enclosure)
