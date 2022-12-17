@@ -26,10 +26,22 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-echo "Create group"
-addgroup -g "$LOCAL_GROUP_ID" -S dockerus
-echo "Create user"
-adduser -u "$LOCAL_USER_ID" -S dockerus -G dockerus
+LOCAL_USER_ID=${LOCAL_USER_ID:-1000}
+LOCAL_GROUP_ID=${LOCAL_GROUP_ID:-1000}
+
+if ! grep -q -E "^dockerus:" /etc/group; then
+    echo "=== Create group ==="
+    addgroup -g "$LOCAL_GROUP_ID" -S dockerus
+fi
+
+if ! grep -q -E "^dockerus:" /etc/passwd; then
+    echo "=== Create user ==="
+    adduser -u "$LOCAL_USER_ID" -S dockerus -G dockerus
+fi
+echo "=== Chown ownership ==="
+# comment next line if needs root
 chown -R dockerus:dockerus /app
+echo "=== Execute $* ==="
+# comment next line if needs root
 set -- su-exec dockerus "$@"
 exec "$@"
