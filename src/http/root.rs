@@ -50,7 +50,11 @@ async fn get_channels(
     let mut context = Context::new();
     context.insert("title", "Channels");
     let channels = ctx.config.get_channels();
-    context.insert("channels", channels);
+    let mut channels_with_id = Vec::new();
+    for channel in channels{
+        channels_with_id.push(channel.get_complete());
+    }
+    context.insert("channels", &channels_with_id);
     Html(t.render("channels.html", &context).unwrap())
 }
 

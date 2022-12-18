@@ -4,16 +4,10 @@
 {% block main %}
 <h1>{{ title }}</h1>
 <table>
-    <tr>
-        <th>id</th>
-        <th>title</th>
-        <th>url</th>
-    </tr>
     {% for channel in channels %}
     <tr>
-        <td>id</td>
-        <td><a href="{{ channel.url }}">{{ channel.title }}</a></td>
-        <td>{{ channel.url }}</td>
+        <td><img src="{{ channel.image }}" alt="{{ channel.title }}" width="64" height="64"></td>
+        <td><a href="/channels/{{ channel.id }}">{{ channel.title }}</a></td>
     </tr>
     {% endfor %}
 </table>
