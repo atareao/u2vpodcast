@@ -18,9 +18,11 @@ buildx:
     #!/usr/bin/env bash
     #--platform linux/arm/v7,linux/arm64/v8,linux/amd64 \
     docker buildx build \
+           --build-arg OPENSSL_LIB_DIR="/usr/lib/arm-linux-gnueabihf" \
            --push \
-           --platform linux/arm/v7,linux/arm64/v8,linux/amd64 \
-           --tag {{user}}/{{name}}:{{version}} .
+           --platform linux/arm/v7 \
+           --tag {{user}}/{{name}}:{{version}} \
+           .
 
 run:
     docker run --rm \
