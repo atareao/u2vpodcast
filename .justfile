@@ -1,27 +1,49 @@
 user    := "atareao"
 name    := `basename ${PWD}`
 version := `git tag -l  | tail -n1`
+os      := `uname -m`
 
 build:
     echo {{version}}
     echo {{name}}
-    docker build -t {{user}}/{{name}}:{{version}} .
+    docker build -t {{user}}/{{name}}:{{os}}-{{version}} .
 
 tag:
-    docker tag {{user}}/{{name}}:{{version}} {{user}}/{{name}}:latest
+    docker tag {{user}}/{{name}}:{{os}}-{{version}} {{user}}/{{name}}:{{os}}-latest
 
 push:
-    docker push {{user}}/{{name}}:{{version}}
-    docker push {{user}}/{{name}}:latest
+    docker push {{user}}/{{name}}:{{os}}-{{version}}
+    docker push {{user}}/{{name}}:{{os}}-latest
 
-buildx:
+build-arm64:
+    echo {{version}}
+    echo {{name}}
+    docker build -t {{user}}/{{name}}:arm64-{{version}} .
+
+tag-arm64:
+    docker tag {{user}}/{{name}}:arm64-{{version}} {{user}}/{{name}}:arm64-latest
+
+push-arm64:
+    docker push {{user}}/{{name}}:arm64-{{version}}
+    docker push {{user}}/{{name}}:arm64-latest
+
+buildx-arm64:
     #!/usr/bin/env bash
     #--platform linux/arm/v7,linux/arm64/v8,linux/amd64 \
     docker buildx build \
-           --build-arg OPENSSL_LIB_DIR="/usr/lib/arm-linux-gnueabihf" \
            --push \
-           --platform linux/arm/v7 \
+           --platform linux/arm64 \
+           --tag {{user}}/{{name}}:{{os}}-{{version}} \
+           .
+
+buildx-amd64:
+    #!/usr/bin/env bash
+    #--platform linux/arm/v7,linux/arm64/v8,linux/amd64 \
+    docker buildx build \
+           --push \
+           --platform linux/amd64 \
            --tag {{user}}/{{name}}:{{version}} \
+           --file Dockerfile.amd64 \
            .
 
 run:
@@ -31,7 +53,7 @@ run:
                --init \
                --env_file croni.env \
                -v ${PWD}/crontab:/crontab \
-               {{user}}/{{name}}:{{version}}
+               {{user}}/{{name}}:{{os}}-{{version}}
 
 sh:
     docker run --rm \
@@ -40,6 +62,6 @@ sh:
                --init \
                --env-file croni.env \
                -v ${PWD}/crontab:/crontab \
-               {{user}}/{{name}}:{{version}} \
+               {{user}}/{{name}}:{{os}}-{{version}} \
                sh
 
