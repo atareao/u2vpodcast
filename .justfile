@@ -18,7 +18,9 @@ push:
 build-arm64:
     echo {{version}}
     echo {{name}}
-    docker build -t {{user}}/{{name}}:arm64-{{version}} .
+    docker build -t {{user}}/{{name}}:arm64-{{version}} \
+                 --platform linux/arm64 \
+                 --file ./Dockerfile.arm64 .
 
 tag-arm64:
     docker tag {{user}}/{{name}}:arm64-{{version}} {{user}}/{{name}}:arm64-latest
@@ -33,7 +35,8 @@ buildx-arm64:
     docker buildx build \
            --push \
            --platform linux/arm64 \
-           --tag {{user}}/{{name}}:{{os}}-{{version}} \
+           --file ./Dockerfile.arm64 \
+           --tag {{user}}/{{name}}:arm64-{{version}} \
            .
 
 buildx-amd64:
