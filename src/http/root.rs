@@ -6,24 +6,31 @@ use axum::{
         IntoResponse,
         Html,
     },
-    http::header::{self, HeaderValue}, extract::Path,
+    http::header::{self, HeaderValue},
+    extract::{Path, Query},
 };
 use tera::{Tera, Context};
 
-use crate::{ http::ApiContext, models::episode::Episode};
+use crate::{
+    http::ApiContext,
+    models::{
+        episode::Episode,
+        parameters::Parameters,
+    }
+};
 
 pub fn router() -> Router {
     Router::new()
         .route("/favicon.ico",
             get(favicon)
         )
-        .route("/",
+        .route("/status",
             get(get_root)
         )
-        .route("/channels",
+        .route("/",
             get(get_channels)
         )
-        .route("/channels/:path",
+        .route("/:path",
             get(get_podcast)
         )
 }
@@ -62,14 +69,31 @@ async fn get_podcast(
     ctx: Extension<ApiContext>,
     t: Extension<Tera>,
     Path(path): Path<String>,
+    parameters: Query<Parameters>
 ) -> impl IntoResponse{
+    let per_page = ctx.config.get_page();
+    let total = Episode::number_of_episodes(&ctx.pool, &path).await / per_page;
+    let page = match parameters.page {
+        Some(value) =>  {
+            if value > 0 {
+                value
+            }else{
+                1
+            }
+        },
+        None => 1,
+
+    };
     let mut context = Context::new();
-    match Episode::read_all_in_channel(&ctx.pool, &path).await{
+    match Episode::read_with_pagination_in_channel(&ctx.pool, &path, page, per_page).await{
         Ok(episodes) => {
             let base_url = ctx.config.get_url();
             context.insert("title", &path);
             context.insert("base_url", base_url);
             context.insert("episodes", &episodes);
+            context.insert("page", &page);
+            context.insert("per_page", &per_page);
+            context.insert("total", &total);
             Html(t.render("podcast.html", &context).unwrap())
         },
         Err(_) => {

@@ -13,6 +13,7 @@ pub struct Configuration{
     password: String,
     with_authentication: bool,
     url: String,
+    per_page: i64,
     cookies: String,
     channels: Vec<Channel>
 }
@@ -29,6 +30,9 @@ impl Configuration {
     }
     pub fn get_sleep_time(&self) -> u64{
         self.sleep_time
+    }
+    pub fn get_page(&self) -> i64{
+        self.per_page
     }
     pub fn get_port(&self) -> u16{
         self.port
