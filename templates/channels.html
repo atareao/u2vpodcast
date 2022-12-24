@@ -6,8 +6,8 @@
 <table>
     {% for channel in channels %}
     <tr>
-        <td><img src="{{ channel.image }}" alt="{{ channel.title }}" width="64" height="64"></td>
-        <td><a href="/channels/{{ channel.id }}">{{ channel.title }}</a></td>
+        <td><img src="{{ channel.image }}" alt="{{ channel.title }}" width="128" height="128"></td>
+        <td><a href="/{{ channel.id }}?page=1">{{ channel.title }}</a></td>
     </tr>
     {% endfor %}
 </table>
