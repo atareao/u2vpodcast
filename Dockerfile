@@ -50,6 +50,7 @@ WORKDIR /app
 COPY entrypoint.sh /app/
 COPY migrations/ /app/migrations/
 COPY templates/ /app/templates/
+COPY assets/ /app/assets/
 # Copy our build
 COPY --from=builder /app/$APP /app/
 
