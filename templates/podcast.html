@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock title %}
-
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="/assets/pagination.css"></link>
+{% endblock head %}
 {% block main %}
 <h1>{{ title }}</h1>
 <table>
     {% for episode in episodes %}
     <tr>
+        <td><img src="{{ episode.image }}" alt="{{ episode.title }}" width="128" height="128"></td>
         <td>{{ episode.title }}</td>
     </tr>
     <tr>
@@ -17,5 +21,19 @@
     </tr>
     {% endfor %}
 </table>
-{% endblock main %}
 
+<nav data-pagination>
+    <ul>
+        {% if page > 1 %}<a href="/{{ title }}?page=1">1</a>{% endif %}
+        {% if page > 4 %}<li><a href="/{{ title }}?page={{ page / 2 | int }}">...</a></li>{% endif %}
+        {% if page > 3 %}<li><a href="/{{ title }}?page={{ page - 2 }}">{{ page - 2 }}</a></li>{% endif %}
+        {% if page > 2 %}<li><a href="/{{ title }}?page={{ page - 1 }}">{{ page - 1 }}</a></li>{% endif %}
+        <li class="current"><a href="/{{ title }}?page={{ page }}">{{ page }}</a></i>
+        {% if page < total - 1 %}<li><a href="/{{ title }}?page={{ page + 1 }}">{{ page + 1 }}</a></li>{% endif %}
+        {% if page < total - 2 %}<li><a href="/{{ title }}?page={{ page + 2 }}">{{ page + 2 }}</a></li>{% endif %}
+        {% if page < total - 3 %}<li><a href="/{{ title }}?page={{ (total + page) / 2 | int}}">...</a></li>{% endif %}
+        {% if page < total %}<a href="/{{ title }}?page={{ total }}">{{ total }}</a>{% endif %}
+    </ul>
+</nav>
+
+{% endblock main %}
