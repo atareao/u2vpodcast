@@ -45,6 +45,8 @@ If you need to run [u2vpodcast](https://github.com/atareao/u2vpodcast) behind re
 docker-compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
 ```
 
+After that, go to `https://u2vpodcast.tuservidor.com` and you can find a list of the channels.
+
 ### Contributing
 
 ### License
