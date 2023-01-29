@@ -1,14 +1,18 @@
 ###############################################################################
 ## Builder
 ###############################################################################
-FROM rust:latest AS builder
+FROM rust:1.64 AS builder
 
 LABEL maintainer="Lorenzo Carbonell <a.k.a. atareao> lorenzo.carbonell.cerezo@gmail.com"
 
-ARG TARGETARCH=x86_64-unknown-linux-musl
-ENV RUST_MUSL_CROSS_TARGET=$TARGETARCH
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ENV RUST_MUSL_CROSS_TARGET=$TARGETPLATFORM
 
-RUN rustup target add $TARGETARCH && \
+COPY ./platform.sh /platform.sh
+RUN /platform.sh
+
+RUN rustup target add "$(cat /.target)" && \
     apt-get update && \
     apt-get install -y \
         --no-install-recommends\
@@ -26,8 +30,8 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src src
 
-RUN cargo build --release --target $TARGETARCH && \
-    cp /app/target/$TARGETARCH/release/u2vpodcast /app/u2vpodcast
+RUN cargo build --release --target $(cat /.target) && \
+    cp /app/target/$(cat /.target)/release/u2vpodcast /app/u2vpodcast
 
 ###############################################################################
 ## Final image
