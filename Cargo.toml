@@ -38,3 +38,7 @@ filetime = "0.2"
 
 # RSS
 rss = "2.0"
+
+[dependencies.rusqlite]
+version = "0.27"
+features = ["bundled"]
