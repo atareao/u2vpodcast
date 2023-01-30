@@ -3,19 +3,32 @@ use serde_yaml::Error;
 
 use crate::models::channel::Channel;
 
+const DEFAULT_SLEEP_TIME: u64 = 1;
+const DEFAULT_PER_PAGE: i64 = 10;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Configuration{
     log_level: String,
     db_url: String,
     port: u16,
+    #[serde(default = "get_default_sleep_time")]
     sleep_time: u64,
     username: String,
     password: String,
     with_authentication: bool,
     url: String,
+    #[serde(default = "get_default_per_page")]
     per_page: i64,
     cookies: String,
     channels: Vec<Channel>
+}
+
+fn get_default_sleep_time() -> u64{
+    return DEFAULT_SLEEP_TIME;
+}
+
+fn get_default_per_page() -> i64{
+    return DEFAULT_PER_PAGE;
 }
 
 impl Configuration {
