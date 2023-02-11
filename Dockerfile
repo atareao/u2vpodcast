@@ -36,14 +36,11 @@ RUN cargo build --release --target $(cat /.target) && \
 ###############################################################################
 ## Final image
 ###############################################################################
-FROM alpine:3.16
-
-ARG APP=u2vpodcast
+FROM alpine:3.17
 
 RUN apk add --update --no-cache \
             su-exec~=0.2 \
-            tzdata~=2022 \
-            ffmpeg~=5.0 \
+            ffmpeg~=5.1 \
             yt-dlp~=2022 &&\
     rm -rf /var/cache/apk && \
     rm -rf /var/lib/app/lists*
@@ -56,7 +53,7 @@ COPY migrations/ /app/migrations/
 COPY templates/ /app/templates/
 COPY assets/ /app/assets/
 # Copy our build
-COPY --from=builder /app/$APP /app/
+COPY --from=builder /app/u2vpodcast /app/
 
 ENTRYPOINT ["/bin/sh", "/app/entrypoint.sh"]
 CMD ["/app/u2vpodcast"]
