@@ -18,3 +18,4 @@ ytpodcast.db
 ytpodcast.db*
 media
 *.db*
+audios/
