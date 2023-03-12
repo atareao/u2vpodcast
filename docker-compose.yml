@@ -5,8 +5,6 @@ services:
     image: atareao/u2vpodcast:latest
     container_name: u2vpodcast
     init: true
-    env_file:
-      - .env
     restart: always
     volumes:
       - ./audios:/app/audios
