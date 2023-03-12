@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use std::fmt::{self, Display};
 use regex::Regex;
+use chrono::{DateTime, Utc, NaiveDateTime};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
@@ -8,6 +9,8 @@ pub struct Channel {
     title: String,
     description: String,
     image: Option<String>,
+    #[serde(default = "get_default_first")]
+    first: DateTime<Utc>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -17,6 +20,10 @@ pub struct ChannelWithId {
     title: String,
     description: String,
     image: Option<String>,
+}
+
+fn get_default_first() -> DateTime<Utc>{
+    DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc)
 }
 
 impl Display for Channel {
@@ -38,6 +45,9 @@ impl Channel{
     pub fn get_id(&self) -> String{
         let re = Regex::new(r"[^a-zA-Z0-9_-]").unwrap();
         re.replace_all(&self.get_title().to_lowercase(), "_").to_string()
+    }
+    pub fn get_first(&self) -> DateTime<Utc>{
+        self.first
     }
     pub fn get_url(&self) -> &str{
         &self.url
