@@ -1,5 +1,6 @@
-log_level: info
-db_url: sqlite:u2vpodcast.db
+dev: false
+log_level: debug
+db_url: sqlite:db/u2vpodcast.db
 port: 8080
 sleep_time: 1
 with_authentication: false
@@ -13,3 +14,8 @@ channels:
     title: Linux y Tapas
     description: Linux y Tapas
     image: https://yt3.googleusercontent.com/Q5_FzQWmSRc1d1gn0pFOcF7jhSwLZfwZt8zVTCe7eVsQRWO0PJazaRZF1mRGd-QMKWW3_HZPcg
+    first: "2020-01-01 00:00:00+00:00"
+  - url: https://www.youtube.com/playlist?list=PL3ei_Xb7-ic5g76Fyp0OL623MYGRZ2DSi
+    title: Divulgación informática
+    description: Divulgación informática
+    image: https://i.ytimg.com/vi/aMlcd8SFF-U/hqdefault.jpg
