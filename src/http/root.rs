@@ -72,9 +72,10 @@ async fn get_podcast(
     parameters: Query<Parameters>
 ) -> impl IntoResponse{
     let per_page = ctx.config.get_page();
-    let total = Episode::number_of_episodes(&ctx.pool, &path).await / per_page;
+    let total = Episode::number_of_episodes(&ctx.pool, &path).await / per_page + 1;
     let page = match parameters.page {
         Some(value) =>  {
+            tracing::debug!("Página solicitada: {}", value);
             if value > 0 {
                 value
             }else{
@@ -82,8 +83,8 @@ async fn get_podcast(
             }
         },
         None => 1,
-
     };
+    tracing::debug!("A leer la página: {}", page);
     let mut context = Context::new();
     match Episode::read_with_pagination_in_channel(&ctx.pool, &path, page, per_page).await{
         Ok(episodes) => {

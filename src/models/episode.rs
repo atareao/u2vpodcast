@@ -100,11 +100,13 @@ impl Episode{
     }
 
     pub async fn read_with_pagination_in_channel(pool: &SqlitePool, channel_id: &str, page: i64, per_page: i64) -> Result<Vec<Episode>, sqlx::Error>{
-        let sql = "SELECT * FROM episodes WHERE channel_id = $1 LIMIT $2 OFFSET $3";
+        tracing::debug!("Channel: {}. Página: {}. Páginas: {}", channel_id, page, per_page);
+        let offset = (page - 1) * per_page;
+        let sql = "SELECT * FROM episodes WHERE channel_id = $1 ORDER BY published_at DESC LIMIT $2 OFFSET $3";
         query(sql)
             .bind(channel_id)
             .bind(per_page)
-            .bind(page)
+            .bind(offset)
             .map(Self::from_row)
             .fetch_all(pool)
             .await
