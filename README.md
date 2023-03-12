@@ -45,7 +45,10 @@ If you need to run [u2vpodcast](https://github.com/atareao/u2vpodcast) behind re
 docker-compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
 ```
 
-After that, go to `https://u2vpodcast.tuservidor.com` and you can find a list of the channels.
+After that, go to `https://u2vpodcast.tuservidor.com` and you can find a list of the channels. In this page, you can find every channel you added to the configuration file. For example, with **Linux y Tapas**, you  can find,
+
+1. The channel: https://u2vpodcast.tuservidor.com/linux_y_tapas?page=1
+2. The feed: https://u2vpodcast.tuservidor.com/linux_y_tapas/feed.xml
 
 ### Contributing
 
