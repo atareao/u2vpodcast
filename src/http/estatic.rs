@@ -1,22 +1,20 @@
 use axum::{
     Router,
-    routing::get_service,
+    handler::HandlerWithoutStateExt,
     http::StatusCode,
-    response::IntoResponse,
 };
 use tower_http::services::ServeDir;
 
 pub fn router() -> Router {
+    let audios_server_dir = ServeDir::new("./audios")
+        .not_found_service(handle_error.into_service());
+    let assets_server_dir = ServeDir::new("./assets")
+        .not_found_service(handle_error.into_service());
     Router::new()
-        .nest_service(
-            "/media",
-            get_service(ServeDir::new("./audios"))
-        .handle_error(handle_error))
-        .nest_service(
-            "/assets",
-            get_service(ServeDir::new("./assets"))
-        .handle_error(handle_error))
+        .nest_service("/media", audios_server_dir)
+        .nest_service("/assets", assets_server_dir)
 }
-async fn handle_error(_err: tokio::io::Error) -> impl IntoResponse {
-    (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong...")
+
+async fn handle_error() -> (StatusCode, &'static str){
+    (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong...: ")
 }
