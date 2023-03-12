@@ -7,14 +7,18 @@ services:
     init: true
     restart: always
     volumes:
-      - ./audios:/app/audios
-      - ./cookies.txt:/app/cookies.txt
-      - ./config.yml:/app/config.yml
-      - ./db:/app/db
+      - audios:/app/audios
+      - db:/app/db
+      - ./cookies.txt:/app/cookies.txt:ro
+      - ./config.yml:/app/config.yml:ro
     networks:
       - proxy
     logging:
       driver: journald
+
+volumes:
+  audios: {}
+  db: {}
 
 networks:
   proxy:
