@@ -6,8 +6,19 @@
 <table>
     {% for channel in channels %}
     <tr>
-        <td><img src="{{ channel.image }}" alt="{{ channel.title }}" width="128" height="128"></td>
-        <td><a href="/{{ channel.id }}?page=1">{{ channel.title }}</a></td>
+        <td>
+            <a href="/{{ channel.id }}?page=1">
+                <img src="{{ channel.image }}" alt="{{ channel.title }}" width="128" height="128"></td>
+            </a>
+        <td>
+            <a href="/{{ channel.id }}/feed.xml">
+                <img src="/assets/rss.svg" alt="RSS" width="24px" style="margin-right: 15px;">
+            </a>
+            <a href="/{{ channel.id }}?page=1" >
+                {{ channel.title }}
+            </a>
+        </td>
+        <td>
     </tr>
     {% endfor %}
 </table>
