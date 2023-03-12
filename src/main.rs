@@ -4,7 +4,7 @@ use sqlx::SqlitePool;
 use tracing_subscriber::EnvFilter;
 use std::str::FromStr;
 use std::time;
-use std::{env, path::Path};
+use std::path::Path;
 use sqlx::{sqlite::SqlitePoolOptions, migrate::{Migrator, MigrateDatabase}};
 use tokio;
 use chrono::{DateTime, Utc, naive::{NaiveDate, NaiveDateTime}};
@@ -17,11 +17,13 @@ mod http;
 mod config;
 
 static FOLDER: &str = "/app/audios";
-static YTDLP: &str = "/usr/bin/yt-dlp";
+static YTDLP: &str = "/app/.local/bin/yt-dlp";
 
 #[tokio::main]
 async fn main(){
     let configuration = read_configuration().await;
+    let cookies = configuration.get_cookies();
+    let _ = tokio::fs::copy(cookies, "cookies-cp.txt").await;
 
     tracing_subscriber::registry()
         .with(EnvFilter::from_str(configuration.get_log_level()).unwrap())
@@ -33,11 +35,12 @@ async fn main(){
         sqlx::Sqlite::create_database(db_url).await.unwrap();
     }
 
-    let migrations = if env::var("RUST_ENV") == Ok("production".to_string()){
-        std::env::current_exe().unwrap().parent().unwrap().join("migrations")
-    }else{
+
+    let migrations = if configuration.get_dev() == true {
         let crate_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
         Path::new(&crate_dir).join("./migrations")
+    }else{
+        std::env::current_exe().unwrap().parent().unwrap().join("migrations")
     };
     println!("{}", &migrations.display());
 
@@ -71,20 +74,26 @@ async fn main(){
 #[allow(unused_must_use)]
 async fn do_the_work(pool: &SqlitePool){
     let configuration = &read_configuration().await;
-    let cookies = configuration.get_cookies();
 
-    let ytdlp = Ytdlp::new(YTDLP, cookies);
+    let ytdlp = Ytdlp::new(YTDLP, "cookies-cp.txt");
     let now = Utc::now();
     for a_channel in configuration.get_channels().as_slice(){
         let channel_id = &a_channel.get_id();
         tokio::fs::create_dir_all(format!("{}/{}", FOLDER, &a_channel.get_id()))
             .await;
         tracing::info!("Getting new videos for channel: {}", a_channel);
+        let first = a_channel.get_first();
         let last = if Episode::number_of_episodes(pool, channel_id).await > 0{
-            Episode::get_max_date(pool, &a_channel.get_id()).await
+            let last = Episode::get_max_date(pool, &a_channel.get_id()).await;
+            if last < first{
+                first
+            }else{
+                last
+            }
         }else{
-            DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc)
+            first
         };
+        tracing::info!("Last video: {}", &last);
         let days = (now.timestamp() - last.timestamp())/86400;
         tracing::info!("Number of days: {}", days);
         match ytdlp.get_latest(&a_channel.get_url(), days).await{
