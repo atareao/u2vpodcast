@@ -6,6 +6,7 @@ services:
     container_name: u2vpodcast
     init: true
     restart: always
+    dns: "8.8.8.8"
     volumes:
       - audios:/app/audios
       - db:/app/db
