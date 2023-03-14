@@ -9,14 +9,7 @@ LABEL maintainer="Lorenzo Carbonell <a.k.a. atareao> lorenzo.carbonell.cerezo@gm
 ENV USER=app
 ENV UID=10001
 
-ARG TARGETPLATFORM
-ARG BUILDPLATFORM
-ENV RUST_MUSL_CROSS_TARGET=$TARGETPLATFORM
-
-COPY ./platform.sh /platform.sh
-RUN /platform.sh
-
-RUN rustup target add "$(cat /.target)" && \
+RUN rustup target add x86_64-unknown-linux-musl && \
     apt-get update && \
     apt-get install -y \
         --no-install-recommends\
@@ -42,8 +35,8 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src src
 
-RUN cargo build --release --target $(cat /.target) && \
-    cp /app/target/$(cat /.target)/release/u2vpodcast /app/u2vpodcast
+RUN cargo build --release --target x86_64-unknown-linux-musl && \
+    cp /app/target/x86_64-unknown-linux-musl/release/u2vpodcast /app/u2vpodcast
 
 ###############################################################################
 ## Final image
