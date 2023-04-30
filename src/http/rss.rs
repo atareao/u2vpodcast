@@ -33,9 +33,11 @@ async fn feed(
                 .summary(Some(episode.description.to_string()))
                 .explicit(Some("No".to_string()))
                 .episode_type(Some("Full".to_string()))
+                .duration(Some(episode.duration))
                 .build();
             let enclosure = EnclosureBuilder::default()
                 .url(&enclosure)
+                .mime_type("audio/mpeg".to_string())
                 .build();
             let guid = GuidBuilder::default()
                 .value(episode.yt_id)

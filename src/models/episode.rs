@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use sqlx::{sqlite::{SqlitePool, SqliteRow}, query, Row};
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, Utc, NaiveDateTime };
+use std::time::{UNIX_EPOCH, Duration};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Episode {
@@ -10,6 +11,7 @@ pub struct Episode {
     pub description: String,
     pub yt_id: String,
     pub published_at: DateTime<Utc>,
+    pub duration: String,
     pub image: String,
     pub listen: bool,
 }
@@ -21,6 +23,7 @@ pub struct NewEpisode {
     pub description: String,
     pub yt_id: String,
     pub published_at: DateTime<Utc>,
+    pub duration: String,
     pub image: String,
     pub listen: bool,
 }
@@ -34,6 +37,7 @@ impl Episode{
             description: row.get("description"),
             yt_id: row.get("yt_id"),
             published_at: row.get("published_at"),
+            duration: row.get("duration"),
             image: row.get("image"),
             listen: row.get("listen"),
         }
@@ -41,17 +45,18 @@ impl Episode{
 
     pub async fn create(pool: &SqlitePool, channel_id: &str, title: &str,
             description: &str, yt_id: &str,  published_at: &DateTime<Utc>,
-            image: &str, listen: bool
+            duration: &str, image: &str, listen: bool
     ) -> Result<Episode, sqlx::Error>{
         let sql = "INSERT INTO episodes (channel_id, title, description, yt_id,
-                   published_at, image, listen)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;";
+                   published_at, duration, image, listen)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;";
         query(sql)
             .bind(channel_id)
             .bind(title)
             .bind(description)
             .bind(yt_id)
             .bind(published_at)
+            .bind(get_duration(duration))
             .bind(image)
             .bind(listen)
             .map(Self::from_row)
@@ -146,8 +151,8 @@ impl Episode{
     pub async fn update(pool: &SqlitePool, episode: Episode) -> Result<Episode, sqlx::Error>{
         let sql = "UPDATE episodes SET channel_id = $2, title = $3,
                    description = $4, yt_id = $5, published_at = $6,
-                   image = $7, listen = $8 FROM episodes WHERE id = $1
-                   RETURNING * ;";
+                   duration =$7, image = $8, listen = $9
+                    FROM episodes WHERE id = $1 RETURNING * ;";
         query(sql)
             .bind(episode.id)
             .bind(episode.channel_id)
@@ -155,6 +160,7 @@ impl Episode{
             .bind(episode.description)
             .bind(episode.yt_id)
             .bind(episode.published_at)
+            .bind(episode.duration)
             .bind(episode.image)
             .bind(episode.listen)
             .map(Self::from_row)
@@ -163,13 +169,25 @@ impl Episode{
     }
     #[allow(dead_code)]
     pub async fn delete(pool: &SqlitePool, id: i64) -> Result<Episode, sqlx::Error>{
-        let sql = "DELETE from episodes WHERE id = $1
-                   RETURNING id, channel_id, title, description, yt_id,
-                   published_at, image, listen;";
+        let sql = "DELETE from episodes WHERE id = $1 RETURNING * ;";
         query(sql)
             .bind(id)
             .map(Self::from_row)
             .fetch_one(pool)
             .await
     }
+}
+
+fn get_duration(duration_str: &str) -> String{
+    let partes: Vec<i64> = duration_str.split(':').map(|x| x.parse::<i64>().unwrap()).collect();
+    let mut valor = 0;
+    for (i, parte) in partes.into_iter().rev().enumerate(){
+        valor += parte * 60_i64.pow(i.try_into().unwrap());
+    }
+    // Creates a new SystemTime from the specified number of whole seconds
+    let d = UNIX_EPOCH + Duration::from_secs(valor.try_into().unwrap());
+    // Create DateTime from SystemTime
+    let datetime = DateTime::<Utc>::from(d);
+    // Formats the combined date and time with the specified format string.
+    datetime.format("%H:%M:%S").to_string()
 }

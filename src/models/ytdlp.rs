@@ -13,6 +13,7 @@ pub struct YtVideo{
     pub description: String,
     pub thumbnail: String,
     pub upload_date: String,
+    pub duration_string: String,
 }
 
 impl Ytdlp {

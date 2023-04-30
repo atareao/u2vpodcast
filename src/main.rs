@@ -2,12 +2,12 @@ use models::episode::Episode;
 use models::ytdlp::Ytdlp;
 use sqlx::SqlitePool;
 use tracing_subscriber::EnvFilter;
-use std::str::FromStr;
 use std::time;
 use std::path::Path;
 use sqlx::{sqlite::SqlitePoolOptions, migrate::{Migrator, MigrateDatabase}};
 use tokio;
-use chrono::{DateTime, Utc, naive::{NaiveDate, NaiveDateTime}};
+use chrono::{DateTime,  Utc, naive::{NaiveDate, NaiveDateTime}};
+use std::str::FromStr;
 use std::process;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use crate::config::Configuration;
@@ -111,6 +111,7 @@ async fn do_the_work(pool: &SqlitePool){
                         let title = &ytvideo.title;
                         let description = &ytvideo.description;
                         let yt_id = &ytvideo.id;
+                        let duration = &ytvideo.duration_string;
                         tracing::info!("{}", &ytvideo.upload_date);
                         let published_at = parse_date(&ytvideo.upload_date);
                         filetime::set_file_mtime(
@@ -121,8 +122,8 @@ async fn do_the_work(pool: &SqlitePool){
                         let image = &ytvideo.thumbnail;
                         let listen = false;
                         match Episode::create(pool, channel_id, title,
-                                description, yt_id, &published_at, image,
-                                listen).await{
+                                description, yt_id, &published_at, duration,
+                                image, listen).await{
                             Ok(_) => {
                                 tracing::info!("Creaded episode: {}", title);
                             },
