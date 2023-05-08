@@ -6,7 +6,7 @@ use std::time::{UNIX_EPOCH, Duration};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Episode {
     pub id: i64,
-    pub channel_id: String,
+    pub channel_id: i64,
     pub title: String,
     pub description: String,
     pub yt_id: String,
@@ -18,7 +18,7 @@ pub struct Episode {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NewEpisode {
-    pub channel_id: String,
+    pub channel_id: i64,
     pub title: String,
     pub description: String,
     pub yt_id: String,
