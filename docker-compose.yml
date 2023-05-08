@@ -13,8 +13,6 @@ services:
       - ./config.yml:/app/config.yml:ro
     networks:
       - proxy
-    logging:
-      driver: journald
 
 volumes:
   audios: {}

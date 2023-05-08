@@ -6,7 +6,6 @@ services:
     container_name: u2vpodcast
     init: true
     restart: always
-    dns: "8.8.8.8"
     volumes:
       - audios:/app/audios
       - db:/app/db
@@ -14,8 +13,6 @@ services:
       - ./config.yml:/app/config.yml
     ports:
       - 8080:8080
-    logging:
-      driver: journald
 
 volumes:
   audios: {}
