@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS episodes(
     description TEXT NOT NULL,
     yt_id TEXT NOT NULL,
     published_at DATETIME NOT NULL,
+    duration TEXT NOT NULL,
     image TEXT NOT NULL,
     listen BOOLEAN NOT NULL,
     UNIQUE(channel_id, yt_id)
