@@ -12,10 +12,6 @@ A service to create your podcasts from your favourites YouTube Channels
 
 With docker-compose
 
-```
-mkdir audios db
-```
-
 * Change `docker-compose` and copy `sample.env` to `.env`. Change `.env` as you need.
 * Create `cookies.txt` from your YouTube cookies.
 
