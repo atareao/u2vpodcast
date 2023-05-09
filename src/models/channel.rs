@@ -42,7 +42,7 @@ impl Channel{
 
     pub async fn create(pool: &SqlitePool, url: &str, title: &str,
         description: &str, image: &str, first: &DateTime<Utc>)
-            -> Result<Channel, sqlx::Error<{
+            -> Result<Channel, sqlx::Error>{
         let sql = "INSERT INTO channels (url, title, description, image, first) 
                    VALUES ($1, $2, $3, $4, $5) RETURNING *;";
         query(sql)
@@ -55,10 +55,93 @@ impl Channel{
             .fetch_one(pool)
             .await
     }
+
+    pub async fn number_of_channels(pool: &SqlitePool) -> i64{
+        let sql = "SELECT count(*) FROM channels";
+        match query(sql)
+            .map(|row: SqliteRow| -> i64 {row.get(0)})
+            .fetch_one(pool)
+            .await {
+                Ok(value) => value,
+                Err(e) => {
+                    tracing::info!("Error on exists {}", e);
+                    0
+                }
+            }
+    }
+
+    pub async fn exists(pool: &SqlitePool, url: &str) -> bool{
+        let sql = "SELECT count(*) FROM channels WHERE url = $1";
+        match query(sql)
+            .bind(url)
+            .map(|row: SqliteRow| -> i64 {row.get(0)})
+            .fetch_one(pool)
+            .await {
+                Ok(value) => value > 0,
+                Err(e) => {
+                    tracing::info!("Error on exists {}", e);
+                    false
+                }
+            }
+    }
+
+    pub async fn read(pool: &SqlitePool, id: i64) -> Result<Vec<Channel>, Sqlx::Error>{
+        let sql = "SELECT * FROM channels WHERE id = $1";
+        query(sql)
+            .bind(id)
+            .map(Self::from_row)
+            .fetch_all(pool)
+            .await
+    }
+
+    pub async fn read_with_pagination(pool: &SqlitePool, page: i64, per_page: i64) -> Result<Vec<Channel>, sqlx::Error>{
+        tracing::debug!("Página: {}. Páginas: {}", page, per_page);
+        let offset = (page - 1) * per_page;
+        let sql = "SELECT * FROM channels WHERE ORDER BY title ASC LIMIT $2 OFFSET $3";
+        query(sql)
+            .bind(per_page)
+            .bind(offset)
+            .map(Self::from_row)
+            .fetch_all(pool)
+            .await
+    }
+
+    pub async fn read_all(pool: &SqlitePool) -> Result<Vec<Channel>, sqlx::Error>{
+        let sql = "SELECT * FROM channels";
+        query(sql)
+            .map(Self::from_row)
+            .fetch_all(pool)
+            .await
+    }
+
+    pub async fn update(pool: &SqlitePool, channel: Channel) -> Result<Channel, sqlx::Error>{
+        let sql = "UPDATE channels SET url = $2, title = $3,
+                   description = $4, image = $5, first = $6
+                    FROM channels WHERE id = $1 RETURNING * ;";
+        query(sql)
+            .bind(channel.id)
+            .bind(channel.url)
+            .bind(channel.title)
+            .bind(channel.description)
+            .bind(channel.image)
+            .bind(channel.first)
+            .map(Self::from_row)
+            .fetch_one(pool)
+            .await
+    }
+
+    pub async fn delete(pool: &SqlitePool, id: i64) -> Result<Channel, sqlx::Error>{
+        let sql = "DELETE from channels WHERE id = $1 RETURNING * ;";
+        query(sql)
+            .bind(id)
+            .map(Self::from_row)
+            .fetch_one(pool)
+            .await
+    }
 }
 
 impl Display for Channel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({}, {})", self.id, self.url)
+        write!(f, "{}. {}: {}", self.id, self.title, self.url)
     }
 }
