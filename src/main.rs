@@ -1,4 +1,4 @@
-use models::episode::Episode;
+use models::{episode::Episode, channel::Channel};
 use models::ytdlp::Ytdlp;
 use sqlx::SqlitePool;
 use tracing_subscriber::EnvFilter;
@@ -73,11 +73,13 @@ async fn main(){
 
 #[allow(unused_must_use)]
 async fn do_the_work(pool: &SqlitePool){
-    let configuration = &read_configuration().await;
-
     let ytdlp = Ytdlp::new(YTDLP, "cookies-cp.txt");
     let now = Utc::now();
-    for a_channel in configuration.get_channels().as_slice(){
+    let channels = match Channel::read_all(&pool).await{
+        Ok(channels) => channels,
+        Err(_) => Vec::new(),
+    };
+    for a_channel in channels{
         let channel_id = a_channel.get_id();
         tokio::fs::create_dir_all(format!("{}/{}", FOLDER, &a_channel.get_id()))
             .await;
