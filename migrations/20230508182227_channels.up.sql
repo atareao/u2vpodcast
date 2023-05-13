@@ -7,10 +7,10 @@
 --     first: NaiveDateTime,
 -- }
 CREATE TABLE IF NOT EXISTS channels(
-    id INTEGER PRIMARY KEY AUTOINCREMENT NO NULL,
-    url TEXT NOT NULL,
-    title TEXT NOT NULL,
-    descritpion TEXT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    url TEXT NOT NULL UNIQUE,
+    title TEXT NOT NULL UNIQUE,
+    description TEXT,
     image TEXT,
     first DATETIME NOT NULL
 )
