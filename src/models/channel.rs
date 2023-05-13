@@ -1,7 +1,6 @@
 use serde::{Serialize, Deserialize};
 use sqlx::{sqlite::{SqlitePool, SqliteRow}, query, Row};
 use std::fmt::{self, Display};
-use regex::Regex;
 use chrono::{DateTime, Utc, NaiveDateTime};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -38,6 +37,30 @@ impl Channel{
             image: row.get("image"),
             first: row.get("first"),
         }
+    }
+
+    pub fn get_id(&self) -> i64{
+        return self.id
+    }
+
+    pub fn get_image(&self) -> Option<String>{
+        self.image.clone()
+    }
+
+    pub fn get_description(&self) -> String{
+        self.description.clone()
+    }
+
+    pub fn get_title(&self) -> String{
+        self.title.clone()
+    }
+
+    pub fn get_url(&self) -> String{
+        self.url.clone()
+    }
+
+    pub fn get_first(&self) -> DateTime<Utc>{
+        self.first.clone()
     }
 
     pub async fn create(pool: &SqlitePool, url: &str, title: &str,
@@ -85,7 +108,7 @@ impl Channel{
             }
     }
 
-    pub async fn read(pool: &SqlitePool, id: i64) -> Result<Vec<Channel>, Sqlx::Error>{
+    pub async fn read(pool: &SqlitePool, id: i64) -> Result<Vec<Channel>, sqlx::Error>{
         let sql = "SELECT * FROM channels WHERE id = $1";
         query(sql)
             .bind(id)
