@@ -63,17 +63,16 @@ impl Channel{
         self.first.clone()
     }
 
-    pub async fn create(pool: &SqlitePool, url: &str, title: &str,
-        description: &str, image: &str, first: &DateTime<Utc>)
+    pub async fn create(pool: &SqlitePool, new_channel: NewChannel)
             -> Result<Channel, sqlx::Error>{
         let sql = "INSERT INTO channels (url, title, description, image, first) 
                    VALUES ($1, $2, $3, $4, $5) RETURNING *;";
         query(sql)
-            .bind(url)
-            .bind(title)
-            .bind(description)
-            .bind(image)
-            .bind(first)
+            .bind(new_channel.url)
+            .bind(new_channel.title)
+            .bind(new_channel.description)
+            .bind(new_channel.image)
+            .bind(new_channel.first)
             .map(Self::from_row)
             .fetch_one(pool)
             .await
