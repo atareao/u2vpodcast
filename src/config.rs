@@ -77,7 +77,7 @@ impl Configuration {
     pub fn get_channels(&self) -> &Vec<Channel>{
         &self.channels
     }
-    pub fn get_channel(&self, id: &str) -> Option<Channel>{
+    pub fn get_channel(&self, id: i64) -> Option<Channel>{
         tracing::info!("Searching: {}", id);
         for channel in self.channels.as_slice(){
             tracing::info!("{} : {}", channel.get_id(), id);

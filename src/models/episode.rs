@@ -43,7 +43,7 @@ impl Episode{
         }
     }
 
-    pub async fn create(pool: &SqlitePool, channel_id: &str, title: &str,
+    pub async fn create(pool: &SqlitePool, channel_id: i64, title: &str,
             description: &str, yt_id: &str,  published_at: &DateTime<Utc>,
             duration: &str, image: &str, listen: bool
     ) -> Result<Episode, sqlx::Error>{
@@ -64,7 +64,7 @@ impl Episode{
             .await
     }
 
-    pub async fn number_of_episodes(pool: &SqlitePool, channel_id: &str) -> i64{
+    pub async fn number_of_episodes(pool: &SqlitePool, channel_id: i64) -> i64{
         let sql = "SELECT count(*) FROM episodes WHERE channel_id = $1";
         match query(sql)
             .bind(channel_id)
@@ -79,7 +79,7 @@ impl Episode{
             }
     }
 
-    pub async fn exists(pool: &SqlitePool, channel_id: &str, yt_id: &str) -> bool{
+    pub async fn exists(pool: &SqlitePool, channel_id: i64, yt_id: &str) -> bool{
         let sql = "SELECT count(*) FROM episodes WHERE channel_id = $1 AND yt_id = $2";
         match query(sql)
             .bind(channel_id)
@@ -104,7 +104,7 @@ impl Episode{
             .await
     }
 
-    pub async fn read_with_pagination_in_channel(pool: &SqlitePool, channel_id: &str, page: i64, per_page: i64) -> Result<Vec<Episode>, sqlx::Error>{
+    pub async fn read_with_pagination_in_channel(pool: &SqlitePool, channel_id: i64, page: i64, per_page: i64) -> Result<Vec<Episode>, sqlx::Error>{
         tracing::debug!("Channel: {}. Página: {}. Páginas: {}", channel_id, page, per_page);
         let offset = (page - 1) * per_page;
         let sql = "SELECT * FROM episodes WHERE channel_id = $1 ORDER BY published_at DESC LIMIT $2 OFFSET $3";
@@ -124,7 +124,7 @@ impl Episode{
             .fetch_all(pool)
             .await
     }
-    pub async fn read_all_in_channel(pool: &SqlitePool, channel_id: &str) -> Result<Vec<Episode>, sqlx::Error>{
+    pub async fn read_all_in_channel(pool: &SqlitePool, channel_id: i64) -> Result<Vec<Episode>, sqlx::Error>{
         let sql = "SELECT * FROM episodes WHERE channel_id = $1";
         query(sql)
             .bind(channel_id)
@@ -132,7 +132,7 @@ impl Episode{
             .fetch_all(pool)
             .await
     }
-    pub async fn get_max_date(pool: &SqlitePool, channel_id: &str) -> DateTime<Utc>{
+    pub async fn get_max_date(pool: &SqlitePool, channel_id: i64) -> DateTime<Utc>{
         let sql = "SELECT MAX(published_at) as last_date FROM episodes WHERE channel_id = $1";
         match query(sql)
             .bind(channel_id)
