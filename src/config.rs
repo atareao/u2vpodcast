@@ -22,7 +22,6 @@ pub struct Configuration{
     #[serde(default = "get_default_per_page")]
     per_page: i64,
     cookies: String,
-    channels: Vec<Channel>
 }
 
 fn get_default_dev() -> bool{
@@ -73,18 +72,5 @@ impl Configuration {
     }
     pub fn get_cookies(&self) -> &str{
         &self.cookies
-    }
-    pub fn get_channels(&self) -> &Vec<Channel>{
-        &self.channels
-    }
-    pub fn get_channel(&self, id: i64) -> Option<Channel>{
-        tracing::info!("Searching: {}", id);
-        for channel in self.channels.as_slice(){
-            tracing::info!("{} : {}", channel.get_id(), id);
-            if channel.get_id() == id{
-                return Some(channel.clone())
-            }
-        }
-        None
     }
 }
