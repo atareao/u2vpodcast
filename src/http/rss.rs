@@ -5,7 +5,7 @@ use axum::{
     extract::Path,
     routing::get, response::{IntoResponse, Response},
 };
-use crate::models::episode::Episode;
+use crate::models::{episode::Episode, channel::Channel};
 use rss::{ChannelBuilder, ItemBuilder,
     extension::itunes::{ITunesItemExtensionBuilder, ITunesChannelExtensionBuilder}, 
     EnclosureBuilder, GuidBuilder};
@@ -20,14 +20,14 @@ pub fn router() -> Router {
 
 async fn feed(
     ctx: Extension<ApiContext>,
-    Path(path): Path<i64>,
+    Path(channel_id): Path<i64>,
 ) -> impl IntoResponse{
-    tracing::info!("path: {}", path);
-    if let Some(channel) = ctx.config.get_channel(path){
+    tracing::info!("path: {}", channel_id);
+    if let Ok(channel) = Channel::read(&ctx.pool, channel_id).await{
         let episodes = Episode::read_all_in_channel(&ctx.pool, channel.get_id()).await.unwrap();
         let mut items = Vec::new();
         for episode in episodes{
-            let enclosure = format!("{}/media/{}/{}.mp3", ctx.config.get_url(), &path, episode.yt_id);
+            let enclosure = format!("{}/media/{}/{}.mp3", ctx.config.get_url(), &channel_id, episode.yt_id);
             let itunes = ITunesItemExtensionBuilder::default()
                 .image(Some(episode.image))
                 .summary(Some(episode.description.to_string()))

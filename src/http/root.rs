@@ -1,7 +1,7 @@
 use axum::{
     Router,
     Extension,
-    routing::get,
+    routing,
     response::{
         IntoResponse,
         Html,
@@ -15,6 +15,7 @@ use crate::{
     http::ApiContext,
     models::{
         episode::Episode,
+        channel::Channel,
         parameters::Parameters,
     }
 };
@@ -22,16 +23,16 @@ use crate::{
 pub fn router() -> Router {
     Router::new()
         .route("/favicon.ico",
-            get(favicon)
+            routing::get(favicon)
         )
         .route("/status",
-            get(get_root)
+            routing::get(get_root)
         )
         .route("/",
-            get(get_channels)
+            routing::get(get_channels)
         )
         .route("/:path",
-            get(get_podcast)
+            routing::get(get_podcast)
         )
 }
 
@@ -56,12 +57,11 @@ async fn get_channels(
 ) -> impl IntoResponse{
     let mut context = Context::new();
     context.insert("title", "Channels");
-    let channels = ctx.config.get_channels();
-    let mut channels_with_id = Vec::new();
-    for channel in channels{
-        channels_with_id.push(channel);
-    }
-    context.insert("channels", &channels_with_id);
+    let channels = match Channel::read_all(&ctx.pool).await{
+        Ok(channels) => channels,
+        Err(_) => Vec::new(),
+    };
+    context.insert("channels", &channels);
     Html(t.render("channels.html", &context).unwrap())
 }
 
@@ -99,8 +99,11 @@ async fn get_podcast(
         },
         Err(_) => {
             context.insert("title", "Channels");
-            let channels = ctx.config.get_channels();
-            context.insert("channels", channels);
+            let channels: Vec<Channel> = match Channel::read_all(&ctx.pool).await{
+                Ok(channels) => channels,
+                Err(_) => Vec::new(),
+            };
+            context.insert("channels", &channels);
             Html(t.render("podcast.html", &context).unwrap())
 
         }

@@ -18,7 +18,7 @@ pub fn router() -> Router {
         .route("/api/v1/channels",
             routing::get(read_all)
         )
-        .route("/api/vi/channels",
+        .route("/api/v1/channels",
             routing::post(create)
         )
         .route("/api/v1/channels/:id",
@@ -34,12 +34,12 @@ pub fn router() -> Router {
 
 async fn read(
     ctx: Extension<ApiContext>,
-    Path(id): Path<i64>,
+    Path(channel_id): Path<i64>,
 ) -> impl IntoResponse{
-    if let Some(channel) = ctx.config.get_channel(id){
-        return (StatusCode::OK, Json(channel)).into_response()
+    match Channel::read(&ctx.pool, channel_id).await{
+        Ok(channel) => (StatusCode::OK, Json(channel)).into_response(),
+        Err(_) => YTPError::NotFound.into_response(),
     }
-    return YTPError::NotFound.into_response();
 }
 
 async fn read_all(
@@ -55,9 +55,13 @@ async fn create(
     ctx: Extension<ApiContext>,
     Json(new_channel): Json<NewChannel>,
 ) -> impl IntoResponse{
+    tracing::info!("Por aquí");
     match Channel::create(&ctx.pool, new_channel).await{
         Ok(channel) => return(StatusCode::OK, Json(channel)).into_response(),
-        Err(_) => YTPError::NotFound.into_response()
+        Err(e) => {
+            tracing::error!("Error: {}", e);
+            YTPError::NotFound.into_response()
+        }
     }
 }
 
