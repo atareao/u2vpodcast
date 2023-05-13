@@ -1,8 +1,57 @@
 {% extends "base.html" %}
 {% block title %}{{ title }}{% endblock title %}
+{% block head %}
+    {{ super() }}
+    <link rel="stylesheet" href="/assets/channels.css"></link>
+    <script src="/assets/channels.js"></script>
+{% endblock head %}
 
 {% block main %}
 <h1>{{ title }}</h1>
+<!-- Button to trigger the modal -->
+<article>
+    <button data-target="new-channel-dialog" onClick="toggleModal(event)">
+        New Channel
+    </button>
+</article>
+
+<!-- Modal -->
+<dialog id="new-channel-dialog">
+  <article>
+    <a href="#close"
+      aria-label="Close"
+      class="close"
+      data-target="new-channel-dialog"
+      onClick="toggleModal(event)">
+    </a>
+    <h3>New Channel Dialog</h3>
+    <form id="new-channel-form">
+        <fieldset>
+            <input type="url" name="url" placeholder="Url: https://..." pattern="https://.*"data-url="" required/>
+            <input name="title" placeholder="Title" data-title=""/>
+            <input name="description" placeholder="Description" data-description=""/>
+            <input type="url" name="image" placeholder="Image: https://..." pattern="https://.*"data-image=""/>
+            <input type="date" name="first" data-first=""/>
+        </fieldset>
+    </form>
+    <footer>
+      <a href="#cancel"
+        role="button"
+        class="secondary"
+        data-target="new-channel-dialog"
+        onClick="toggleModal(event)">
+        Cancel
+      </a>
+      <a href="#confirm"
+        role="button"
+        data-target="new-channel-dialog"
+        data-form="new-channel-form"
+        onClick="createNewChannel(event)">
+        Confirm
+      </a>
+    </footer>
+  </article>
+</dialog>
 <table>
     {% for channel in channels %}
     <tr>
