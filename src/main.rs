@@ -37,9 +37,11 @@ async fn main(){
 
 
     let migrations = if configuration.get_dev() == true {
+        tracing::info!("DEVELOP");
         let crate_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
         Path::new(&crate_dir).join("./migrations")
     }else{
+        tracing::info!("PRODUCTION");
         std::env::current_exe().unwrap().parent().unwrap().join("migrations")
     };
     println!("{}", &migrations.display());
@@ -79,6 +81,7 @@ async fn do_the_work(pool: &SqlitePool){
         Ok(channels) => channels,
         Err(_) => Vec::new(),
     };
+    tracing::debug!("Channels: {:?}", channels);
     for a_channel in channels{
         let channel_id = a_channel.get_id();
         tokio::fs::create_dir_all(format!("{}/{}", FOLDER, &a_channel.get_id()))
