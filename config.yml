@@ -1,4 +1,4 @@
-dev: false
+dev: true
 log_level: debug
 db_url: sqlite:db/u2vpodcast.db
 port: 8080
