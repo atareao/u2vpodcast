@@ -59,7 +59,7 @@ async fn get_channels(
     let channels = ctx.config.get_channels();
     let mut channels_with_id = Vec::new();
     for channel in channels{
-        channels_with_id.push(channel.get_complete());
+        channels_with_id.push(channel);
     }
     context.insert("channels", &channels_with_id);
     Html(t.render("channels.html", &context).unwrap())
@@ -68,11 +68,11 @@ async fn get_channels(
 async fn get_podcast(
     ctx: Extension<ApiContext>,
     t: Extension<Tera>,
-    Path(path): Path<String>,
+    Path(channel_id): Path<i64>,
     parameters: Query<Parameters>
 ) -> impl IntoResponse{
     let per_page = ctx.config.get_page();
-    let total = Episode::number_of_episodes(&ctx.pool, &path).await / per_page + 1;
+    let total = Episode::number_of_episodes(&ctx.pool, channel_id).await / per_page + 1;
     let page = match parameters.page {
         Some(value) =>  {
             tracing::debug!("Página solicitada: {}", value);
@@ -86,10 +86,10 @@ async fn get_podcast(
     };
     tracing::debug!("A leer la página: {}", page);
     let mut context = Context::new();
-    match Episode::read_with_pagination_in_channel(&ctx.pool, &path, page, per_page).await{
+    match Episode::read_with_pagination_in_channel(&ctx.pool, channel_id, page, per_page).await{
         Ok(episodes) => {
             let base_url = ctx.config.get_url();
-            context.insert("title", &path);
+            context.insert("title", &channel_id);
             context.insert("base_url", base_url);
             context.insert("episodes", &episodes);
             context.insert("page", &page);

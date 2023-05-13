@@ -25,9 +25,9 @@ pub fn router() -> Router {
 
 async fn read(
     ctx: Extension<ApiContext>,
-    extract::Path(id): extract::Path<String>,
+    extract::Path(id): extract::Path<i64>,
 ) -> impl IntoResponse{
-    if let Some(channel) = ctx.config.get_channel(&id){
+    if let Some(channel) = ctx.config.get_channel(id){
         return (StatusCode::OK, Json(channel)).into_response()
     }
     return YTPError::NotFound.into_response();

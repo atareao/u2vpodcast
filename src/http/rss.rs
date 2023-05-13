@@ -20,11 +20,11 @@ pub fn router() -> Router {
 
 async fn feed(
     ctx: Extension<ApiContext>,
-    Path(path): Path<String>,
+    Path(path): Path<i64>,
 ) -> impl IntoResponse{
     tracing::info!("path: {}", path);
-    if let Some(channel) = ctx.config.get_channel(&path){
-        let episodes = Episode::read_all_in_channel(&ctx.pool, &channel.get_id()).await.unwrap();
+    if let Some(channel) = ctx.config.get_channel(path){
+        let episodes = Episode::read_all_in_channel(&ctx.pool, channel.get_id()).await.unwrap();
         let mut items = Vec::new();
         for episode in episodes{
             let enclosure = format!("{}/media/{}/{}.mp3", ctx.config.get_url(), &path, episode.yt_id);

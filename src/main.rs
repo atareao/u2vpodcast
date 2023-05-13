@@ -78,13 +78,13 @@ async fn do_the_work(pool: &SqlitePool){
     let ytdlp = Ytdlp::new(YTDLP, "cookies-cp.txt");
     let now = Utc::now();
     for a_channel in configuration.get_channels().as_slice(){
-        let channel_id = &a_channel.get_id();
+        let channel_id = a_channel.get_id();
         tokio::fs::create_dir_all(format!("{}/{}", FOLDER, &a_channel.get_id()))
             .await;
         tracing::info!("Getting new videos for channel: {}", a_channel);
         let first = a_channel.get_first();
         let last = if Episode::number_of_episodes(pool, channel_id).await > 0{
-            let last = Episode::get_max_date(pool, &a_channel.get_id()).await;
+            let last = Episode::get_max_date(pool, a_channel.get_id()).await;
             if last < first{
                 first
             }else{
