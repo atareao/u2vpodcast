@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use sqlx::{sqlite::{SqlitePool, SqliteRow}, query, Row};
 use std::fmt::{self, Display};
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, NaiveDate, Utc, NaiveDateTime};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
@@ -19,8 +19,8 @@ pub struct NewChannel {
     pub url: String,
     pub title: String,
     pub description: String,
-    pub image: Option<String>,
-    pub first: DateTime<Utc>
+    pub image: String,
+    pub first: String
 }
 
 fn get_default_first() -> DateTime<Utc>{
@@ -65,14 +65,23 @@ impl Channel{
 
     pub async fn create(pool: &SqlitePool, new_channel: NewChannel)
             -> Result<Channel, sqlx::Error>{
+        tracing::info!("Data: {:?}", new_channel);
         let sql = "INSERT INTO channels (url, title, description, image, first) 
                    VALUES ($1, $2, $3, $4, $5) RETURNING *;";
+        let datetime = if new_channel.first.is_empty(){
+            DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc)
+        }else{
+            match NaiveDate::parse_from_str(&new_channel.first, "%Y-%d-%m"){
+                Ok(nd) => DateTime::<Utc>::from_utc(nd.and_hms(0, 0, 0), Utc),
+                Err(_) => DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
+            }
+        };
         query(sql)
             .bind(new_channel.url)
             .bind(new_channel.title)
             .bind(new_channel.description)
             .bind(new_channel.image)
-            .bind(new_channel.first)
+            .bind(datetime)
             .map(Self::from_row)
             .fetch_one(pool)
             .await
@@ -107,12 +116,12 @@ impl Channel{
             }
     }
 
-    pub async fn read(pool: &SqlitePool, id: i64) -> Result<Vec<Channel>, sqlx::Error>{
+    pub async fn read(pool: &SqlitePool, id: i64) -> Result<Channel, sqlx::Error>{
         let sql = "SELECT * FROM channels WHERE id = $1";
         query(sql)
             .bind(id)
             .map(Self::from_row)
-            .fetch_all(pool)
+            .fetch_one(pool)
             .await
     }
 
