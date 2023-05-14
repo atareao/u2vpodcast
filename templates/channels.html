@@ -8,24 +8,18 @@
 
 {% block main %}
 <h1>{{ title }}</h1>
-<!-- Button to trigger the modal -->
-<article>
-    <button data-target="new-channel-dialog" onClick="toggleModal(event)">
-        New Channel
-    </button>
-</article>
-
 <!-- Modal -->
-<dialog id="new-channel-dialog">
+
+<dialog id="channel-dialog">
   <article>
     <a href="#close"
       aria-label="Close"
       class="close"
-      data-target="new-channel-dialog"
+      data-target="channel-dialog"
       onClick="toggleModal(event)">
     </a>
     <h3>New Channel Dialog</h3>
-    <form id="new-channel-form">
+    <form id="channel-form">
         <fieldset>
             <input type="url" name="url" placeholder="Url: https://..." pattern="https://.*"data-url="" required/>
             <input name="title" placeholder="Title" data-title=""/>
@@ -38,14 +32,14 @@
       <a href="#cancel"
         role="button"
         class="secondary"
-        data-target="new-channel-dialog"
+        data-target="channel-dialog"
         onClick="toggleModal(event)">
         Cancel
       </a>
       <a href="#confirm"
         role="button"
-        data-target="new-channel-dialog"
-        data-form="new-channel-form"
+        data-target="channel-dialog"
+        data-form="channel-form"
         onClick="createNewChannel(event)">
         Confirm
       </a>
@@ -61,10 +55,21 @@
             </a>
         <td>
             <a href="/{{ channel.id }}/feed.xml">
-                <img src="/assets/rss.svg" alt="RSS" width="24px" style="margin-right: 15px;">
+                <img src="/assets/rss.svg" alt="RSS" width="32px" style="margin-right: 15px;">
             </a>
             <a href="/{{ channel.id }}?page=1" >
                 {{ channel.title }}
+            </a>
+        </td>
+        <td>
+            <a href="#" data-target="channel-dialog" onClick="toggleModal(event)">
+                <img src="/assets/new.svg" alt="RSS" width="32px" style="margin-right: 15px;">
+            </a>
+            <a href="/{{ channel.id }}/feed.xml">
+                <img src="/assets/edit.svg" alt="RSS" width="32px" style="margin-right: 15px;">
+            </a>
+            <a href="/{{ channel.id }}/feed.xml">
+                <img src="/assets/delete.svg" alt="RSS" width="32px" style="margin-right: 15px;">
             </a>
         </td>
         <td>
