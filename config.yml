@@ -3,12 +3,12 @@ log_level: debug
 db_url: sqlite:db/u2vpodcast.db
 port: 8080
 sleep_time: 1
-with_authentication: false
-username: username
-password: password
 url: http://localhost:8080
 cookies: cookies.txt
 per_page: 10
+jwt_secret: ''
+jwt_expires_in: ''
+jwt_maxage: 3600
 channels:
   - url: https://www.youtube.com/@linuxytapas2840/videos
     title: Linux y Tapas
