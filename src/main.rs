@@ -46,12 +46,19 @@ async fn main(){
     };
     println!("{}", &migrations.display());
 
-    let pool = SqlitePoolOptions::new()
+    let pool = match SqlitePoolOptions::new()
         .max_connections(2)
         .connect(db_url)
-        .await
-        .expect("Pool failed");
-
+        .await{
+            Ok(pool) => {
+                tracing::info!("✅Connection to the database is successful!");
+                pool
+            },
+            Err(err) => {
+                tracing::info!("🔥 Failed to connect to the database: {:?}", err);
+                std::process::exit(1);
+            }
+        };
     Migrator::new(migrations)
         .await
         .unwrap()
@@ -69,6 +76,7 @@ async fn main(){
             tokio::time::sleep(time::Duration::from_secs(sleep_time)).await;
         }
     });
+    tracing::info!("🚀 Server started successfully");
     http::serve(configuration, pool).await.unwrap();
 }
 
