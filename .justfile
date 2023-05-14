@@ -3,6 +3,12 @@ name    := `basename ${PWD}`
 version := `git tag -l  | tail -n1`
 os      := `uname -m`
 
+run:
+    cargo run --
+
+watch:
+    cargo watch -q -c -w src/ -x run
+
 build:
     echo {{version}}
     echo {{name}}
