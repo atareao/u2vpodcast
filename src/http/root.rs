@@ -5,6 +5,7 @@ use axum::{
     response::{
         IntoResponse,
         Html,
+        Json
     },
     http::header::{self, HeaderValue},
     extract::{Path, Query},
@@ -24,6 +25,9 @@ pub fn router() -> Router {
     Router::new()
         .route("/favicon.ico",
             routing::get(favicon)
+        )
+        .route("/healthcheck",
+            routing::get(healthcheck)
         )
         .route("/status",
             routing::get(get_root)
@@ -72,8 +76,15 @@ async fn get_channels(
 async fn login(
     t: Extension<Tera>,
 ) -> impl IntoResponse{
-    let mut context = Context::new();
+    let context = Context::new();
     Html(t.render("login.html", &context).unwrap())
+}
+
+async fn healthcheck() -> impl IntoResponse{
+    Json(serde_json::json!({
+        "status": "success",
+        "message": "Up and running"
+    }))
 }
 
 
