@@ -2,8 +2,7 @@
 {% block title %}{{ title }}{% endblock title %}
 {% block head %}
     {{ super() }}
-    <link rel="stylesheet" href="/assets/channels.css"></link>
-    <script src="/assets/channels.js"></script>
+    <script src="/assets/js/channels.js"></script>
 {% endblock head %}
 
 {% block main %}
@@ -55,7 +54,7 @@
             </a>
         <td>
             <a href="/{{ channel.id }}/feed.xml">
-                <img src="/assets/rss.svg" alt="RSS" width="32px" style="margin-right: 15px;">
+                <img src="/assets/icons/rss.svg" alt="RSS" width="32px" style="margin-right: 15px;">
             </a>
             <a href="/{{ channel.id }}?page=1" >
                 {{ channel.title }}
@@ -63,13 +62,13 @@
         </td>
         <td>
             <a href="#" data-target="channel-dialog" onClick="toggleModal(event)">
-                <img src="/assets/new.svg" alt="RSS" width="32px" style="margin-right: 15px;">
+                <img src="/assets/icons/new.svg" alt="RSS" width="32px" style="margin-right: 15px;">
             </a>
             <a href="/{{ channel.id }}/feed.xml">
-                <img src="/assets/edit.svg" alt="RSS" width="32px" style="margin-right: 15px;">
+                <img src="/assets/icons/edit.svg" alt="RSS" width="32px" style="margin-right: 15px;">
             </a>
             <a href="/{{ channel.id }}/feed.xml">
-                <img src="/assets/delete.svg" alt="RSS" width="32px" style="margin-right: 15px;">
+                <img src="/assets/icons/delete.svg" alt="RSS" width="32px" style="margin-right: 15px;">
             </a>
         </td>
         <td>
@@ -77,4 +76,3 @@
     {% endfor %}
 </table>
 {% endblock main %}
-
