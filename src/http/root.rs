@@ -61,6 +61,7 @@ async fn get_channels(
         Ok(channels) => channels,
         Err(_) => Vec::new(),
     };
+    tracing::debug!("Channels: {:?}", &channels);
     context.insert("channels", &channels);
     Html(t.render("channels.html", &context).unwrap())
 }
