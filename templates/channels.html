@@ -2,7 +2,9 @@
 {% block title %}{{ title }}{% endblock title %}
 {% block head %}
     {{ super() }}
-    <script src="/assets/js/channels.js"></script>
+    <script defer src="/assets/js/auth.js"></script>
+    <script defer src="/assets/js/init.js"></script>
+    <script defer src="/assets/js/channels.js"></script>
 {% endblock head %}
 
 {% block main %}
