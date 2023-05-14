@@ -7,4 +7,9 @@ if (form) {
     // run the class
     const validator = new Login(form, fields);
 }
+const auth = new Auth();
+
+document.querySelector(".logout").addEventListener("click", (e) => {
+    auth.logOut();
+});
 

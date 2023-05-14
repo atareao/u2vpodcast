@@ -31,6 +31,9 @@ pub fn router() -> Router {
         .route("/",
             routing::get(get_channels)
         )
+        .route("/login",
+            routing::get(login)
+        )
         .route("/:path",
             routing::get(get_podcast)
         )
@@ -65,6 +68,14 @@ async fn get_channels(
     context.insert("channels", &channels);
     Html(t.render("channels.html", &context).unwrap())
 }
+
+async fn login(
+    t: Extension<Tera>,
+) -> impl IntoResponse{
+    let mut context = Context::new();
+    Html(t.render("login.html", &context).unwrap())
+}
+
 
 async fn get_podcast(
     ctx: Extension<ApiContext>,
