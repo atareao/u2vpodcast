@@ -10,13 +10,17 @@ rust-version = "1.67"
 
 [dependencies]
 # Core dependencies: runtime, HTTP framework and database client.
-tokio = { version = "1.26", features = ["full", "time"] }
+tokio = { version = "1.27", features = ["full", "time"] }
 sqlx = { version = "0.6", features = ["runtime-tokio-rustls", "sqlite", "macros", "offline", "chrono"] }
 axum = { version = "0.6" , features = ["multipart"] }
+axum-extra = { version = "0.7", features = ["cookie"] }
 
 # Axum builds on the types in Tower
 tower = "0.4"
 tower-http = { version = "0.4", features = [ "trace", "fs" ] }
+
+# jwt
+jsonwebtoken = "8.3"
 
 # Templates
 tera = "1.17"
