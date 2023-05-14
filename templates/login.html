@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock title %}
+{% block head %}
+    {{ super() }}
+    <script src="/assets/js/login.js"></script>
+{% endblock head %}
+
+{% block main %}
+<h2 class="text-center">Login</h2>
+<form action="/" class="loginForm">
+    <div class="input-group">
+        <label for="username" class="label">Username</label>
+        <input type="text" id="username" class="input">
+        <span class="error-message"></span>
+    </div>
+    <br>
+    <div class="input-group">
+        <label for="password" class="label">Password</label>
+        <input type="password" id="password" class="input">
+        <span class="error-message"></span>
+    </div>
+    <br>
+    <button class="button" type="submit">Login</button>
+</form>
+{% endblock main %}
