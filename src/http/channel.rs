@@ -27,7 +27,7 @@ pub fn router() -> Router {
         .route("/api/v1/channels",
             routing::put(update)
         )
-        .route("/api/vi/channels",
+        .route("/api/v1/channels",
             routing::delete(delete)
         )
 }

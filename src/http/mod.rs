@@ -14,8 +14,8 @@ use axum::{
 };
 use async_trait::async_trait;
 use crate::config::Configuration;
-use tower_http::trace::TraceLayer;
 use tower::ServiceBuilder;
+use tower_http::trace::TraceLayer;
 use tera::Tera;
 
 pub mod channel;
