@@ -1,8 +1,6 @@
 use serde::{Serialize, Deserialize};
 use serde_yaml::Error;
 
-use crate::models::channel::Channel;
-
 const DEFAULT_SLEEP_TIME: u64 = 1;
 const DEFAULT_PER_PAGE: i64 = 10;
 
@@ -15,13 +13,13 @@ pub struct Configuration{
     port: u16,
     #[serde(default = "get_default_sleep_time")]
     sleep_time: u64,
-    username: String,
-    password: String,
-    with_authentication: bool,
     url: String,
     #[serde(default = "get_default_per_page")]
     per_page: i64,
     cookies: String,
+    jwt_secret: String,
+    jwt_expires_in: String,
+    jwt_maxage: i32,
 }
 
 fn get_default_dev() -> bool{
@@ -57,15 +55,6 @@ impl Configuration {
     }
     pub fn get_port(&self) -> u16{
         self.port
-    }
-    pub fn is_with_authentication(&self) -> bool{
-        self.with_authentication
-    }
-    pub fn get_username(&self) -> &str{
-        &self.username
-    }
-    pub fn get_password(&self) -> &str{
-        &self.password
     }
     pub fn get_url(&self) -> &str{
         &self.url
