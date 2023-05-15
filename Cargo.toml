@@ -16,7 +16,7 @@ axum = { version = "0.6" , features = ["multipart"] }
 axum-extra = { version = "0.7", features = ["cookie"] }
 
 # Axum builds on the types in Tower
-tower = "0.4"
+# tower = "0.4"
 tower-http = { version = "0.4", features = [ "trace", "fs" ] }
 
 # jwt
@@ -34,11 +34,13 @@ serde_yaml = "0.9"
 serde_json = "1.0"
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
-async-trait = "0.1"
-regex = "1"
+# async-trait = "0.1"
+# regex = "1"
 base64 = "0.20"
 # change modification file
 filetime = "0.2"
 
 # RSS
 rss = "2.0"
+rand_core = { version = "0.6.4", features = ["std"] }
+argon2 = "0.5.0"
