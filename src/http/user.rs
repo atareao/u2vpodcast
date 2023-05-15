@@ -79,19 +79,8 @@ pub async fn register_user(
     let user_response = serde_json::json!({
         "status": "success",
         "data": serde_json::json!({
-        "user": filter_user(&user)
+        "user": FilteredUser::from_user(&user)
     })});
 
     Ok(Json(user_response))
-}
-
-fn filter_user(user: &User) -> FilteredUser {
-    FilteredUser {
-        id: user.id,
-        email: user.email.to_owned(),
-        role: user.role.to_owned(),
-        verified: user.verified,
-        created_at: user.created_at,
-        updated_at: user.updated_at,
-    }
 }

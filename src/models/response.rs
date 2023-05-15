@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::Serialize;
+use crate::models::user::User;
 
 #[derive(Debug, Serialize)]
 pub struct FilteredUser {
@@ -20,4 +21,17 @@ pub struct UserData {
 pub struct UserResponse {
     pub status: String,
     pub data: UserData,
+}
+
+impl FilteredUser{
+    pub fn from_user(user: &User) -> Self{
+        Self {
+            id: user.id,
+            email: user.email.to_owned(),
+            role: user.role.to_owned(),
+            verified: user.verified,
+            created_at: user.created_at,
+            updated_at: user.updated_at,
+        }
+    }
 }
