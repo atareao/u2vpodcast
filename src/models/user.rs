@@ -43,13 +43,7 @@ pub struct TokenClaims {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct RegisterUserSchema {
-    pub email: String,
-    pub password: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct LoginUserSchema {
+pub struct UserSchema {
     pub email: String,
     pub password: String,
 }
@@ -61,7 +55,7 @@ impl User {
             email: row.get("email"),
             password: row.get("password"),
             role: row.get("role"),
-            verified: row.get("veified"),
+            verified: row.get("verified"),
             created_at: row.get("created_at"),
             updated_at: row.get("updated_at"),
         }
@@ -83,11 +77,19 @@ impl User {
             .fetch_optional(pool)
             .await
     }
+    pub async fn read_from_email(pool: &SqlitePool, email: &str) -> Result<Option<User>, sqlx::Error>{
+        let sql = "SELECT * FROM users WHERE email = $1";
+        query(sql)
+            .bind(email)
+            .map(Self::from_row)
+            .fetch_optional(pool)
+            .await
+    }
     pub async fn exists(pool: &SqlitePool, email: &str) -> Result<bool, sqlx::Error>{
         let sql = "SELECT EXISTS(SELECT 1 FROM users WHERE email = $2)";
         query(sql)
             .bind(email.to_ascii_lowercase())
-            .map(|row| -> bool {row.get(1)})
+            .map(|row| -> bool {row.get(0)})
             .fetch_one(pool)
             .await
     }

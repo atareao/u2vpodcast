@@ -54,6 +54,7 @@ fn api_router(app_state: AppState) -> Router {
         .merge(rss::router())
         .merge(estatic::router())
         .merge(root::router())
+        .merge(user::router())
         .with_state(Arc::new(app_state))
 }
 
