@@ -3,6 +3,8 @@ use serde_yaml::Error;
 
 const DEFAULT_SLEEP_TIME: u64 = 1;
 const DEFAULT_PER_PAGE: i64 = 10;
+const DEFAULT_MAX_AGE: i32 = 60;
+const DEFAULT_EXPIRES: &str = "60m";
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Configuration{
@@ -18,20 +20,30 @@ pub struct Configuration{
     per_page: i64,
     cookies: String,
     jwt_secret: String,
+    #[serde(default = "get_default_expires")]
     jwt_expires_in: String,
+    #[serde(default = "get_default_maxage")]
     jwt_maxage: i32,
 }
 
 fn get_default_dev() -> bool{
-    return false;
+    false
+}
+
+fn get_default_expires() -> String{
+    DEFAULT_EXPIRES.to_string()
+}
+
+fn get_default_maxage() -> i32{
+    DEFAULT_MAX_AGE
 }
 
 fn get_default_sleep_time() -> u64{
-    return DEFAULT_SLEEP_TIME;
+    DEFAULT_SLEEP_TIME
 }
 
 fn get_default_per_page() -> i64{
-    return DEFAULT_PER_PAGE;
+    DEFAULT_PER_PAGE
 }
 
 impl Configuration {
@@ -61,5 +73,14 @@ impl Configuration {
     }
     pub fn get_cookies(&self) -> &str{
         &self.cookies
+    }
+    pub fn get_expires(&self) -> &str{
+        &self.jwt_expires_in
+    }
+    pub fn get_secret(&self) -> &str{
+        &self.jwt_secret
+    }
+    pub fn get_maxage(&self) -> &i32{
+        &self.jwt_maxage
     }
 }
