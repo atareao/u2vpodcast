@@ -6,9 +6,9 @@ sleep_time: 1
 url: http://localhost:8080
 cookies: cookies.txt
 per_page: 10
-jwt_secret: ''
-jwt_expires_in: ''
-jwt_maxage: 3600
+jwt_secret: my_ultra_secure_secret
+jwt_expires_in: 60m
+jwt_maxage: 60
 channels:
   - url: https://www.youtube.com/@linuxytapas2840/videos
     title: Linux y Tapas
