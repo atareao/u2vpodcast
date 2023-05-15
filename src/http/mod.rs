@@ -15,6 +15,7 @@ pub mod rss;
 pub mod estatic;
 pub mod root;
 pub mod jwt_auth;
+pub mod user;
 
 
 #[derive(Clone)]
