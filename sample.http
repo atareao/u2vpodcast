@@ -46,3 +46,11 @@ DELETE http://localhost:{{PORT}}/episodes/1
 # FEED
 
 GET http://localhost:{{PORT}}/rss
+
+POST http://localhsot:{{PORT}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+    "email": "atareao@atareao.es",
+    "password": "12345678"
+}
