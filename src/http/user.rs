@@ -9,6 +9,7 @@ use axum::{
     response::IntoResponse,
     Extension,
     Json,
+    middleware,
 };
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use jsonwebtoken::{encode, EncodingKey, Header};
@@ -23,9 +24,10 @@ use crate::{
             FilteredUser,
     },
     http::AppState,
+    http::jwt_auth::auth,
 };
 
-pub fn router() -> Router<Arc<AppState>> {
+pub fn router(app_state: Arc<AppState>) -> Router<Arc<AppState>> {
     Router::new()
         .route("/api/v1/auth/register",
             routing::post(register)
@@ -35,9 +37,11 @@ pub fn router() -> Router<Arc<AppState>> {
         )
         .route("/api/v1/auth/logout",
             routing::get(logout)
+                .route_layer(middleware::from_fn_with_state(app_state.clone(), auth))
         )
         .route("/api/v1/users/me",
             routing::get(me)
+                .route_layer(middleware::from_fn_with_state(app_state.clone(), auth))
         )
 }
 

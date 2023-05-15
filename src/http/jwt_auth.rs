@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use axum::{
     extract::State,
     http::{header, Request, StatusCode},
@@ -23,7 +24,7 @@ pub struct ErrorResponse {
 
 pub async fn auth<B>(
     cookie_jar: CookieJar,
-    State(app_state): State<AppState>,
+    State(app_state): State<Arc<AppState>>,
     mut req: Request<B>,
     next: Next<B>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<ErrorResponse>)> {

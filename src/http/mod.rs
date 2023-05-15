@@ -3,9 +3,21 @@ use sqlx::SqlitePool;
 use axum::{
     Router,
     Extension,
+    http::{
+        header::{
+            ACCEPT,
+            AUTHORIZATION,
+            CONTENT_TYPE
+        },
+        HeaderValue,
+        Method,
+    },
 };
 use crate::config::Configuration;
-use tower_http::trace::TraceLayer;
+use tower_http::{
+    trace::TraceLayer,
+    cors::CorsLayer,
+};
 use tera::Tera;
 
 pub mod channel;
@@ -33,13 +45,22 @@ pub async fn serve(config: Configuration, pool: SqlitePool) -> anyhow::Result<()
             ::std::process::exit(1);
         }
     };
+
+    let cors = CorsLayer::new()
+        .allow_origin(config.get_url().parse::<HeaderValue>().unwrap())
+        .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
+        .allow_credentials(true)
+        .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
+
     let app = api_router(
             AppState {
                 config: config.clone(),
                 pool: pool.clone(),
             })
             .layer(TraceLayer::new_for_http())
-            .layer(Extension(tera));
+            .layer(Extension(tera))
+            .layer(cors);
+
     axum::Server::bind(
         &SocketAddr::new(std::net::IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), config.get_port()))
         .serve(app.into_make_service())
@@ -54,7 +75,7 @@ fn api_router(app_state: AppState) -> Router {
         .merge(rss::router())
         .merge(estatic::router())
         .merge(root::router())
-        .merge(user::router())
-        .with_state(Arc::new(app_state))
+        .merge(user::router(Arc::new(app_state.clone())))
+        .with_state(Arc::new(app_state.clone()))
 }
 
