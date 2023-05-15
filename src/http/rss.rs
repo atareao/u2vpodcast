@@ -1,17 +1,17 @@
+use std::sync::Arc;
 use axum::{
     http::StatusCode,
     Router,
-    Extension,
-    extract::Path,
+    extract::{Path, State},
     routing::get, response::{IntoResponse, Response},
 };
 use crate::models::{episode::Episode, channel::Channel};
 use rss::{ChannelBuilder, ItemBuilder,
     extension::itunes::{ITunesItemExtensionBuilder, ITunesChannelExtensionBuilder}, 
     EnclosureBuilder, GuidBuilder};
-use super::{ApiContext, error::YTPError};
+use super::{AppState, error::YTPError};
 
-pub fn router() -> Router {
+pub fn router() -> Router<Arc<AppState>> {
     Router::new()
         .route("/:path/feed.xml",
             get(feed)
@@ -19,15 +19,15 @@ pub fn router() -> Router {
 }
 
 async fn feed(
-    ctx: Extension<ApiContext>,
+    State(app_state): State<Arc<AppState>>,
     Path(channel_id): Path<i64>,
 ) -> impl IntoResponse{
     tracing::info!("path: {}", channel_id);
-    if let Ok(channel) = Channel::read(&ctx.pool, channel_id).await{
-        let episodes = Episode::read_all_in_channel(&ctx.pool, channel.get_id()).await.unwrap();
+    if let Ok(channel) = Channel::read(&app_state.pool, channel_id).await{
+        let episodes = Episode::read_all_in_channel(&app_state.pool, channel.get_id()).await.unwrap();
         let mut items = Vec::new();
         for episode in episodes{
-            let enclosure = format!("{}/media/{}/{}.mp3", ctx.config.get_url(), &channel_id, episode.yt_id);
+            let enclosure = format!("{}/media/{}/{}.mp3", app_state.config.get_url(), &channel_id, episode.yt_id);
             let itunes = ITunesItemExtensionBuilder::default()
                 .image(Some(episode.image))
                 .summary(Some(episode.description.to_string()))
@@ -52,7 +52,7 @@ async fn feed(
                 .build();
             items.push(item);
         }
-        let link = format!("{}/rss", ctx.config.get_url());
+        let link = format!("{}/rss", app_state.config.get_url());
         let itunes = ITunesChannelExtensionBuilder::default()
             .image(channel.get_image())
             .summary(Some(channel.get_description().to_string()))

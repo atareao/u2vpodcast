@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use axum::{
     Router,
     Extension,
@@ -8,12 +9,12 @@ use axum::{
         Json
     },
     http::header::{self, HeaderValue},
-    extract::{Path, Query},
+    extract::{Path, Query, State},
 };
 use tera::{Tera, Context};
 
 use crate::{
-    http::ApiContext,
+    http::AppState,
     models::{
         episode::Episode,
         channel::Channel,
@@ -21,7 +22,7 @@ use crate::{
     }
 };
 
-pub fn router() -> Router {
+pub fn router() -> Router<Arc<AppState>> {
     Router::new()
         .route("/favicon.ico",
             routing::get(favicon)
@@ -50,7 +51,6 @@ async fn favicon() -> impl IntoResponse {
 }
 
 async fn get_root(
-    _ctx: Extension<ApiContext>,
     t: Extension<Tera>,
 ) -> impl IntoResponse{
     let mut context = Context::new();
@@ -59,12 +59,12 @@ async fn get_root(
 }
 
 async fn get_channels(
-    ctx: Extension<ApiContext>,
+    State(app_state): State<Arc<AppState>>,
     t: Extension<Tera>,
 ) -> impl IntoResponse{
     let mut context = Context::new();
     context.insert("title", "Channels");
-    let channels = match Channel::read_all(&ctx.pool).await{
+    let channels = match Channel::read_all(&app_state.pool).await{
         Ok(channels) => channels,
         Err(_) => Vec::new(),
     };
@@ -89,13 +89,13 @@ async fn healthcheck() -> impl IntoResponse{
 
 
 async fn get_podcast(
-    ctx: Extension<ApiContext>,
+    State(app_state): State<Arc<AppState>>,
     t: Extension<Tera>,
     Path(channel_id): Path<i64>,
     parameters: Query<Parameters>
 ) -> impl IntoResponse{
-    let per_page = ctx.config.get_page();
-    let total = Episode::number_of_episodes(&ctx.pool, channel_id).await / per_page + 1;
+    let per_page = app_state.config.get_page();
+    let total = Episode::number_of_episodes(&app_state.pool, channel_id).await / per_page + 1;
     let page = match parameters.page {
         Some(value) =>  {
             tracing::debug!("Página solicitada: {}", value);
@@ -109,9 +109,9 @@ async fn get_podcast(
     };
     tracing::debug!("A leer la página: {}", page);
     let mut context = Context::new();
-    match Episode::read_with_pagination_in_channel(&ctx.pool, channel_id, page, per_page).await{
+    match Episode::read_with_pagination_in_channel(&app_state.pool, channel_id, page, per_page).await{
         Ok(episodes) => {
-            let base_url = ctx.config.get_url();
+            let base_url = app_state.config.get_url();
             context.insert("title", &channel_id);
             context.insert("base_url", base_url);
             context.insert("episodes", &episodes);
@@ -122,7 +122,7 @@ async fn get_podcast(
         },
         Err(_) => {
             context.insert("title", "Channels");
-            let channels: Vec<Channel> = match Channel::read_all(&ctx.pool).await{
+            let channels: Vec<Channel> = match Channel::read_all(&app_state.pool).await{
                 Ok(channels) => channels,
                 Err(_) => Vec::new(),
             };

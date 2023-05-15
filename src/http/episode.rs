@@ -1,21 +1,21 @@
+use std::sync::Arc;
 use axum::{
     Router,
     Json,
-    Extension,
-    extract,
+    extract::{Path, State},
     routing::get,
     response::IntoResponse,
 };
 
 use crate::{
     http::{
-        ApiContext,
+        AppState,
         error::YTPError,
     },
     models::episode::Episode
 };
 
-pub fn router() -> Router {
+pub fn router() -> Router<Arc<AppState>> {
     Router::new()
         .route("/api/v1/episodes",
             get(read_all)
@@ -26,19 +26,19 @@ pub fn router() -> Router {
 }
 
 async fn read(
-    ctx: Extension<ApiContext>,
-    extract::Path(id): extract::Path<i64>
+    State(app_state): State<Arc<AppState>>,
+    Path(id): Path<i64>
 ) -> impl IntoResponse{
-    Episode::read(&ctx.pool, id)
+    Episode::read(&app_state.pool, id)
         .await
         .map_err(|error| YTPError::Sqlx(error.to_string()))
         .map(|episode| Json(episode))
 }
 
 async fn read_all(
-    ctx: Extension<ApiContext>,
+    State(app_state): State<Arc<AppState>>,
 ) -> impl IntoResponse{
-    Episode::read_all(&ctx.pool)
+    Episode::read_all(&app_state.pool)
         .await
         .map_err(|error| YTPError::Sqlx(error.to_string()))
         .map(|episodes| Json(episodes))

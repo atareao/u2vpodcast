@@ -1,19 +1,19 @@
+use std::sync::Arc;
 use axum::{
     Router,
     Json,
-    Extension,
-    extract::Path,
+    extract::{State, Path},
     routing,
     response::IntoResponse,
     http::StatusCode,
 };
 
 use crate::{ http::{
-    ApiContext,
+    AppState,
     error::YTPError,
 }, models::channel::{Channel, NewChannel}};
 
-pub fn router() -> Router {
+pub fn router() -> Router<Arc<AppState>> {
     Router::new()
         .route("/api/v1/channels",
             routing::get(read_all)
@@ -33,30 +33,30 @@ pub fn router() -> Router {
 }
 
 async fn read(
-    ctx: Extension<ApiContext>,
+    State(app_state): State<Arc<AppState>>,
     Path(channel_id): Path<i64>,
 ) -> impl IntoResponse{
-    match Channel::read(&ctx.pool, channel_id).await{
+    match Channel::read(&app_state.pool, channel_id).await{
         Ok(channel) => (StatusCode::OK, Json(channel)).into_response(),
         Err(_) => YTPError::NotFound.into_response(),
     }
 }
 
 async fn read_all(
-    ctx: Extension<ApiContext>,
+    State(app_state): State<Arc<AppState>>,
 ) -> impl IntoResponse{
-    match Channel::read_all(&ctx.pool).await{
+    match Channel::read_all(&app_state.pool).await{
         Ok(channels) => (StatusCode::OK, Json(channels)).into_response(),
         Err(_) => YTPError::NotFound.into_response(),
     }
 }
 
 async fn create(
-    ctx: Extension<ApiContext>,
+    State(app_state): State<Arc<AppState>>,
     Json(new_channel): Json<NewChannel>,
 ) -> impl IntoResponse{
     tracing::info!("Por aquí");
-    match Channel::create(&ctx.pool, new_channel).await{
+    match Channel::create(&app_state.pool, new_channel).await{
         Ok(channel) => return(StatusCode::OK, Json(channel)).into_response(),
         Err(e) => {
             tracing::error!("Error: {}", e);
@@ -66,20 +66,20 @@ async fn create(
 }
 
 async fn update(
-    ctx: Extension<ApiContext>,
+    State(app_state): State<Arc<AppState>>,
     Json(channel): Json<Channel>,
 ) -> impl IntoResponse{
-    match Channel::update(&ctx.pool, channel).await{
+    match Channel::update(&app_state.pool, channel).await{
         Ok(channel) => return(StatusCode::OK, Json(channel)).into_response(),
         Err(_) => YTPError::NotFound.into_response()
     }
 }
 
 async fn delete(
-    ctx: Extension<ApiContext>,
+    State(app_state): State<Arc<AppState>>,
     Path(channel_id): Path<i64>,
 ) -> impl IntoResponse{
-    match Channel::delete(&ctx.pool, channel_id).await{
+    match Channel::delete(&app_state.pool, channel_id).await{
         Ok(channel) => return(StatusCode::OK, Json(channel)).into_response(),
         Err(_) => YTPError::NotFound.into_response()
     }
