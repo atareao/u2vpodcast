@@ -19,3 +19,4 @@ ytpodcast.db*
 media
 *.db*
 audios/
+cookies-cp.txt
