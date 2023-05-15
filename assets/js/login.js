@@ -24,7 +24,7 @@ class Login {
             // if everything validates, error will be 0 and can continue
             if (error == 0) {
                 //do login api here or in this case, just submit the form and set a localStorage item
-                localStorage.setItem("auth", 1);
+                localStorage.setItem("jwt_token", 1);
                 this.form.submit();
             }
         });
@@ -57,6 +57,19 @@ class Login {
                     this.setStatus(field, null, "success");
                     return true;
                 }
+            }else if (field.type == "email"){
+                if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(field.value)) {
+                    this.setStatus(field, null, "success");
+                    return true;
+                }else{
+                    this.setStatus(
+                        field,
+                        `${field.previousElementSibling.innerText} is not a valid address`,
+                        "error"
+                    );
+                    return false;
+
+                }
             } else {
                 // set the status based on the field without text and return a success message
                 this.setStatus(field, null, "success");
@@ -67,19 +80,32 @@ class Login {
 
     setStatus(field, message, status) {
         // create variable to hold message
-        const errorMessage = field.parentElement.querySelector(".error-message");
-
-        // if success, remove messages and error classes
-        if (status == "success") {
-            if (errorMessage) {
+        const errorMessage = field.parentElement.querySelector(".alert");
+        if(errorMessage) {
+            if (status == "success") {
                 errorMessage.innerText = "";
+                errorMessage.classList.remove("alert-danger");
+                errorMessage.classList.remove("alert-warning");
+                errorMessage.classList.add("alert-success");
+                errorMessage.hidden = true;
+            } else if (status == "error") {
+                errorMessage.innerText = message;
+                errorMessage.classList.remove("alert-warning");
+                errorMessage.classList.remove("alert-success");
+                errorMessage.classList.add("alert-danger");
+                errorMessage.hidden = false;
             }
-            field.classList.remove("input-error");
-        }
-        // if error, add messages and add error classes
-        if (status == "error") {
-            errorMessage.innerText = message;
-            field.classList.add("input-error");
         }
     }
 }
+
+document.addEventListener("readystatechange", (event) => {
+    if (document.readyState === "complete") {
+        const form = document.getElementById("loginForm");
+        if (form) {
+            const fields = ["email", "password"];
+            const validator = new Login(form, fields);
+        }
+    }
+})
+
