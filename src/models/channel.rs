@@ -116,12 +116,12 @@ impl Channel{
             }
     }
 
-    pub async fn read(pool: &SqlitePool, id: i64) -> Result<Channel, sqlx::Error>{
+    pub async fn read(pool: &SqlitePool, id: i64) -> Result<Option<Channel>, sqlx::Error>{
         let sql = "SELECT * FROM channels WHERE id = $1";
         query(sql)
             .bind(id)
             .map(Self::from_row)
-            .fetch_one(pool)
+            .fetch_optional(pool)
             .await
     }
 

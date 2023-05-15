@@ -35,10 +35,24 @@ pub fn router() -> Router<Arc<AppState>> {
 async fn read(
     State(app_state): State<Arc<AppState>>,
     Path(channel_id): Path<i64>,
-) -> impl IntoResponse{
-    match Channel::read(&app_state.pool, channel_id).await{
-        Ok(channel) => (StatusCode::OK, Json(channel)).into_response(),
-        Err(_) => YTPError::NotFound.into_response(),
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    let channel = Channel::read(&app_state.pool, channel_id).await
+        .map_err(|e| {
+                let error_response = serde_json::json!({
+                    "status": "fail",
+                    "message": format!("Database error: {}", e),
+                });
+                (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
+            })?;
+    match channel{
+        Some(channel) => Ok((StatusCode::OK, Json(serde_json::to_value(channel).unwrap()))),
+        None  => {
+            let error_response = serde_json::json!({
+                "status": "fail",
+                "message": "User with that email already exists",
+            });
+            Err((StatusCode::CONFLICT, Json(error_response)))
+        }
     }
 }
 
