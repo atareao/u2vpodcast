@@ -11,15 +11,16 @@
     <div class="input-group">
         <label for="email" class="label">Email</label>
         <input type="email" id="email" class="input">
-        <div class="alert" hidden></span>
+        <div id="email-notification" class="alert" hidden></div>
     </div>
     <br>
     <div class="input-group">
         <label for="password" class="label">Password</label>
         <input type="password" id="password" class="input">
-        <div class="alert" hidden></span>
+        <div id="password-notification" class="alert" hidden></div>
     </div>
     <br>
+    <div id="loginForm-notification" class="alert" hidden></div>
     <button class="button" type="submit">Login</button>
 </form>
 {% endblock main %}

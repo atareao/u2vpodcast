@@ -1,15 +1,18 @@
-// create a variable for the login form
-const form = document.querySelector(".loginForm");
-// if the form exists, run the class
-if (form) {
-    // setup the fields we want to validate, we only have two but you can add others
-    const fields = ["email", "password"];
-    // run the class
-    const validator = new Login(form, fields);
-}
-const auth = new Auth();
-
-document.querySelector(".logout").addEventListener("click", (e) => {
-    auth.logOut();
-});
+document.addEventListener("readystatechange", () => {
+    if (document.readyState === "complete") {
+        const form = document.getElementById("loginForm");
+        if (form) {
+            console.log("form")
+            const fields = ["email", "password"];
+            const validator = new Login(form, fields);
+        }
+        const auth = new Auth();
+        const logout = document.querySelector(".logout");
+        if (logout){
+            logout.addEventListener("click", () => {
+                auth.logOut();
+            });
+        }
+    }
+})
 

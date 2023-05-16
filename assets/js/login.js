@@ -12,19 +12,26 @@ class Login {
         this.form.addEventListener("submit", (e) => {
             // remove default functionality 
             e.preventDefault();
-            var error = 0;
+            let anyError = 0;
             // loop through the fields and check them against a function for validation
             self.fields.forEach((field) => {
                 const input = document.querySelector(`#${field}`);
                 if (self.validateFields(input) == false) {
                     // if a field does not validate, auto-increment our error integer
-                    error++;
+                    anyError++;
                 }
             });
             // if everything validates, error will be 0 and can continue
-            if (error == 0) {
-                //do login api here or in this case, just submit the form and set a localStorage item
-                localStorage.setItem("jwt_token", 1);
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            try{
+                this.doLogin(email, password);
+            } catch(error) {
+                anyError++;
+                const field = document.getElementById("email");
+                this.setStatus(field, error, "error");
+            }
+            if (anyError == 0) {
                 this.form.submit();
             }
         });
@@ -68,7 +75,6 @@ class Login {
                         "error"
                     );
                     return false;
-
                 }
             } else {
                 // set the status based on the field without text and return a success message
@@ -80,15 +86,15 @@ class Login {
 
     setStatus(field, message, status) {
         // create variable to hold message
-        const errorMessage = field.parentElement.querySelector(".alert");
+        const errorMessage = document.getElementById(`${field.id}-notification`);
         if(errorMessage) {
-            if (status == "success") {
+            if (status === "success") {
                 errorMessage.innerText = "";
                 errorMessage.classList.remove("alert-danger");
                 errorMessage.classList.remove("alert-warning");
                 errorMessage.classList.add("alert-success");
                 errorMessage.hidden = true;
-            } else if (status == "error") {
+            } else if (status === "error") {
                 errorMessage.innerText = message;
                 errorMessage.classList.remove("alert-warning");
                 errorMessage.classList.remove("alert-success");
@@ -96,6 +102,40 @@ class Login {
                 errorMessage.hidden = false;
             }
         }
+    }
+
+    doLogin(email, password) {
+        console.log("doLogin");
+        const data = {
+            email: email,
+            password: password
+        };
+        const payload = JSON.stringify(data);
+        console.log(payload);
+        fetch("/api/v1/auth/login", {
+            method: "POST",
+            mode: "cors",
+            cache: "no-cache",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: payload,
+        }).then(
+            response => response.json()
+        ).then(json => {
+            console.log(JSON.stringify(json));
+            if(json.status === "success" && json.token !== ""){
+                localStorage.setItem("jwt_token", json.token);
+                console.log("saved json");
+                return true;
+            }else{
+                throw new Error("Can't do login");
+            }
+        }).catch(function (error) {
+            console.warn(error);
+            throw new Error(error);
+        });
     }
 }
 
