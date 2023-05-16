@@ -7,7 +7,7 @@ run:
     cargo run --
 
 watch:
-    cargo watch -q -c -w src/ -x run
+    cargo watch -q -c -w src/ -w assets/ -x run
 
 build:
     echo {{version}}
