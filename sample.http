@@ -4,7 +4,7 @@ GET http://localhost:{{PORT}}
 
 # CHANNELS
 
-GET http://localhost:{{PORT}}/channels
+GET http://localhost:{{PORT}}/api/v1/channels
 
 GET http://localhost:{{PORT}}/channels/7
 
@@ -22,7 +22,7 @@ DELETE http://localhost:{{PORT}}/channels/1
 
 # EPISODES
 
-GET http://localhost:{{PORT}}/episodes
+GET http://localhost:{{PORT}}/api/v1/episodes
 
 GET http://localhost:{{PORT}}/episodes/2
 
