@@ -7,16 +7,16 @@
 
 {% block main %}
 <h2 class="text-center">Login</h2>
-<form action="/" id="loginForm">
+<form action="/login" id="loginForm" method="post">
     <div class="input-group">
         <label for="email" class="label">Email</label>
-        <input type="email" id="email" class="input">
+        <input type="email" name="email" id="email" class="input">
         <div id="email-notification" class="alert" hidden></div>
     </div>
     <br>
     <div class="input-group">
         <label for="password" class="label">Password</label>
-        <input type="password" id="password" class="input">
+        <input type="password" name="password" id="password" class="input">
         <div id="password-notification" class="alert" hidden></div>
     </div>
     <br>
