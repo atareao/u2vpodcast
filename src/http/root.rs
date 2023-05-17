@@ -8,21 +8,28 @@ use axum::{
         Html,
         Json
     },
+    Form,
+    middleware,
     http::header::{self, HeaderValue},
     extract::{Path, Query, State},
 };
 use tera::{Tera, Context};
 
 use crate::{
-    http::AppState,
+    http::{
+        AppState,
+        jwt_auth::auth,
+        user::do_login,
+    },
     models::{
         episode::Episode,
         channel::Channel,
         parameters::Parameters,
+        user::UserSchema,
     }
 };
 
-pub fn router() -> Router<Arc<AppState>> {
+pub fn router(app_state: Arc<AppState>) -> Router<Arc<AppState>> {
     Router::new()
         .route("/favicon.ico",
             routing::get(favicon)
@@ -35,9 +42,10 @@ pub fn router() -> Router<Arc<AppState>> {
         )
         .route("/",
             routing::get(get_channels)
+                .route_layer(middleware::from_fn_with_state(app_state.clone(), auth))
         )
         .route("/login",
-            routing::get(login)
+            routing::get(login).post(login_post)
         )
         .route("/:path",
             routing::get(get_podcast)
@@ -78,6 +86,15 @@ async fn login(
 ) -> impl IntoResponse{
     let context = Context::new();
     Html(t.render("login.html", &context).unwrap())
+}
+
+async fn login_post(
+    State(app_state): State<Arc<AppState>>,
+    Form(user_data): Form<UserSchema>
+) -> impl IntoResponse{
+    tracing::debug!("{:?}", user_data);
+    do_login(app_state, user_data).await;
+    Html("esto funciona aparentemente")
 }
 
 async fn healthcheck() -> impl IntoResponse{

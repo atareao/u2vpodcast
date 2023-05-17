@@ -74,7 +74,7 @@ fn api_router(app_state: AppState) -> Router {
         .merge(episode::router())
         .merge(rss::router())
         .merge(estatic::router())
-        .merge(root::router())
+        .merge(root::router(Arc::new(app_state.clone())))
         .merge(user::router(Arc::new(app_state.clone())))
         .with_state(Arc::new(app_state.clone()))
 }

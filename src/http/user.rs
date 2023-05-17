@@ -100,11 +100,11 @@ pub async fn register(
     Ok(Json(user_response))
 }
 
-pub async fn login(
-        State(app_state): State<Arc<AppState>>,
-        Json(body): Json<UserSchema>,
-        ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-
+pub async fn do_login(
+    app_state: Arc<AppState>,
+    body: UserSchema
+) -> Result<Json<serde_json::Value>,(StatusCode, Json<serde_json::Value>)>{
+    tracing::info!("init login");
     let user = User::read_from_email(&app_state.pool, &body.email)
         .await
         .map_err(|e| {
@@ -127,7 +127,6 @@ pub async fn login(
             .map_or(false, |_| true),
         Err(_) => false,
     };
-
     if !is_valid {
         let error_response = serde_json::json!({
             "status": "fail",
@@ -163,7 +162,26 @@ pub async fn login(
     response
         .headers_mut()
         .insert(header::SET_COOKIE, cookie.to_string().parse().unwrap());
-    Ok(response)
+    tracing::info!("Writing cookie");
+    tracing::info!("finish login");
+    Ok(axum::Json(json!({"status": "success", "token": token})))
+
+}
+
+pub async fn login(
+        State(app_state): State<Arc<AppState>>,
+        Json(body): Json<UserSchema>,
+        ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+
+    match do_login(app_state, body).await{
+        Ok(body) => {
+            let response = Response::new(body.to_string());
+            tracing::info!("Writing cookie");
+            tracing::info!("finish login");
+            Ok(response)
+        },
+        Err(e) => Err(e),
+    }
 }
 
 pub async fn logout() -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
@@ -178,6 +196,7 @@ pub async fn logout() -> Result<impl IntoResponse, (StatusCode, Json<serde_json:
     response
         .headers_mut()
         .insert(header::SET_COOKIE, cookie.to_string().parse().unwrap());
+    tracing::info!("Deleting cookie");
     Ok(response)
 }
 
