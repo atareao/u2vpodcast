@@ -5,8 +5,8 @@ use axum::{
     extract::State,
     Router,
     routing,
-    http::{header, Response, StatusCode},
-    response::IntoResponse,
+    http::{header, Response, StatusCode,},
+    response::{IntoResponse, Html},
     Extension,
     Json,
     middleware,
@@ -32,9 +32,9 @@ pub fn router(app_state: Arc<AppState>) -> Router<Arc<AppState>> {
         .route("/api/v1/auth/register",
             routing::post(register)
         )
-        .route("/api/v1/auth/login",
-            routing::post(login)
-        )
+        //.route("/api/v1/auth/login",
+        //    routing::post(login)
+        //)
         .route("/api/v1/auth/logout",
             routing::get(logout)
                 .route_layer(middleware::from_fn_with_state(app_state.clone(), auth))
@@ -100,10 +100,11 @@ pub async fn register(
     Ok(Json(user_response))
 }
 
-pub async fn do_login(
+pub async fn get_token(
     app_state: Arc<AppState>,
     body: UserSchema
-) -> Result<Json<serde_json::Value>,(StatusCode, Json<serde_json::Value>)>{
+) -> Result<String, (StatusCode, Json<serde_json::Value>)>{
+//) -> Result<Json<serde_json::Value>,(StatusCode, Json<serde_json::Value>)>{
     tracing::info!("init login");
     let user = User::read_from_email(&app_state.pool, &body.email)
         .await
@@ -144,45 +145,75 @@ pub async fn do_login(
         iat,
     };
 
-    let token = encode(
+    Ok(encode(
         &Header::default(),
         &claims,
         &EncodingKey::from_secret(app_state.config.get_secret().as_ref()),
-    )
-    .unwrap();
-
-    let cookie = Cookie::build("token", token.to_owned())
-        .path("/")
-        .max_age(time::Duration::hours(1))
-        .same_site(SameSite::Lax)
-        .http_only(true)
-        .finish();
-
-    let mut response = Response::new(json!({"status": "success", "token": token}).to_string());
-    response
-        .headers_mut()
-        .insert(header::SET_COOKIE, cookie.to_string().parse().unwrap());
-    tracing::info!("Writing cookie");
-    tracing::info!("finish login");
-    Ok(axum::Json(json!({"status": "success", "token": token})))
-
+    ).map_err(|e| {
+        let error_response = serde_json::json!({
+            "status": "error",
+            "message": format!("Encoding JWT error: {}", e),
+        });
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
+    })?)
 }
-
-pub async fn login(
-        State(app_state): State<Arc<AppState>>,
-        Json(body): Json<UserSchema>,
-        ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-
-    match do_login(app_state, body).await{
-        Ok(body) => {
-            let response = Response::new(body.to_string());
-            tracing::info!("Writing cookie");
-            tracing::info!("finish login");
-            Ok(response)
+pub async fn do_login(
+    app_state: Arc<AppState>,
+    body: UserSchema
+) -> impl IntoResponse{
+    match get_token(app_state, body).await {
+        Ok(token) => {
+            let cookie = Cookie::build("token", token.to_owned())
+                .path("/")
+                .max_age(time::Duration::hours(1))
+                .same_site(SameSite::Lax)
+                .http_only(true)
+                .finish();
+            tracing::info!("El token: {}", token.to_string());
+            Response::builder()
+                .header(header::SET_COOKIE, cookie.to_string())
+                .body(axum::body::Empty::new())
+                .unwrap()
         },
-        Err(e) => Err(e),
+        Err(e) => {
+            Response::builder()
+                .body(axum::body::Empty::new())
+                .unwrap()
+        }
     }
 }
+//     let cookie = Cookie::build("token", token.to_owned())
+//         .path("/")
+//         .max_age(time::Duration::hours(1))
+//         .same_site(SameSite::Lax)
+//         .http_only(true)
+//         .finish();
+// 
+//     let mut response = Response::new(json!({"status": "success", "token": token}).to_string());
+//     response
+//         .headers_mut()
+//         .insert(header::SET_COOKIE, cookie.to_string().parse().unwrap());
+//     tracing::info!("Writing cookie");
+//     tracing::info!("finish login");
+//     Ok(axum::Json(json!({"status": "success", "token": token})))
+// 
+// }
+
+// pub async fn login(
+//         State(app_state): State<Arc<AppState>>,
+//         Json(body): Json<UserSchema>,
+//         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+// 
+//     match do_login(app_state, body).await{
+//         Ok(body) => {
+//             let response = Response::new(body.to_string());
+//             tracing::info!("Writing cookie");
+//             tracing::info!("finish login");
+//             Ok(response)
+//         },
+//         Err(e) => Err(e),
+//     }
+// }
 
 pub async fn logout() -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     let cookie = Cookie::build("token", "")

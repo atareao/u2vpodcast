@@ -93,8 +93,8 @@ async fn login_post(
     Form(user_data): Form<UserSchema>
 ) -> impl IntoResponse{
     tracing::debug!("{:?}", user_data);
-    do_login(app_state, user_data).await;
-    Html("esto funciona aparentemente")
+    do_login(app_state, user_data).await
+    //Html("esto funciona aparentemente")
 }
 
 async fn healthcheck() -> impl IntoResponse{
