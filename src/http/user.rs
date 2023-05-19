@@ -2,15 +2,19 @@ use std::sync::Arc;
 
 use argon2::{password_hash::SaltString, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use axum::{
-    extract::State,
+    body,
+    Form,
+    extract::{Query, State},
     Router,
     routing,
-    http::{header, Response, StatusCode,},
-    response::{IntoResponse, Html},
+    http::{header, Response, StatusCode, },
+    response::{IntoResponse, Html,},
     Extension,
     Json,
     middleware,
 };
+use tera::{Tera, Context};
+
 use axum_extra::extract::cookie::{Cookie, SameSite};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use rand_core::OsRng;
@@ -23,6 +27,7 @@ use crate::{
             User,
             FilteredUser,
     },
+    models::channel::Channel,
     http::AppState,
     http::jwt_auth::auth,
 };
@@ -101,7 +106,7 @@ pub async fn register(
 }
 
 pub async fn get_token(
-    app_state: Arc<AppState>,
+    app_state: &Arc<AppState>,
     body: UserSchema
 ) -> Result<String, (StatusCode, Json<serde_json::Value>)>{
 //) -> Result<Json<serde_json::Value>,(StatusCode, Json<serde_json::Value>)>{
@@ -158,10 +163,11 @@ pub async fn get_token(
     })?)
 }
 pub async fn do_login(
-    app_state: Arc<AppState>,
-    body: UserSchema
+    State(app_state): State<Arc<AppState>>,
+    t: Extension<Tera>,
+    Form(user_data): Form<UserSchema>,
 ) -> impl IntoResponse{
-    match get_token(app_state, body).await {
+    match get_token(&app_state, user_data).await {
         Ok(token) => {
             let cookie = Cookie::build("token", token.to_owned())
                 .path("/")
@@ -170,15 +176,30 @@ pub async fn do_login(
                 .http_only(true)
                 .finish();
             tracing::info!("El token: {}", token.to_string());
-            Response::builder()
+            
+            Ok(Response::builder()
+                .status(StatusCode::SEE_OTHER)
+                .header(header::LOCATION, "/")
                 .header(header::SET_COOKIE, cookie.to_string())
-                .body(axum::body::Empty::new())
-                .unwrap()
+                .body(body::Empty::new())
+                .unwrap())
         },
         Err(e) => {
-            Response::builder()
-                .body(axum::body::Empty::new())
-                .unwrap()
+            let cookie = Cookie::build("token", "")
+                .path("/")
+                .max_age(time::Duration::hours(0))
+                .same_site(SameSite::Lax)
+                .http_only(true)
+                .finish();
+
+            //Err(Response::builder()
+            //    .status(StatusCode::SEE_OTHER)
+            //    .header(header::LOCATION, "/login?error=error")
+            //    .header(header::SET_COOKIE, cookie.to_string())
+            //    .body(Html("Hola"))
+            //    .unwrap())
+            let context = Context::new();
+            Err(Html(t.render("podcast.html", &context).unwrap()))
         }
     }
 }

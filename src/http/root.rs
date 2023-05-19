@@ -45,7 +45,7 @@ pub fn router(app_state: Arc<AppState>) -> Router<Arc<AppState>> {
                 .route_layer(middleware::from_fn_with_state(app_state.clone(), auth))
         )
         .route("/login",
-            routing::get(login).post(login_post)
+            routing::get(login).post(do_login)
         )
         .route("/:path",
             routing::get(get_podcast)
@@ -88,14 +88,14 @@ async fn login(
     Html(t.render("login.html", &context).unwrap())
 }
 
-async fn login_post(
-    State(app_state): State<Arc<AppState>>,
-    Form(user_data): Form<UserSchema>
-) -> impl IntoResponse{
-    tracing::debug!("{:?}", user_data);
-    do_login(app_state, user_data).await
-    //Html("esto funciona aparentemente")
-}
+// async fn login_post(
+//     State(app_state): State<Arc<AppState>>,
+//     Form(user_data): Form<UserSchema>
+// ) -> impl IntoResponse{
+//     tracing::debug!("{:?}", user_data);
+//     //do_login(app_state, user_data).await
+//     //Html("esto funciona aparentemente")
+// }
 
 async fn healthcheck() -> impl IntoResponse{
     Json(serde_json::json!({
