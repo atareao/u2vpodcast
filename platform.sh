@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#/bin/sh
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2022 Lorenzo Carbonell <a.k.a. atareao>
@@ -21,8 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-#!/bin/bash
-
 # Used in Docker build to set platform dependent variables
         #echo "/usr/lib/arm-linux-gnueabihf" > /.libdir
 
@@ -32,10 +30,25 @@ case $TARGETPLATFORM in
         echo "x86_64-unknown-linux-musl" > /.target
         echo "/usr/lib/x86_64-linux-gnu" > /.libdir
         ;;
-    "linux/arm64") 
+    "linux/arm64")
         echo "aarch64-unknown-linux-musl" > /.target
         echo "/usr/lib/aarch64-linux-gnu" > /.libdir
         ;;
+    "linux/arm64/v8")
+        echo "aarch64-unknown-linux-musl" > /.target
+        echo "/usr/lib/aarch64-linux-gnu" > /.libdir
+        ;;
+    "linux/arm/v7")
+        echo "armv7-unknown-linux-musleabihf" > /.target
+        echo "/usr/lib/aarch64-linux-gnu" > /.libdir
+        ;;
+    "linux/arm/v6")
+        echo "arm-unknown-linux-musleabihf" > /.target
+        echo "/usr/lib/aarch64-linux-gnu" > /.libdir
+        ;;
+    *)
+        echo "x86_64-unknown-linux-musl" > /.target
+        echo "/usr/lib/x86_64-linux-gnu" > /.libdir
 esac
 
 

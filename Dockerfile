@@ -1,15 +1,23 @@
 ###############################################################################
 ## Builder
 ###############################################################################
-FROM rust:1.64 AS builder
-
+FROM rust:1.69 AS builder
 LABEL maintainer="Lorenzo Carbonell <a.k.a. atareao> lorenzo.carbonell.cerezo@gmail.com"
+ARG TARGETPLATFORM
 
 # Create appuser
 ENV USER=app
 ENV UID=10001
 
-RUN rustup target add x86_64-unknown-linux-musl && \
+ENV RUST_MUSL_CROSS_TARGET=$TARGETPLATFORM
+
+COPY ./platform.sh /platform.sh
+RUN /platform.sh && \
+    echo $TARGETPLATFORM && \
+    cat /.target
+
+#RUN rustup target add x86_64-unknown-linux-musl && \
+RUN rustup target add "$(cat /.target)" && \
     apt-get update && \
     apt-get install -y \
         --no-install-recommends\
@@ -35,19 +43,19 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src src
 
-RUN cargo build --release --target x86_64-unknown-linux-musl && \
-    cp /app/target/x86_64-unknown-linux-musl/release/u2vpodcast /app/u2vpodcast
+RUN cross build --release --target $(cat /.target) && \
+    cp /app/target/$(cat /.target)/release/u2vpodcast /app/u2vpodcast
 
 ###############################################################################
 ## Final image
 ###############################################################################
-FROM alpine:3.17
+FROM --platform=$TARGETPLATFORM alpine:3.18
 
 RUN apk add --update --no-cache \
-            ffmpeg~=5.1 \
-            git~=2.38 \
-            python3~=3.10 \
-            py3-pip~=22.3 && \
+            ffmpeg~=6.0 \
+            git~=2.40 \
+            python3~=3.11 \
+            py3-pip~=23.1 && \
     rm -rf /var/cache/apk && \
     rm -rf /var/lib/app/lists*
 
