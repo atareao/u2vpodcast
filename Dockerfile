@@ -1,13 +1,9 @@
 ###############################################################################
 ## Builder
 ###############################################################################
-FROM rust:1.64 AS builder
+FROM rust:1.70 AS builder
 
 LABEL maintainer="Lorenzo Carbonell <a.k.a. atareao> lorenzo.carbonell.cerezo@gmail.com"
-
-# Create appuser
-ENV USER=app
-ENV UID=10001
 
 RUN rustup target add x86_64-unknown-linux-musl && \
     apt-get update && \
@@ -22,14 +18,6 @@ RUN rustup target add x86_64-unknown-linux-musl && \
         && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN adduser \
-    --disabled-password \
-    --gecos "" \
-    --home "/${USER}" \
-    --shell "/sbin/nologin" \
-    --uid "${UID}" \
-    "${USER}"
-
 WORKDIR /app
 
 COPY Cargo.toml Cargo.lock ./
@@ -41,31 +29,39 @@ RUN cargo build --release --target x86_64-unknown-linux-musl && \
 ###############################################################################
 ## Final image
 ###############################################################################
-FROM alpine:3.17
+FROM alpine:3.18
+
+ENV USER=app
+ENV UID=10001
 
 RUN apk add --update --no-cache \
-            ffmpeg~=5.1 \
-            git~=2.38 \
-            python3~=3.10 \
-            py3-pip~=22.3 && \
+            ffmpeg~=6.0 \
+            git~=2.40 \
+            python3~=3.11 \
+            py3-pip~=23.1 && \
     rm -rf /var/cache/apk && \
     rm -rf /var/lib/app/lists*
 
-
-# Set the work dir
-WORKDIR /app
-
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /etc/group /etc/group
+# Copy our build
 COPY --from=builder /app/u2vpodcast /app/
 
 COPY migrations/ /app/migrations/
 COPY templates/ /app/templates/
 COPY assets/ /app/assets/
 
-RUN mkdir -p /app/db /app/audios && \
+# Create the user
+RUN adduser \
+    --disabled-password \
+    --gecos "" \
+    --home "/${USER}" \
+    --shell "/sbin/nologin" \
+    --uid "${UID}" \
+    "${USER}" && \
+    mkdir -p /app/db /app/audios && \
     chown -R app: /app
 
+# Set the work dir
+WORKDIR /app
 USER app
 
 RUN python3 -m pip install --user --upgrade git+https://github.com/yt-dlp/yt-dlp.git@release
