@@ -125,7 +125,7 @@ impl Episode{
             .await
     }
     pub async fn read_all_in_channel(pool: &SqlitePool, channel_id: &str) -> Result<Vec<Episode>, sqlx::Error>{
-        let sql = "SELECT * FROM episodes WHERE channel_id = $1";
+        let sql = "SELECT * FROM episodes WHERE channel_id = $1 ORDER BY published_at DESC";
         query(sql)
             .bind(channel_id)
             .map(Self::from_row)
@@ -143,7 +143,8 @@ impl Episode{
                 }, 
                 Err(e) => {
                     tracing::info!("Not last: {}", e);
-                    DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc)
+                    DateTime::<Utc>::from_utc(
+                        NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), Utc)
                 }
             }
     }

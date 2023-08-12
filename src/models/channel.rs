@@ -23,7 +23,7 @@ pub struct ChannelWithId {
 }
 
 fn get_default_first() -> DateTime<Utc>{
-    DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc)
+    DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), Utc)
 }
 
 impl Display for Channel {
