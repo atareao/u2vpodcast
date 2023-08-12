@@ -10,7 +10,10 @@
     {% for episode in episodes %}
     <tr>
         <td><img src="{{ episode.image }}" alt="{{ episode.title }}" width="128" height="128"></td>
-        <td>{{ episode.title }}</td>
+        <td>
+            <h3>{{ episode.title }}</h3>
+            <span>{{ episode.published_at }}</span>
+        </td>
     </tr>
     <tr>
         <td>
