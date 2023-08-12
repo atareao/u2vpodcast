@@ -89,7 +89,7 @@ impl User {
         let sql = "SELECT EXISTS(SELECT 1 FROM users WHERE email = $2)";
         query(sql)
             .bind(email.to_ascii_lowercase())
-            .map(|row| -> bool {row.get(0)})
+            .map(|row: SqliteRow| -> bool {row.get(0)})
             .fetch_one(pool)
             .await
     }

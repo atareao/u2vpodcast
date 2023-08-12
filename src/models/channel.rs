@@ -24,7 +24,7 @@ pub struct NewChannel {
 }
 
 fn get_default_first() -> DateTime<Utc>{
-    DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc)
+    DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), Utc)
 }
 
 impl Channel{
@@ -69,11 +69,11 @@ impl Channel{
         let sql = "INSERT INTO channels (url, title, description, image, first) 
                    VALUES ($1, $2, $3, $4, $5) RETURNING *;";
         let datetime = if new_channel.first.is_empty(){
-            DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc)
+            DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), Utc)
         }else{
             match NaiveDate::parse_from_str(&new_channel.first, "%Y-%d-%m"){
-                Ok(nd) => DateTime::<Utc>::from_utc(nd.and_hms(0, 0, 0), Utc),
-                Err(_) => DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(0, 0), Utc),
+                Ok(nd) => DateTime::<Utc>::from_utc(nd.and_hms_opt(0, 0, 0).unwrap(), Utc),
+                Err(_) => DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp_opt(0, 0).unwrap(), Utc),
             }
         };
         query(sql)

@@ -20,6 +20,12 @@ test:
         --push \
         .
 
+buildt:
+    docker build -t {{user}}/{{name}}:test .
+
+pusht:
+    docker push {{user}}/{{name}}:test
+
 build:
     echo {{version}}
     echo {{name}}
