@@ -6,11 +6,13 @@ os      := `uname -m`
 build:
     echo {{version}}
     echo {{name}}
-    podman build -t {{user}}/{{name}}:{{version}} -t {{user}}/{{name}}:latest .
+    docker build -t {{user}}/{{name}}:{{version}} \
+                 -t {{user}}/{{name}}:latest \
+                 .
 
 push:
-    podman push {{user}}/{{name}}:{{version}}
-    podman push {{user}}/{{name}}:latest
+    docker push {{user}}/{{name}}:{{version}}
+    docker push {{user}}/{{name}}:latest
 
 build-arm64:
     echo {{version}}
