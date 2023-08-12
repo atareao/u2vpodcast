@@ -64,6 +64,19 @@ impl Ytdlp {
             .await
             .expect("ytdlp failed to run")
     }
+
+    pub async fn auto_update() -> std::process::ExitStatus{
+        let python3 = "python3";
+        let args = vec!["-m", "pip", "install", "--user", "--upgrade",
+            "git+https://github.com/yt-dlp/yt-dlp.git@release"];
+        Command::new(python3)
+            .args(&args)
+            .spawn()
+            .expect("ytdlp can not auto update")
+            .wait()
+            .await
+            .expect("ytdlp failed to auto update")
+    }
 }
 
 #[tokio::test]

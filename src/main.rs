@@ -74,7 +74,9 @@ async fn main(){
 #[allow(unused_must_use)]
 async fn do_the_work(pool: &SqlitePool){
     let configuration = &read_configuration().await;
-
+    tracing::info!("**** Start updating yt-dlp ****");
+    Ytdlp::auto_update().await;
+    tracing::info!("**** Finish updating yt-dlp ****");
     let ytdlp = Ytdlp::new(YTDLP, "cookies-cp.txt");
     let now = Utc::now();
     for a_channel in configuration.get_channels().as_slice(){
@@ -147,7 +149,7 @@ fn parse_date(date: &str) -> DateTime<Utc>{
     let format = "%Y%m%d";
     let naive_date = NaiveDate::parse_from_str(date, format).unwrap();
     // Add some default time to convert it into a NaiveDateTime
-    let naive_datetime: NaiveDateTime = naive_date.and_hms(0,0,0);
+    let naive_datetime: NaiveDateTime = naive_date.and_hms_opt(0,0,0).unwrap();
     // Add a timezone to the object to convert it into a DateTime<UTC>
     DateTime::<Utc>::from_utc(naive_datetime, Utc)
 }
