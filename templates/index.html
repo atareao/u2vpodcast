@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}U2VPodcast{% endblock title %}
+
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        .important { color: #336699; }
+    </style>
+{% endblock head %}
+{% block main %}
+    <h1>U2VPodcast</h1>
+    <ul>
+        <li><a href="/channels/">Channels</a></li>
+    </ul>
+{% endblock main %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %} {% block title %}{{title}}{% endblock title %} {%
+block head %} {{ super() }}
+<style type="text/css">
+    .important {
+        color: #336699;
+    }
+</style>
+{% endblock head %} {% block main %}
+<div class="hero is-full-screen">
+    <div class="is-center is-vertical-align">
+        <section>
+            <div class="card card-error">
+                <header>
+                    <h4>Error</h4>
+                </header>
+                <p class="alert-danger">{{error.status_code}}</p>
+                <p class="alert-danger">{{error.details|safe}}</p>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock main %}

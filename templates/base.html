@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        {% block head %}
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
+        <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png" />
+        <link rel="manifest" href="/assets/favicon/site.webmanifest" />
+        <link rel="mask-icon" href="/assets/favicon/safari-pinned-tab.svg" color="#5bbad5" />
+        <!-- fontawesome -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+        <!-- picocss -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+        <!-- custom -->
+        <link rel="stylesheet" href="/assets/css/custom.css">
+
+        <title>{% block title %}{% endblock title %}</title>
+        {% endblock head %}
+    </head>
+    <body>
+        <main class="container">
+            {% block main %}
+            {% endblock main %}
+        </main>
+        <button class="contrast switcher theme-switcher" aria-label="Turn off dark mode"><i class="fa-solid fa-sun"></i></button>
+        <script src="/assets/js/common.js"></script>
+        {% block scripts %} {% endblock scripts %}
+    </body>
+</html>
