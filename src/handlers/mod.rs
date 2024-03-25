@@ -7,7 +7,7 @@ mod users;
 mod config;
 
 
-use actix_web::web::{self, route};
+use actix_web::web;
 use minijinja::{path_loader, Environment};
 use tracing::{
     info,
@@ -21,6 +21,7 @@ pub static ENV: Lazy<Environment<'static>> = Lazy::new(|| {
     env.set_loader(path_loader("templates"));
     env
 });
+
 use super::{
     middleware::Authentication,
     models::{
@@ -37,6 +38,10 @@ use channels::{
 use users::{
     api_users,
     web_users,
+};
+use config::{
+    api_config,
+    web_config,
 };
 
 pub fn config_services(cfg: &mut web::ServiceConfig) {
@@ -67,12 +72,14 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
                         web::scope("/1.0")
                             .configure(api_channels)
                             .configure(api_users)
+                            .configure(api_config)
                 )
             ).service(
                 web::scope("config")
                     .wrap(Authentication)
                     .configure(web_channels)
                     .configure(web_users)
+                    .configure(web_config)
             ),
 
     );

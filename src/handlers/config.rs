@@ -1,145 +1,102 @@
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use actix_web::{
     Responder,
     HttpResponse,
     web::{
-        Path,
         Data,
-        Query,
         Json,
         ServiceConfig, self,
     },
     http::StatusCode,
     get,
     post,
-    delete,
 };
 use tracing::{
     info,
     debug,
+    error,
 };
-use minijinja::context;
+use minijinja::{
+    context,
+    value::Value,
+};
+
+use crate::models::Param;
 
 use super::{
     ENV,
     AppState,
-    super::models::{
-        CustomResponse,
-        Channel,
-        NewChannel,
-    },
+    super::models::CustomResponse,
 };
 
 pub fn api_config(cfg: &mut ServiceConfig){
     cfg.service(
         web::scope("config/")
-            .service(create)
-            .service(delete)
-            .service(read)
-            .service(read_with_pagination)
+            .service(post_config)
     );
 }
 
 pub fn web_config(cfg: &mut ServiceConfig){
     cfg.service(
-        web::scope("channels")
-            .service(read_web)
+        web::scope("config/")
+            .service(get_config)
     );
 
 }
 
-#[derive(Deserialize)]
-struct Page{
-    page: Option<i64>,
-}
-
-#[derive(Deserialize)]
-struct Info{
-    channel_id: i64,
-}
-
-
-#[get("/")]
-async fn read_with_pagination(
-    data: Data<AppState>,
-    page: Query<Page>,
-) -> impl Responder{
-    info!("read_all");
-    let page = page.page.unwrap_or(1);
-    let per_page = data.config.per_page;
-    match Channel::read_with_pagination(&data.pool, page, per_page).await{
-        Ok(channel) => Ok(Json(channel)),
-        Err(e) => Err(e),
-    }
+#[derive(Serialize, Deserialize)]
+struct KeyValue{
+    key: String,
+    value: String
 }
 
 #[post("/")]
-async fn create(
+async fn post_config(
     data: Data<AppState>,
-    channel: Json<NewChannel>,
+    pairs: Json<Vec<KeyValue>>,
 ) -> impl Responder {
-    info!("create");
-    match Channel::new(&data.pool, channel.into_inner()).await{
-            Ok(channel) => Ok(Json(CustomResponse::new(
-            StatusCode::OK,
-            "Ok",
-            channel,
-        ))),
-            Err(e) => Err(e),
+    info!("post_config");
+    let mut response_pairs = Vec::new();
+    for pair in pairs.into_inner().as_slice(){
+        match Param::set(&data.pool, &pair.key, &pair.value).await {
+            Ok(kv) => {
+                debug!("{:?}", kv);
+                let key = kv.get_key(); 
+                let value = kv.get_value();
+                response_pairs.push(KeyValue{
+                    key: key.to_string(),
+                    value: value.to_string(),
+                });
+            },
+            Err(e) => {
+                error!("{:?}", e);
+                response_pairs.push(KeyValue{
+                    key: pair.key.clone(),
+                    value: pair.value.clone(),
+                });
+            }
         }
-}
-
-#[get("/{channel_id}")]
-async fn read( data: Data<AppState>, path: Path<Info>,) -> impl Responder{
-    info!("read");
-    match Channel::read(&data.pool, path.channel_id).await{
-        Ok(channel) => Ok(Json(channel)),
-        Err(e) => Err(e),
     }
+    Json(CustomResponse::new(
+        StatusCode::OK,
+        "Ok",
+        response_pairs,
+    ))
 }
-#[delete("/")]
-async fn delete( data: Data<AppState>, path: Query<Info>,) -> impl Responder{
-    info!("delete");
-    match Channel::delete(&data.pool, path.channel_id).await{
-        Ok(channel) => Ok(Json(CustomResponse::new(
-            StatusCode::OK,
-            "Ok",
-            channel,
-        ))),
-        Err(e) => Err(e),
-    }
-}
-
 
 #[get("/")]
-async fn read_web(
+async fn get_config(
     data: Data<AppState>,
-    page: Query<Page>,
 ) -> impl Responder{
-    info!("read_all");
+    info!("get_config");
     let config = &data.config;
     let title = &config.title;
-    let per_page = config.per_page;
-    let page = page.page.unwrap_or(1);
-    match Channel::read_with_pagination(&data.pool, page, per_page).await{
-        Ok(channels) => {
-            debug!("{:?}", channels);
-            let template = ENV.get_template("channels.html").unwrap();
-            let ctx = context! {
-                title => &format!("{title} - Configure channels"),
-                channels => channels,
-
-            };
-            HttpResponse::Ok().body(template.render(ctx).unwrap())
-        },
-        Err(error) => {
-            let template = ENV.get_template("error.html").unwrap();
-            let ctx = context! {
-                title => &title,
-                error => error,
-            };
-            HttpResponse::Ok().body(template.render(ctx).unwrap())
-        },
-    }
+    let params = Param::get_all(&data.pool).await.unwrap();
+    debug!("{:?}", params);
+    let template = ENV.get_template("config.html").unwrap();
+    let ctx = context! {
+        title => &format!("{title} - Configure channels"),
+        ..Value::from_serializable(&params),
+    };
+    HttpResponse::Ok().body(template.render(ctx).unwrap())
 }
-
