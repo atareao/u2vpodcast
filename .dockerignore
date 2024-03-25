@@ -4,3 +4,4 @@ Dockerfile
 README.md
 .gitignore
 .justfile
+u2vpodcast.db*

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock title %}
+
+{% block main %}
+<h1>{{ title }} <img src="/assets/favicon/favicon-48x48.png"/></h1>
+<div>
+    <button role="button"
+            class="add"
+            data-role="add"
+            data-tooltip="Add">
+        <i class="fa-solid fa-plus"></i>
+    </button>
+    <button role="button"
+            class="logout"
+            data-role="logout"
+            data-tooltip="Logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
+</div>
+<table id="table">
+    <thead id="table-head">
+        <tr>
+            <th></th>
+            <th>Title</th>
+            <th>Url</th>
+            <th>Description</th>
+            <th>Image</th>
+            <th>First</th>
+            <th>Max</th>
+            <th></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody id="table-body">
+        {% for channel in channels %}
+        <tr id="{{ channel.id }}" class="channel">
+            <td>
+            {% if channel.active == True -%}
+                <i class="fa-regular fa-square-check"></i>
+            {% else -%}
+                <i class="fa-regular fa-square"></i>
+            {% endif -%}
+            </td>
+            <td>{{ channel.title }}</td>
+            <td>{{ channel.url }}</td>
+            <td>{{ channel.url }}</td>
+            <td>{{ channel.image }}</td>
+            <td>{{ channel.first }}</td>
+            <td>{{ channel.max }}</td>
+            <td><button role="button"
+                        class="edit"
+                        data-role="edit"
+                        data-tooltip="Edit"
+                        data-id="{{ channel.id }}"
+                        data-title="{{ channel.title }}"
+                        data-active="{{ channel.active }}"
+                        data-url="{{ channel.url }}"
+                        data-description="{{ channel.description }}"
+                        data-image="{{ channel.image }}"
+                        data-first="{{ channel.first }}"
+                        data-max="{{ channel.max }}">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+            </td>
+            <td><button role="button"
+                        class="delete"
+                        data-role="delete"
+                        data-tooltip="Delete"
+                        data-id="{{ channel.id }}">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<!-- Dialog -->
+<dialog id="dialog">
+  <article>
+    <a id="dialog-close" href="#close" aria-label="Close" class="close"></a>
+    <h3 id="dialog-type">Edit</h3>
+    <input type="checkbox" id="dialog-active" name="active" role="switch"></input>
+    <br/>
+    <label for="dialog-title">Title</label>
+    <input type="text" id="dialog-title" name="title" placeholder="title"></input>
+    <label for="dialog-url">Url</label>
+    <input type="url" id="dialog-url" name="url" placeholder="url"></input>
+    <label for="dialog-description">Description</label>
+    <input type="text" id="dialog-description" name="description" placeholder="description"></input>
+    <label for="dialog-image">Image</label>
+    <input type="url" id="dialog-image" name="image"></input>
+    <label for="dialog-first">First</label>
+    <input type="date" id="dialog-first" name="first"></input>
+    <label for="dialog-max">Max</label>
+    <input type="number" id="dialog-max" name="max"></input>
+    <footer>
+      <a id="dialog-cancel" href="#cancel" role="button" class="secondary">Cancel</a>
+      <a id="dialog-confirm" href="#confirm" role="button">Confirm</a>
+    </footer>
+  </article>
+</dialog>
+<!-- ./ Dialog -->
+{% endblock main %}
+{% block scripts %}
+<script src="/assets/js/channel.js"></script>
+{% endblock scripts %}
+

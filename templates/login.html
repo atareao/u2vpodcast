@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{title}}{% endblock title %}
+
+{% block main %}
+<h1>{{ title }} <img src="/assets/favicon/favicon-48x48.png"/></h1>
+<form action="/login" id="loginForm" method="post">
+    <div class="input-group">
+        <label for="username" class="label">User name</label>
+        <input type="text" name="username" id="username" class="input">
+        <div id="name-notification" class="alert" hidden></div>
+    </div>
+    <br>
+    <div class="input-group">
+        <label for="password" class="label">Password</label>
+        <input type="password" name="password" id="password" class="input">
+        <div id="password-notification" class="alert" hidden></div>
+    </div>
+    <br>
+    <div id="loginForm-notification" class="alert" hidden></div>
+    <button class="button" role="button" type="submit">Login</button>
+</form>
+{% endblock main %}
