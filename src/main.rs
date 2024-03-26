@@ -24,6 +24,7 @@ use std::{
     path::Path,
 };
 use tracing_subscriber::{
+    Layer,
     EnvFilter,
     layer::SubscriberExt,
     util::SubscriberInitExt
@@ -46,10 +47,7 @@ use actix_web::{
     App,
     HttpServer,
     web::Data,
-    middleware::{
-        Logger,
-        NormalizePath,
-    },
+    middleware::Logger,
 };
 use actix_cors::Cors;
 
@@ -59,11 +57,28 @@ static MIGRATIONS_DIR: &str = "migrations";
 
 #[actix_web::main]
 async fn main() -> Result<(), Error> {
-    let log_level = var("RUST_LOG").unwrap_or("debug".to_string());
+
+    let format = time::format_description::parse(
+        "[year]-[month padding:zero]-[day padding:zero]T[hour]:[minute]:[second]",
+    ).expect("Can't parse timer");
+    let offset_in_sec = chrono::Local::now()
+        .offset()
+        .local_minus_utc();
+    let time_offset = time::UtcOffset::from_whole_seconds(offset_in_sec).unwrap();
+
+    let timer = tracing_subscriber::fmt::time::OffsetTime::new(time_offset, format);
+    let log_level = var("RUST_LOG")
+        .unwrap_or("DEBUG".to_string());
+    let log_layer = tracing_subscriber::fmt::layer()
+        .compact()
+        .with_timer(timer)
+        .with_thread_names(true)
+        .with_filter(EnvFilter::from_str(&log_level).unwrap());
+
     tracing_subscriber::registry()
-        .with(EnvFilter::from_str(&log_level).unwrap())
-        .with(tracing_subscriber::fmt::layer())
+        .with(log_layer)
         .init();
+
     info!("Log level: {log_level}");
 
     let db_url = if var("RUST_ENV") == Ok("production".to_string()){
