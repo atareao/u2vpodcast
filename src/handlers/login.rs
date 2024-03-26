@@ -42,7 +42,7 @@ pub async fn post_login(data: Data<AppState>, Form(credentials): Form<Credential
     //match config.get_user(&credentials.username) {
         Ok(user) => {
             if user.active && user.check_password(config, &credentials.password) {
-                let token = TokenClaims::generate_token(config.to_owned(), &credentials);
+                let token = TokenClaims::generate_token(config.to_owned(), &user);
                 info!("Ok");
                 let cookie = Cookie::build("session_auth", token)
                     .path("/")

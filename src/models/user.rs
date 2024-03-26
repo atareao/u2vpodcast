@@ -63,12 +63,13 @@ pub struct UserClaims {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TokenClaims {
     pub sub: String,
+    pub role: String,
     pub iat: i64,
     pub exp: i64,
 }
 
 impl TokenClaims {
-    pub fn generate_token(config: Config, credentials: &Credentials) -> String {
+    pub fn generate_token(config: Config, user: &User) -> String {
         let max_age = config.jwt_maxage;
         debug!("Token Max Age: {}", max_age);
         let secret = STANDARD.encode(config.jwt_secret);
@@ -78,7 +79,8 @@ impl TokenClaims {
         let payload = TokenClaims {
             iat: now,
             exp: now + max_age,
-            sub: credentials.username.clone(),
+            sub: user.name.to_string(),
+            role: user.role.to_string(),
         };
 
         jsonwebtoken::encode(
