@@ -94,7 +94,7 @@ async fn get_options(
     let title = &config.title;
     let params = Param::get_all(&data.pool).await.unwrap();
     debug!("{:?}", params);
-    let template = ENV.get_template("options.html").unwrap();
+    let template = ENV.get_template("config/options.html").unwrap();
     let ctx = context! {
         page_title => &format!("{title} - General options"),
         ..Value::from_serializable(&params),

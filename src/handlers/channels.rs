@@ -124,7 +124,7 @@ async fn read_web(
     match Channel::read_with_pagination(&data.pool, page, per_page).await{
         Ok(channels) => {
             debug!("{:?}", channels);
-            let template = ENV.get_template("channels.html").unwrap();
+            let template = ENV.get_template("config/channels.html").unwrap();
             let ctx = context! {
                 page_title => &format!("{title} - Configure channels"),
                 channels => channels,
