@@ -126,7 +126,7 @@ async fn read_web(
             debug!("{:?}", channels);
             let template = ENV.get_template("channels.html").unwrap();
             let ctx = context! {
-                title => &format!("{title} - Configure channels"),
+                page_title => &format!("{title} - Configure channels"),
                 channels => channels,
 
             };
@@ -135,7 +135,7 @@ async fn read_web(
         Err(error) => {
             let template = ENV.get_template("error.html").unwrap();
             let ctx = context! {
-                title => &title,
+                page_title => &title,
                 error => error,
             };
             HttpResponse::Ok().body(template.render(ctx).unwrap())

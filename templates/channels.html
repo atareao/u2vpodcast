@@ -2,7 +2,10 @@
 {% block title %}{{ title }}{% endblock title %}
 
 {% block main %}
-<h1>{{ title }} <img src="/assets/favicon/favicon-48x48.png"/></h1>
+<h1>{{ page_title }} <img src="/assets/favicon/favicon-48x48.png"/></h1>
+<a id="logout" href="/logout" role="button" data-tooltip="Logout">
+    <i class="fa-solid fa-right-from-bracket"></i>
+</a>
 <div>
     <button role="button"
             class="add"

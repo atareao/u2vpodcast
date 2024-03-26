@@ -38,7 +38,7 @@ pub fn api_options(cfg: &mut ServiceConfig){
 
 pub fn web_options(cfg: &mut ServiceConfig){
     cfg.service(
-        web::scope("options/")
+        web::scope("options")
             .service(get_options)
     );
 
@@ -77,6 +77,7 @@ async fn post_options(
             }
         }
     }
+    // TODO: update AppState => Mutex ???
     Json(CustomResponse::new(
         StatusCode::OK,
         "Ok",
@@ -95,7 +96,7 @@ async fn get_options(
     debug!("{:?}", params);
     let template = ENV.get_template("options.html").unwrap();
     let ctx = context! {
-        title => &format!("{title} - General options"),
+        page_title => &format!("{title} - General options"),
         ..Value::from_serializable(&params),
     };
     HttpResponse::Ok().body(template.render(ctx).unwrap())
