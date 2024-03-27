@@ -78,7 +78,7 @@ impl TokenClaims {
         let now = Utc::now().timestamp_nanos_opt().unwrap() / 1_000_000_000; // nanosecond -> second
         let payload = TokenClaims {
             iat: now,
-            exp: now + max_age,
+            exp: now + max_age * 60, //max_age are minutes
             sub: user.name.to_string(),
             role: user.role.to_string(),
         };

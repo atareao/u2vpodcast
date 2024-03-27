@@ -88,6 +88,7 @@ where
             }
         }
         if !authenticate_pass{
+            debug!("No authenticate pass");
             let (request, _pl) = req.into_parts();
             let response = HttpResponse::SeeOther()
                 .insert_header((header::LOCATION, "/login"))
