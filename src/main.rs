@@ -72,7 +72,7 @@ async fn main() -> Result<(), Error> {
     let log_layer = tracing_subscriber::fmt::layer()
         .compact()
         .with_timer(timer)
-        .with_thread_names(true)
+        //.with_thread_names(true)
         .with_filter(EnvFilter::from_str(&log_level).unwrap());
 
     tracing_subscriber::registry()

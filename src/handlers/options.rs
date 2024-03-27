@@ -36,7 +36,7 @@ pub fn api_options(cfg: &mut ServiceConfig){
     );
 }
 
-pub fn web_options(cfg: &mut ServiceConfig){
+pub fn config_options(cfg: &mut ServiceConfig){
     cfg.service(
         web::scope("options")
             .service(get_options)

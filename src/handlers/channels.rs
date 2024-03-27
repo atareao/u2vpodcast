@@ -32,7 +32,7 @@ use super::{
 
 pub fn api_channels(cfg: &mut ServiceConfig){
     cfg.service(
-        web::scope("channels/")
+        web::scope("channels")
             .service(create)
             .service(delete)
             .service(read)
@@ -40,12 +40,18 @@ pub fn api_channels(cfg: &mut ServiceConfig){
     );
 }
 
+pub fn config_channels(cfg: &mut ServiceConfig){
+    cfg.service(
+        web::resource("channels/")
+            .route(web::get().to(read_config_channels))
+    );
+}
+
 pub fn web_channels(cfg: &mut ServiceConfig){
     cfg.service(
-        web::scope("channels")
-            .service(read_web)
+        web::resource("/")
+            .route(web::get().to(read_web_channels))
     );
-
 }
 
 #[derive(Deserialize)]
@@ -111,8 +117,7 @@ async fn delete( data: Data<AppState>, path: Query<Info>,) -> impl Responder{
 }
 
 
-#[get("/")]
-async fn read_web(
+async fn read_config_channels(
     data: Data<AppState>,
     page: Query<Page>,
 ) -> impl Responder{
@@ -125,6 +130,37 @@ async fn read_web(
         Ok(channels) => {
             debug!("{:?}", channels);
             let template = ENV.get_template("config/channels.html").unwrap();
+            let ctx = context! {
+                page_title => &format!("{title} - Configure channels"),
+                channels => channels,
+
+            };
+            HttpResponse::Ok().body(template.render(ctx).unwrap())
+        },
+        Err(error) => {
+            let template = ENV.get_template("error.html").unwrap();
+            let ctx = context! {
+                page_title => &title,
+                error => error,
+            };
+            HttpResponse::Ok().body(template.render(ctx).unwrap())
+        },
+    }
+}
+
+async fn read_web_channels(
+    data: Data<AppState>,
+    page: Query<Page>,
+) -> impl Responder{
+    info!("read_web_channels");
+    let config = &data.config;
+    let title = &config.title;
+    let per_page = config.per_page;
+    let page = page.page.unwrap_or(1);
+    match Channel::read_with_pagination(&data.pool, page, per_page).await{
+        Ok(channels) => {
+            debug!("{:?}", channels);
+            let template = ENV.get_template("web/channels.html").unwrap();
             let ctx = context! {
                 page_title => &format!("{title} - Configure channels"),
                 channels => channels,

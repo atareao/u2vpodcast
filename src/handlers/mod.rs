@@ -33,15 +33,16 @@ use super::{
 };
 use channels::{
     api_channels,
+    config_channels,
     web_channels,
 };
 use users::{
     api_users,
-    web_users,
+    config_users,
 };
 use options::{
     api_options,
-    web_options,
+    config_options,
 };
 
 pub fn config_services(cfg: &mut web::ServiceConfig) {
@@ -49,14 +50,10 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
     //let auth = HttpAuthentication::bearer(validator);
     cfg.service(
         web::scope("")
-            .service(
-                web::resource("/")
-                    .wrap(Authentication)
-                    .route(web::get().to(root::get_root))
-            )
+            .configure(web_channels)
             .service(web::resource("/logout")
                 .route(web::get().to(logout::get_logout))
-                )
+            )
             .service(
                 web::resource("/status")
                     .route(web::get().to(status::get_status)))
@@ -67,7 +64,7 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
                     .route(web::post().to(login::post_login))
             ).service(
                 web::scope("/api")
-                    .wrap(Authentication)
+                    //.wrap(Authentication)
                     .service(
                         web::scope("/1.0")
                             .configure(api_channels)
@@ -75,12 +72,12 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
                             .configure(api_options)
                 )
             ).service(
-                web::scope("config")
+                web::scope("/config")
                     .wrap(Authentication)
-                    .configure(web_channels)
-                    .configure(web_users)
-                    .configure(web_options)
-            ),
+                    .configure(config_channels)
+                    .configure(config_users)
+                    .configure(config_options)
+            )
 
     );
 }

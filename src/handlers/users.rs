@@ -41,7 +41,7 @@ pub fn api_users(cfg: &mut ServiceConfig){
     );
 }
 
-pub fn web_users(cfg: &mut ServiceConfig){
+pub fn config_users(cfg: &mut ServiceConfig){
     cfg.service(
         web::scope("users")
             .service(read_web)
