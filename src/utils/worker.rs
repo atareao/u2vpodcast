@@ -21,7 +21,8 @@ use super::super::models::{
     YtVideo,
 };
 
-static FOLDER: &str = "/app/audios";
+//static FOLDER: &str = "/app/audios";
+static FOLDER: &str = "audios";
 static YTDLP: &str = "/app/.local/bin/yt-dlp";
 
 pub async fn do_the_work(pool: &SqlitePool) -> Result<(), Error>{
@@ -43,6 +44,7 @@ async fn process_channel(
     channel: &Channel,
     ytdlp: &Ytdlp,
 ) -> Result<(), Error>{
+    info!("Create directory {}/{}", FOLDER, &channel.id);
     let _ = create_dir_all(format!("{}/{}", FOLDER, &channel.id))
         .await;
     info!("Getting new videos for channel: {}", channel);
