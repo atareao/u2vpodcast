@@ -29,7 +29,7 @@ pub async fn get_login(data: Data<AppState>) -> impl Responder{
     let title = &config.title;
     let template = ENV.get_template("login.html").unwrap();
     let ctx = context! {
-        title => &title,
+        page_title => &title,
     };
     HttpResponse::Ok().body(template.render(ctx).unwrap())
 }
@@ -51,7 +51,7 @@ pub async fn post_login(data: Data<AppState>, Form(credentials): Form<Credential
                     .same_site(SameSite::Strict)
                     .finish();
                 HttpResponse::SeeOther()
-                    .insert_header((header::LOCATION, "/"))
+                    .insert_header((header::LOCATION, "/config/channels/"))
                     .cookie(cookie)
                     .finish()
             }else{

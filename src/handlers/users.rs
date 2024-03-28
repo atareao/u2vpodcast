@@ -126,7 +126,7 @@ async fn read_web(
     match User::read_with_pagination(&data.pool, page, per_page).await{
         Ok(users) => {
             debug!("{:?}", users);
-            let template = ENV.get_template("users.html").unwrap();
+            let template = ENV.get_template("config/users.html").unwrap();
             let ctx = context! {
                 page_title => &format!("{title} - Configure users"),
                 users => users,

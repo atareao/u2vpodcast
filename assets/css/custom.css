@@ -1,66 +1,78 @@
-[role="button"]{
+:root {
+    --font-size: 1rem;
+}
+
+[role="button"] {
     width: auto;
 }
+
 .switcher {
-  position: fixed;
-  right: calc(var(--spacing) / 2 + var(--scrollbar-width, 0px));
-  bottom: var(--spacing);
-  width: auto;
-  margin-bottom: 0;
-  padding: 0.75rem;
-  border-radius: 2rem;
-  box-shadow: var(--card-box-shadow);
-  line-height: 1;
-  text-align: right;
+    position: fixed;
+    right: calc(var(--spacing) / 2 + var(--scrollbar-width, 0px));
+    bottom: var(--spacing);
+    width: auto;
+    margin-bottom: 0;
+    padding: 0.75rem;
+    border-radius: 2rem;
+    box-shadow: var(--card-box-shadow);
+    line-height: 1;
+    text-align: right;
 }
+
 .switcher i {
-  display: inline-block;
-  padding: 0;
-  overflow: hidden;
-  font-style: normal;
-  font-size: 0.875rem;
-  white-space: nowrap;
+    display: inline-block;
+    padding: 0;
+    overflow: hidden;
+    font-style: normal;
+    font-size: 0.875rem;
+    white-space: nowrap;
 }
+
 table {
-  border-collapse: collapse;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  table-layout: fixed;
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    table-layout: fixed;
 }
 
 table caption {
-  font-size: 1.5em;
-  margin: 0.5em 0 0.75em;
+    font-size: 1.5em;
+    margin: 0.5em 0 0.75em;
 }
 
 table tr {
-  padding: 0.35em;
+    padding: 0.35em;
 }
 
 table th,
 table td {
-  padding: 0.625em;
-  text-align: center;
+    padding: 0.625em;
+    text-align: center;
 }
+
 td:first-child {
     width: 24px;
     padding: 2px;
 }
-td:nth-child(3){
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+
+td:nth-child(3) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-td:nth-child(2){
+
+td:nth-child(2) {
     width: 200px
 }
-td:nth-child(4){
+
+td:nth-child(4) {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 200px
 }
+
 td:nth-child(5),
 td:last-child {
     padding-left: 2px;
@@ -69,15 +81,15 @@ td:last-child {
 }
 
 table th {
-  font-size: 0.85em;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+    font-size: 0.85em;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
 @media screen and (max-width: 600px) {
+
     td:nth-child(3),
-    td:nth-child(4){
+    td:nth-child(4) {
         display: none;
     }
 }
-

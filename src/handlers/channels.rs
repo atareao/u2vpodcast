@@ -162,7 +162,7 @@ async fn read_web_channels(
             debug!("{:?}", channels);
             let template = ENV.get_template("web/channels.html").unwrap();
             let ctx = context! {
-                page_title => &format!("{title} - Configure channels"),
+                page_title => &format!("{title} - Channels"),
                 channels => channels,
 
             };
