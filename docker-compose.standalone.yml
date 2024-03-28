@@ -1,18 +1,17 @@
-version: "3.7"
-
 services:
   u2vpodcast:
     image: atareao/u2vpodcast:latest
     container_name: u2vpodcast
     init: true
     restart: always
+    environment:
+      RUST_ENV: production
     volumes:
       - audios:/app/audios
       - db:/app/db
       - ./cookies.txt:/app/cookies.txt
-      - ./config.yml:/app/config.yml
     ports:
-      - 8080:8080
+      - 6996:6996
 
 volumes:
   audios: {}
