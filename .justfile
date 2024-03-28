@@ -20,3 +20,8 @@ build-arm64:
     docker build -t {{user}}/{{name}}:arm64-{{version}} \
                  --platform linux/arm64 \
                  --file ./Dockerfile.arm64 .
+
+dcu:
+    docker compose -f ./docker-compose.standalone.yml up -d
+dcd:
+    docker compose down
