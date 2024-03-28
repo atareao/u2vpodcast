@@ -2,22 +2,13 @@
 {% block title %}{{ title }}{% endblock title %}
 
 {% block main %}
-<h1>{{ page_title }} <img src="/assets/favicon/favicon-48x48.png"/></h1>
-<a id="logout" href="/logout" role="button" data-tooltip="Logout">
-    <i class="fa-solid fa-right-from-bracket"></i>
-</a>
+{% include "navigation/config.html" %}
 <div>
     <button role="button"
             class="add"
             data-role="add"
             data-tooltip="Add">
         <i class="fa-solid fa-plus"></i>
-    </button>
-    <button role="button"
-            class="logout"
-            data-role="logout"
-            data-tooltip="Logout">
-        <i class="fa-solid fa-right-from-bracket"></i>
     </button>
 </div>
 <table id="table">

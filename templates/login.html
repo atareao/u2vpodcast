@@ -2,7 +2,7 @@
 {% block title %}{{title}}{% endblock title %}
 
 {% block main %}
-<h1>{{ title }} <img src="/assets/favicon/favicon-48x48.png"/></h1>
+{% include "navigation/web.html" %}
 <form action="/login" id="loginForm" method="post">
     <div class="input-group">
         <label for="username" class="label">User name</label>

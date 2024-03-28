@@ -10,12 +10,7 @@
 </style>
 {% endblock head %}
 {% block main %}
-<div class="is-center">
-    <h1>{{ page_title }} <img src="/assets/favicon/favicon-48x48.png"/></h1>
-</div>
-<a id="logout" href="/logout" role="button" data-tooltip="Logout">
-    <i class="fa-solid fa-right-from-bracket"></i>
-</a>
+{% include "navigation/config.html" %}
 <article>
     <h3 id="general">General</h3>
     <label for="title">Title</label>
