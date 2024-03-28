@@ -1,0 +1,11 @@
+{% extends "navigation/nav.html" %}
+{% block navigation %}
+<li><a href="/config/options/">General</a></li>
+<li><a href="/config/channels/">Channels</a></li>
+<li><a href="/config/users/">Users</a></li>
+<li>
+    <a id="logout" href="/logout" data-tooltip="Logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+    </a>
+</li>
+{% endblock navigation %}
