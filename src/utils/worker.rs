@@ -27,7 +27,10 @@ static YTDLP: &str = "/app/.local/bin/yt-dlp";
 
 pub async fn do_the_work(pool: &SqlitePool) -> Result<(), Error>{
     info!("**** Start updating yt-dlp ****");
-    Ytdlp::auto_update().await;
+    match Ytdlp::auto_update().await{
+        Ok(()) => {},
+        Err(e) => error!("{}", e),
+    }
     info!("**** Finish updating yt-dlp ****");
     let ytdlp = Ytdlp::new(YTDLP, "cookies-cp.txt");
     for channel in Channel::read_all(pool).await?.as_slice(){

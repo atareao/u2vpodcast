@@ -64,17 +64,22 @@ impl Ytdlp {
             .map_err(|e| e.into())
     }
 
-    pub async fn auto_update() -> std::process::ExitStatus{
+    pub async fn auto_update() -> Result<(), Error>{
         let python3 = "python3";
         let args = vec!["-m", "pip", "install", "--user", "--upgrade",
-            "--break-system-packages", "git+https://github.com/yt-dlp/yt-dlp.git@release"];
-        Command::new(python3)
+            "--break-system-packages", "yt-dlp"];
+        if Command::new(python3)
             .args(&args)
             .spawn()
-            .expect("ytdlp can not auto update")
+            .map_err(|e| Error::new(&e.to_string()))?
             .wait()
             .await
-            .expect("ytdlp failed to auto update")
+            .map_err(|e| Error::new(&e.to_string()))?
+            .success(){
+            Ok(())
+        }else{
+            Err(Error::new("Can't update yt-dlp"))
+        }
     }
 }
 
