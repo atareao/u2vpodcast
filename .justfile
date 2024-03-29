@@ -21,7 +21,11 @@ build-arm64:
                  --platform linux/arm64 \
                  --file ./Dockerfile.arm64 .
 
-dcu:
-    docker compose -f ./docker-compose.standalone.yml up -d
-dcd:
-    docker compose down
+up:
+    docker compose -f ./docker-compose.standalone.yml up -d --force-recreate
+down:
+    docker compose -f ./docker-compose.standalone.yml down
+logs:
+    docker compose -f ./docker-compose.standalone.yml logs
+logsf:
+    docker compose -f ./docker-compose.standalone.yml logs -f
