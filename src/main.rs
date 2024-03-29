@@ -85,6 +85,7 @@ async fn main() -> Result<(), Error> {
         std::env::current_exe()?
             .parent()
             .unwrap()
+            .join("db")
             .join(DDBB)
             .to_str()
             .unwrap()
@@ -140,7 +141,7 @@ async fn main() -> Result<(), Error> {
                 }
             }
             info!("Sleep time: {}", &sleep_time);
-            sleep(Duration::from_secs(sleep_time * 86400)).await;
+            sleep(Duration::from_secs(sleep_time * 3600)).await;
         }
 
     });
