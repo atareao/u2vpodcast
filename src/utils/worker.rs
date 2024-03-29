@@ -21,8 +21,7 @@ use super::super::models::{
     YtVideo,
 };
 
-//static FOLDER: &str = "/app/audios";
-static FOLDER: &str = "audios";
+static FOLDER: &str = "/app/audios";
 static YTDLP: &str = "/app/.local/bin/yt-dlp";
 
 pub async fn do_the_work(pool: &SqlitePool) -> Result<(), Error>{
@@ -34,6 +33,7 @@ pub async fn do_the_work(pool: &SqlitePool) -> Result<(), Error>{
     info!("**** Finish updating yt-dlp ****");
     let ytdlp = Ytdlp::new(YTDLP, "cookies-cp.txt");
     for channel in Channel::read_all(pool).await?.as_slice(){
+        info!("Processing: {}", channel.name);
         match process_channel(pool, channel, &ytdlp).await{
             Ok(_) => {},
             Err(e) => error!{"Cant process channel: {channel}. Error: {e}"},
@@ -68,6 +68,7 @@ async fn process_channel(
     let ytvideos = ytdlp.get_latest(&channel.url, days).await?;
     info!("Getting {} videos", ytvideos.len());
     for ytvideo in ytvideos{
+        info!("Processing: {}", &ytvideo.title);
         match process_episode(pool, channel, &ytvideo, ytdlp).await{
             Ok(_) => {},
             Err(e) => error!("Cant process episode: {e}"),
@@ -83,6 +84,7 @@ async fn process_episode(
     ytvideo: &YtVideo,
     ytdlp: &Ytdlp,
 ) -> Result<(), Error>{
+    info!("Start processing episode {}", ytvideo.title);
     if channel.episode_exists(pool, &ytvideo.id).await{
         info!("El video {} titulado '{}', existe",
             &ytvideo.id,
