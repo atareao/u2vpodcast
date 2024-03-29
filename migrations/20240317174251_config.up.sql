@@ -10,7 +10,7 @@ INSERT INTO config (key, value) VALUES
     ('port', '6996'),
     ('salt', 'salt'),
     ('pepper', 'pepper'),
-    ('sleep_time', '1'),
+    ('sleep_time', '24'),
     ('per_page', '10'),
     ('jwt_secret', 'a-secret-very-secret'),
     ('jwt_expires_in', '60m'),
