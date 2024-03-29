@@ -83,16 +83,17 @@ impl Episode {
                    created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7,
                    $8, $9, $9) RETURNING *;";
         query(sql)
-            .bind(&episode.channel_id)
+            .bind(episode.channel_id)
             .bind(&episode.title)
             .bind(&episode.description)
             .bind(&episode.yt_id)
             .bind(&episode.webpage_url)
-            .bind(&episode.published_at)
+            .bind(episode.published_at)
             .bind(&episode.duration)
             .bind(&episode.image)
-            .bind(&episode.listen)
-            .bind(&episode.created_at)
+            .bind(episode.listen)
+            .bind(episode.created_at)
+            .bind(episode.updated_at)
             .map(Self::from_row)
             .fetch_one(pool)
             .await
@@ -202,20 +203,23 @@ impl Episode {
         }
     }
     pub async fn update(pool: &SqlitePool, episode: &Self) -> Result<Self, Error> {
+        info!("update");
         let sql = "UPDATE episodes SET channel_id = $2, title = $3,
                    description = $4, yt_id = $5, published_at = $6,
-                   duration =$7, image = $8, listen = $9
-                    FROM episodes WHERE id = $1 RETURNING * ;";
+                   duration =$7, image = $8, listen = $9, updated_at = $10
+                   FROM episodes WHERE id = $1 RETURNING * ;";
+        let updated_at = Utc::now();
         query(sql)
-            .bind(&episode.id)
-            .bind(&episode.channel_id)
+            .bind(episode.id)
+            .bind(episode.channel_id)
             .bind(&episode.title)
             .bind(&episode.description)
             .bind(&episode.yt_id)
-            .bind(&episode.published_at)
+            .bind(episode.published_at)
             .bind(&episode.duration)
             .bind(&episode.image)
-            .bind(&episode.listen)
+            .bind(episode.listen)
+            .bind(updated_at)
             .map(Self::from_row)
             .fetch_one(pool)
             .await
