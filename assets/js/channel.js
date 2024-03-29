@@ -108,11 +108,8 @@ class Dialog {
       .addEventListener("click", () => {
         this.close("confirm");
       });
-    this.title = document.getElementById("dialog-title");
     this.url = document.getElementById("dialog-url");
     this.active = document.getElementById("dialog-active");
-    this.description = document.getElementById("dialog-description");
-    this.image = document.getElementById("dialog-image");
     this.first = document.getElementById("dialog-first");
     this.max = document.getElementById("dialog-max");
   }
@@ -127,11 +124,8 @@ class Dialog {
       this.dialog_role = "edit";
       document.getElementById("dialog-type").innerText = "Edit";
       this.element = element;
-      this.title.value = element.getAttribute("data-title");
       this.url.value = element.getAttribute("data-url");
       this.active.checked = element.getAttribute("data-active") === "true";
-      this.description.value = element.getAttribute("data-description");
-      this.image.value = element.getAttribute("data-image");
       this.first.valueAsDate = new Date(element.getAttribute("data-first"));
       this.max.valueAsNumber = element.getAttribute("data-max");
       this.url.readOnly = (this.dialog_role == "edit");
@@ -144,11 +138,8 @@ class Dialog {
     }else{
       this.dialog_role = "add";
       document.getElementById("dialog-type").innerText = "Add";
-      this.title.value = "";
       this.url.value = "";
       this.active.checked = true;
-      this.description.value = "";
-      this.image.value = "";
       this.first.valueAsDate = new Date();
       this.max.value = 30;
     }
@@ -191,11 +182,8 @@ class Dialog {
           .catch((err) => console.log("Error", err));
       } else if (this.dialog_role == "add") {
         const data = JSON.stringify({
-            title: this.title.value,
             url: this.url.value,
             active: this.active.checked,
-            description: this.description.value,
-            image: this.image.value,
             first: this.first.valueAsDate,
             max: this.max.valueAsNumber,
           });
@@ -222,10 +210,7 @@ class Dialog {
             tbody.innerHTML += `
                         <tr id="${data.id}">
                             <td>${active}</td>
-                            <td>${data.title}</td>
                             <td>${data.url}</td>
-                            <td>${data.description}</td>
-                            <td>${data.image}</td>
                             <td>${data.first}</td>
                             <td>${data.max}</td>
                             <td>
@@ -234,11 +219,8 @@ class Dialog {
                                         data-role="edit"
                                         data-tooltip="Edit"
                                         data-id="${data.id}"
-                                        data-title="${data.title}"
                                         data-active="${data.active}"
                                         data-url="${data.url}"
-                                        data-description="${data.description}"
-                                        data-image="${data.image}"
                                         data-first="${data.first}"
                                         data-max="${data.max}">
                                   <i class="fa-solid fa-pen"></i>

@@ -20,7 +20,12 @@ use sqlx::{
     query,
     Row
 };
-use super::{Error, Episode};
+
+use super::{
+    Error,
+    Episode,
+    YTInfo,
+};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
@@ -39,10 +44,7 @@ pub struct Channel {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NewChannel {
     pub url: String,
-    pub title: String,
     pub active: bool,
-    pub description: String,
-    pub image: String,
     pub first: DateTime<Utc>,
     pub max: i64,
 }
@@ -74,13 +76,17 @@ impl Channel{
         info!("new");
         let created_at = Utc::now();
         let updated_at = created_at;
+        let ytinfo = match YTInfo::new(&channel.url).await{
+            Ok(ytinfo) => ytinfo,
+            Err(_) => YTInfo::default(),
+        };
         let mut channel = Self{
             id: -1,
             url: channel.url,
-            title: channel.title,
+            title: ytinfo.title,
             active: channel.active,
-            description: channel.description,
-            image: channel.image,
+            description: ytinfo.description,
+            image: ytinfo.image,
             first: channel.first,
             max: channel.max,
             created_at,

@@ -8,6 +8,7 @@ mod episode;
 mod ytdlp;
 pub mod channel;
 pub mod response;
+pub mod ytinfo;
 
 
 use chrono::{
@@ -27,6 +28,7 @@ pub use channel::{
     Channel,
     NewChannel,
 };
+use ytinfo::YTInfo;
 pub use episode::Episode;
 pub use appstate::AppState;
 pub use user::{
