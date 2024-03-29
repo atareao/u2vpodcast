@@ -1,5 +1,9 @@
 use tokio::process::Command;
 use serde::{Serialize, Deserialize};
+use tracing::{
+    info,
+    debug,
+};
 use super::Error;
 
 pub struct Ytdlp{
@@ -13,7 +17,7 @@ pub struct YtVideo{
     pub title: String,
     pub description: String,
     pub thumbnail: String,
-    pub url: String,
+    pub original_url: String,
     pub webpage_url: String,
     pub upload_date: String,
     pub duration_string: String,
@@ -28,9 +32,8 @@ impl Ytdlp {
     }
     pub async fn get_latest(&self, url: &str, days: i64) -> Result<Vec<YtVideo>, Error>{
         let elapsed = format!("today-{}days", days);
-        let mut args = vec!["--dateafter", &elapsed, "--dump-json",
-            "--break-on-reject"];
-        args.push(url);
+        let args = vec!["--dateafter", &elapsed, "--dump-json",
+            "--break-on-reject", url];
         let stdout = Command::new(&self.path)
             .args(&args)
             .output()
@@ -42,8 +45,8 @@ impl Ytdlp {
             .join(",");
         result.pop();
         let content = format!("[{}]", result);
-        tracing::info!("{}", &content);
         let ytvideos: Vec<YtVideo> = serde_json::from_str(&content).unwrap();
+        info!("{:?}", &ytvideos);
         Ok(ytvideos)
     }
 
