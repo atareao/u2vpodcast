@@ -15,6 +15,7 @@
     <thead id="table-head">
         <tr>
             <th></th>
+            <th>Name</th>
             <th>Url</th>
             <th>First</th>
             <th>Max</th>
@@ -32,6 +33,7 @@
                 <i class="fa-regular fa-square"></i>
             {% endif -%}
             </td>
+            <td>{{ channel.name }}</td>
             <td>{{ channel.url }}</td>
             <td>{{ channel.first }}</td>
             <td>{{ channel.max }}</td>
@@ -41,6 +43,7 @@
                         data-tooltip="Edit"
                         data-id="{{ channel.id }}"
                         data-active="{{ channel.active }}"
+                        data-name="{{ channel.name }}"
                         data-url="{{ channel.url }}"
                         data-first="{{ channel.first }}"
                         data-max="{{ channel.max }}">
@@ -66,6 +69,8 @@
     <h3 id="dialog-type">Edit</h3>
     <input type="checkbox" id="dialog-active" name="active" role="switch"></input>
     <br/>
+    <label for="dialog-name">Name</label>
+    <input type="text" id="dialog-name" name="name" placeholder="name"></input>
     <label for="dialog-url">Url</label>
     <input type="url" id="dialog-url" name="url" placeholder="url"></input>
     <label for="dialog-first">First</label>

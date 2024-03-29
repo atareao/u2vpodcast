@@ -59,6 +59,7 @@ RUN python3 -m pip install \
             --user \
             --upgrade \
             --break-system-packages \
-            git+https://github.com/yt-dlp/yt-dlp.git@release
+            yt-dlp
+            #git+https://github.com/yt-dlp/yt-dlp.git@release
 
 CMD ["/app/u2vpodcast"]

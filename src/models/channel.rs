@@ -30,6 +30,7 @@ use super::{
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
     pub id: i64,
+    pub name: String,
     pub url: String,
     pub title: String,
     pub active: bool,
@@ -43,6 +44,7 @@ pub struct Channel {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NewChannel {
+    pub name: String,
     pub url: String,
     pub active: bool,
     pub first: DateTime<Utc>,
@@ -51,7 +53,7 @@ pub struct NewChannel {
 
 impl Display for Channel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({}, {} - {})", self.id, self.title, self.url)
+        write!(f, "({}, {} - {})", self.id, self.name, self.url)
     }
 }
 
@@ -60,6 +62,7 @@ impl Channel{
         info!("from_row");
         Self{
             id: row.get("id"),
+            name: row.get("name"),
             url: row.get("url"),
             title: row.get("title"),
             active: row.get("active"),
@@ -82,6 +85,7 @@ impl Channel{
         };
         let mut channel = Self{
             id: -1,
+            name: channel.name,
             url: channel.url,
             title: ytinfo.title,
             active: channel.active,
@@ -97,10 +101,11 @@ impl Channel{
 
     pub async fn create(pool: &SqlitePool, channel: &Self) -> Result<Self, Error>{
         info!("create");
-        let sql = "INSERT INTO channels (url, title, active, description,
+        let sql = "INSERT INTO channels (name, url, title, active, description,
                    image, first, max, created_at, updated_at)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;";
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *;";
         query(sql)
+            .bind(&channel.name)
             .bind(&channel.url)
             .bind(&channel.title)
             .bind(channel.active)
@@ -157,10 +162,11 @@ impl Channel{
     pub async fn update(pool: &SqlitePool, channel: &Self) -> Result<Self, Error>{
         info!("update");
         let updated_at = Utc::now();
-        let sql = "UPDATE channels SET url = $1, title = $2, active = $3,
-                   description= $4, image = $5, first = $6, max = $7,
-                   updated_at = $8 WHERE id = $9 RETURNING *";
+        let sql = "UPDATE channels SET name = $1, url = $2, title = $3,
+                   active = $4, description= $5, image = $6, first = $7,
+                   max = $8, updated_at = $9 WHERE id = $10 RETURNING *";
         query(sql)
+            .bind(&channel.name)
             .bind(&channel.url)
             .bind(&channel.title)
             .bind(channel.active)

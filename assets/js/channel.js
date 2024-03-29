@@ -108,6 +108,7 @@ class Dialog {
       .addEventListener("click", () => {
         this.close("confirm");
       });
+    this.name = document.getElementById("dialog-name");
     this.url = document.getElementById("dialog-url");
     this.active = document.getElementById("dialog-active");
     this.first = document.getElementById("dialog-first");
@@ -124,10 +125,12 @@ class Dialog {
       this.dialog_role = "edit";
       document.getElementById("dialog-type").innerText = "Edit";
       this.element = element;
+      this.name.value = element.getAttribute("data-name");
       this.url.value = element.getAttribute("data-url");
       this.active.checked = element.getAttribute("data-active") === "true";
       this.first.valueAsDate = new Date(element.getAttribute("data-first"));
       this.max.valueAsNumber = element.getAttribute("data-max");
+      this.name.readOnly = (this.dialog_role == "edit");
       this.url.readOnly = (this.dialog_role == "edit");
       if (this.isScrollbarVisible()) {
         document.documentElement.style.setProperty(
@@ -138,6 +141,7 @@ class Dialog {
     }else{
       this.dialog_role = "add";
       document.getElementById("dialog-type").innerText = "Add";
+      this.name.value = "";
       this.url.value = "";
       this.active.checked = true;
       this.first.valueAsDate = new Date();
@@ -182,6 +186,7 @@ class Dialog {
           .catch((err) => console.log("Error", err));
       } else if (this.dialog_role == "add") {
         const data = JSON.stringify({
+            name: this.name.value,
             url: this.url.value,
             active: this.active.checked,
             first: this.first.valueAsDate,
@@ -210,6 +215,7 @@ class Dialog {
             tbody.innerHTML += `
                         <tr id="${data.id}">
                             <td>${active}</td>
+                            <td>${data.name}</td>
                             <td>${data.url}</td>
                             <td>${data.first}</td>
                             <td>${data.max}</td>
@@ -220,6 +226,7 @@ class Dialog {
                                         data-tooltip="Edit"
                                         data-id="${data.id}"
                                         data-active="${data.active}"
+                                        data-name="${data.name}"
                                         data-url="${data.url}"
                                         data-first="${data.first}"
                                         data-max="${data.max}">
