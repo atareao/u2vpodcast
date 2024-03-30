@@ -5,6 +5,7 @@ mod channels;
 mod episodes;
 mod users;
 mod options;
+mod feed;
 
 
 use actix_web::web;
@@ -37,6 +38,7 @@ use channels::{
     web_channels,
 };
 use episodes::web_episodes;
+use feed::web_feed;
 use users::{
     api_users,
     config_users,
@@ -56,6 +58,7 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
             )
             .configure(web_channels)
             .configure(web_episodes)
+            .configure(web_feed)
             .service(web::resource("/logout/")
                 .route(web::get().to(logout::get_logout))
             )

@@ -167,7 +167,7 @@ async fn main() -> Result<(), Error> {
             )
             .app_data(Data::clone(&data))
             .service(af::Files::new("/assets", "./assets").show_files_listing())
-            //.wrap(NormalizePath::trim())
+            .service(af::Files::new("/media", "./audios"))
             .configure(handlers::config_services)
 
     })
