@@ -49,7 +49,7 @@ pub fn config_channels(cfg: &mut ServiceConfig){
 
 pub fn web_channels(cfg: &mut ServiceConfig){
     cfg.service(
-        web::resource("/")
+        web::resource("channels/")
             .route(web::get().to(read_web_channels))
     );
 }
@@ -157,6 +157,7 @@ async fn read_web_channels(
     let title = &config.title;
     let per_page = config.per_page;
     let page = page.page.unwrap_or(1);
+    let total = Channel::number_of_channels(&data.pool).await;
     match Channel::read_with_pagination(&data.pool, page, per_page).await{
         Ok(channels) => {
             debug!("{:?}", channels);
@@ -164,7 +165,8 @@ async fn read_web_channels(
             let ctx = context! {
                 page_title => &format!("{title} - Channels"),
                 channels => channels,
-
+                page => page,
+                total => total / per_page + 1,
             };
             HttpResponse::Ok().body(template.render(ctx).unwrap())
         },
