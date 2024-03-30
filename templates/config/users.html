@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}{{ title }}{% endblock title %}
+{% set page_title = app_title + " - Configure users" %}
+{% block title %}{{ page_title }}{% endblock title %}
 
 {% block main %}
 {% include "navigation/config.html" %}

@@ -1,22 +1,22 @@
 {% extends "base.html" %}
-{% block title %}{{ title }}{% endblock title %}
+{% set page_title = app_title + " - Channels" %}
+{% block title %}{{ page_title }}{% endblock title %}
 
 {% block main %}
-<h1>{{ title }}</h1>
 {% include "navigation/web.html" %}
 <table>
     {% for channel in channels %}
     <tr>
         <td style="width:128px">
-            <a href="/channels/{{ channel.id }}?page=1">
+            <a href="/channels/{{ channel.id }}/?page=1">
                 <img src="{{ channel.image }}" alt="{{ channel.title }}" width="128" height="128"></td>
             </a>
         </td>
         <td>
-            <a href="/channels/{{ channel.id }}?page=1">{{ channel.title }}</a>
+            <a href="/channels/{{ channel.id }}/?page=1">{{ channel.title }}</a>
         </td>
         <td style="white-space:preserve;text-align:left">
-            <a href="/channels/{{ channel.id }}?page=1">{{ channel.description }}</a>
+            <a href="/channels/{{ channel.id }}/?page=1">{{ channel.description }}</a>
         </td>
         <td>
             <a href="/channels/{{ channel.id }}/feed.xml">

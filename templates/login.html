@@ -1,9 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{title}}{% endblock title %}
+{% set page_title = app_title + " - Login" %}
+{% block title %}{{ app_title }}{% endblock title %}
 
 {% block main %}
 {% include "navigation/web.html" %}
-<form action="/login" id="loginForm" method="post">
+<form action="/login/" id="loginForm" method="post">
     <div class="input-group">
         <label for="username" class="label">User name</label>
         <input type="text" name="username" id="username" class="input">

@@ -56,15 +56,15 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
             )
             .configure(web_channels)
             .configure(web_episodes)
-            .service(web::resource("/logout")
+            .service(web::resource("/logout/")
                 .route(web::get().to(logout::get_logout))
             )
             .service(
-                web::resource("/status")
+                web::resource("/status/")
                     .route(web::get().to(status::get_status)))
 
             .service(
-                web::resource("/login")
+                web::resource("/login/")
                     .route(web::get().to(login::get_login))
                     .route(web::post().to(login::post_login))
             ).service(

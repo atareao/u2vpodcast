@@ -90,7 +90,7 @@ async fn create(
         }
 }
 
-#[get("/{user_id}")]
+#[get("/{user_id}/")]
 async fn read( data: Data<AppState>, path: Path<Info>,) -> impl Responder{
     info!("read");
     match User::read(&data.pool, path.user_id).await{

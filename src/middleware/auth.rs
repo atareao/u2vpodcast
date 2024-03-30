@@ -91,7 +91,7 @@ where
             debug!("No authenticate pass");
             let (request, _pl) = req.into_parts();
             let response = HttpResponse::SeeOther()
-                .insert_header((header::LOCATION, "/login"))
+                .insert_header((header::LOCATION, "/login/"))
                 .finish()
                 .map_into_right_body();
             return Box::pin(async { Ok(ServiceResponse::new(request, response)) });

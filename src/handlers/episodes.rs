@@ -26,7 +26,7 @@ use super::{
 
 pub fn web_episodes(cfg: &mut ServiceConfig){
     cfg.service(
-        web::resource("/channels/{channel_id}")
+        web::resource("/channels/{channel_id}/")
             .route(web::get().to(read_web_episodes))
     );
 }

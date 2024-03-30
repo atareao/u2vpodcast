@@ -1,4 +1,6 @@
-{% extends "base.html" %} {% block title %}{{title}}{% endblock title %} {%
+{% extends "base.html" %}
+{% set page_title = app_title + " - Error" %}
+{% block title %}{{ page_title }}{% endblock title %} {%
 block head %} {{ super() }}
 <style type="text/css">
     .important {
@@ -6,7 +8,6 @@ block head %} {{ super() }}
     }
 </style>
 {% endblock head %} {% block main %}
-<h1>{{ app_title }} <img src="/assets/favicon/favicon-48x48.png"/></h1>
 <div class="hero is-full-screen">
     <div class="is-center is-vertical-align">
         <section>

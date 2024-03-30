@@ -95,7 +95,7 @@ async fn create(
         }
 }
 
-#[get("/{channel_id}")]
+#[get("/{channel_id}/")]
 async fn read( data: Data<AppState>, path: Path<Info>,) -> impl Responder{
     info!("read");
     match Channel::read(&data.pool, path.channel_id).await{
