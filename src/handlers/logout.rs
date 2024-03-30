@@ -18,8 +18,9 @@ pub async fn get_logout(_req: HttpRequest) -> impl Responder{
         .http_only(true)
         .same_site(SameSite::Strict)
         .finish();
+
     HttpResponse::SeeOther()
-        .insert_header((header::LOCATION, "/login"))
+        .insert_header((header::LOCATION, "/login/"))
         .cookie(cookie)
         .finish()
 }

@@ -26,7 +26,7 @@ ready(() => {
         });
         if (data.length > 0) {
             console.log(data);
-            fetch("/config", {
+            fetch("/api/1.0/options/", {
                 method: "POST",
                 cache: "no-cache",
                 credentials: "same-origin",

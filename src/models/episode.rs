@@ -7,7 +7,6 @@ use sqlx::{
     Row,
 };
 use tracing::info;
-use std::time::{Duration, UNIX_EPOCH};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Episode {
@@ -96,6 +95,16 @@ impl Episode {
             .bind(episode.updated_at)
             .map(Self::from_row)
             .fetch_one(pool)
+            .await
+            .map_err(|e| e.into())
+    }
+
+    pub async fn read_all(pool: &SqlitePool) -> Result<Vec<Self>, Error>{
+        info!("read_all");
+        let sql = "SELECT * FROM episodes";
+        query(sql)
+            .map(Self::from_row)
+            .fetch_all(pool)
             .await
             .map_err(|e| e.into())
     }

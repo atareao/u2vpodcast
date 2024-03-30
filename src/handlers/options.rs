@@ -3,12 +3,12 @@ use actix_web::{
     Responder,
     HttpResponse,
     web::{
+        self,
         Data,
         Json,
-        ServiceConfig, self,
+        ServiceConfig,
     },
     http::StatusCode,
-    get,
     post,
 };
 use tracing::{
@@ -31,15 +31,15 @@ use super::{
 
 pub fn api_options(cfg: &mut ServiceConfig){
     cfg.service(
-        web::scope("options/")
+        web::scope("options")
             .service(post_options)
     );
 }
 
 pub fn config_options(cfg: &mut ServiceConfig){
     cfg.service(
-        web::scope("options")
-            .service(get_options)
+        web::resource("options/")
+            .route(web::get().to(get_options))
     );
 
 }
@@ -85,7 +85,6 @@ async fn post_options(
     ))
 }
 
-#[get("/")]
 async fn get_options(
     data: Data<AppState>,
 ) -> impl Responder{
