@@ -1,8 +1,8 @@
 mod login;
 mod logout;
 mod status;
-mod root;
 mod channels;
+mod episodes;
 mod users;
 mod options;
 
@@ -36,6 +36,7 @@ use channels::{
     config_channels,
     web_channels,
 };
+use episodes::web_episodes;
 use users::{
     api_users,
     config_users,
@@ -50,7 +51,11 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
     //let auth = HttpAuthentication::bearer(validator);
     cfg.service(
         web::scope("")
+            .service(
+                web::redirect("/", "/channels")
+            )
             .configure(web_channels)
+            .configure(web_episodes)
             .service(web::resource("/logout")
                 .route(web::get().to(logout::get_logout))
             )
