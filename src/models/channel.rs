@@ -33,7 +33,6 @@ use super::{
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Channel {
     pub id: i64,
-    pub name: String,
     pub url: String,
     pub title: String,
     pub active: bool,
@@ -47,7 +46,6 @@ pub struct Channel {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NewChannel {
-    pub name: String,
     pub url: String,
     pub active: bool,
     pub first: DateTime<Utc>,
@@ -57,7 +55,6 @@ pub struct NewChannel {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UpdateChannel {
     pub id: i64,
-    pub name: String,
     pub url: String,
     pub active: bool,
     pub first: DateTime<Utc>,
@@ -66,7 +63,7 @@ pub struct UpdateChannel {
 
 impl Display for Channel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "({}, {} - {})", self.id, self.name, self.url)
+        write!(f, "({} - {})", self.id, self.url)
     }
 }
 
@@ -75,7 +72,6 @@ impl Channel{
         info!("from_row");
         Self{
             id: row.get("id"),
-            name: row.get("name"),
             url: row.get("url"),
             title: row.get("title"),
             active: row.get("active"),
@@ -96,11 +92,10 @@ impl Channel{
             Ok(ytinfo) => ytinfo,
             Err(_) => YTInfo::default(),
         };
-        let sql = "INSERT INTO channels (name, url, title, active, description,
+        let sql = "INSERT INTO channels (url, title, active, description,
                    image, first, max, created_at, updated_at)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *;";
+                   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;";
         query(sql)
-            .bind(&channel.name)
             .bind(&channel.url)
             .bind(&ytinfo.title)
             .bind(channel.active)
