@@ -25,12 +25,14 @@ pub struct YtVideo{
 
 impl Ytdlp {
     pub fn new(path: &str, cookies: &str) -> Self{
+        info!("new");
         Self{
             path: path.to_string(),
             cookies: cookies.to_string(),
         }
     }
     pub async fn get_latest(&self, url: &str, days: i64) -> Result<Vec<YtVideo>, Error>{
+        info!("get_latest");
         let elapsed = format!("today-{}days", days);
         let args = vec!["--dateafter", &elapsed, "--dump-json",
             "--break-on-reject", url];
@@ -44,6 +46,7 @@ impl Ytdlp {
             .collect::<Vec<&str>>()
             .join(",");
         result.pop();
+        debug!("{}", &result);
         let content = format!("[{}]", result);
         let ytvideos: Vec<YtVideo> = serde_json::from_str(&content).unwrap();
         info!("{:?}", &ytvideos);

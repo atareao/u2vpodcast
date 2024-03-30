@@ -206,10 +206,30 @@ impl Channel{
         .map_err(|e| e.into())
     }
 
+    pub async fn number_of_channels(pool: &SqlitePool) -> i64 {
+        let sql = "SELECT count(*) FROM channels";
+        match query(sql)
+            .map(|row: SqliteRow| -> i64 { row.get(0) })
+            .fetch_one(pool)
+            .await
+        {
+            Ok(value) => value,
+            Err(e) => {
+                tracing::info!("Error on exists {}", e);
+                0
+            }
+        }
+    }
+
     pub async fn number_of_episodes(&self, pool: &SqlitePool) -> i64 {
+        Self::total(pool, self.id).await
+    }
+
+    pub async fn total(pool: &SqlitePool, channel_id: i64) -> i64 {
+
         let sql = "SELECT count(*) FROM episodes WHERE channel_id = $1";
         match query(sql)
-            .bind(self.id)
+            .bind(channel_id)
             .map(|row: SqliteRow| -> i64 { row.get(0) })
             .fetch_one(pool)
             .await
@@ -235,13 +255,5 @@ impl Channel{
                 Utc::now()
             }
         }
-    }
-
-    pub async fn get_episodes(&self, pool: &SqlitePool) -> Result<Vec<Episode>, Error>{
-        Episode::read_all_in_channel(pool, self.id).await
-    }
-
-    pub async fn get_episodes_with_pagination(&self, pool: &SqlitePool, page: i64, per_page: i64) -> Result<Vec<Episode>, Error>{
-        Episode::read_with_pagination_in_channel(pool, self.id, page, per_page).await
     }
 }

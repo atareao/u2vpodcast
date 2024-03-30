@@ -12,20 +12,6 @@ use super::super::models::{
     TokenClaims,
 };
 
-pub async fn check_token(
-    appstate: &AppState,
-    token: &str,
-) -> Result<bool, Error>{
-    let secret = STANDARD.encode(&appstate.config.jwt_secret);
-    debug!("Secret: {}", secret);
-    let token_data = jsonwebtoken::decode::<TokenClaims>(
-        token,
-        &DecodingKey::from_base64_secret(&secret).unwrap(),
-        &Validation::default(),
-    ).map_err(|e| Error::new(&e.to_string()))?;
-    Ok(User::exists(&appstate.pool, &token_data.claims.sub).await)
-}
-
 pub fn check_token_sync(
     appstate: &AppState,
     token: &str,

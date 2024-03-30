@@ -81,7 +81,7 @@ impl Episode {
         let sql = "INSERT INTO episodes (channel_id, title, description, yt_id,
                    webpage_url, published_at, duration, image, listen,
                    created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7,
-                   $8, $9, $9) RETURNING *;";
+                   $8, $9, $10, $11) RETURNING *;";
         query(sql)
             .bind(episode.channel_id)
             .bind(&episode.title)
@@ -144,7 +144,7 @@ impl Episode {
         }
     }
 
-    pub async fn read_with_pagination_in_channel(
+    pub async fn read_with_pagination(
         pool: &SqlitePool,
         channel_id: i64,
         page: i64,
@@ -157,34 +157,13 @@ impl Episode {
             per_page
         );
         let offset = (page - 1) * per_page;
-        let sql = "SELECT * FROM episodes WHERE channel_id = $1 ORDER BY published_at DESC LIMIT $2 OFFSET $3";
+        let sql = "SELECT * FROM episodes
+                   WHERE channel_id = $1 ORDER BY published_at DESC
+                   LIMIT $2 OFFSET $3";
         query(sql)
             .bind(channel_id)
             .bind(per_page)
             .bind(offset)
-            .map(Self::from_row)
-            .fetch_all(pool)
-            .await
-            .map_err(|e| e.into())
-    }
-
-    pub async fn read_all(pool: &SqlitePool) -> Result<Vec<Episode>, Error> {
-        let sql = "SELECT * FROM episodes";
-        query(sql)
-            .map(Self::from_row)
-            .fetch_all(pool)
-            .await
-            .map_err(|e| e.into())
-    }
-
-    pub async fn read_all_in_channel(
-        pool: &SqlitePool,
-        channel_id: i64,
-    ) -> Result<Vec<Episode>, Error> {
-        let sql = "SELECT * FROM episodes WHERE channel_id = $1
-                   ORDER BY published_at DESC";
-        query(sql)
-            .bind(channel_id)
             .map(Self::from_row)
             .fetch_all(pool)
             .await
@@ -237,10 +216,6 @@ impl Episode {
             .map_err(|e| e.into())
     }
 
-    pub async fn delete(&mut self, pool: &SqlitePool) -> Result<Self, Error>{
-        info!("delete");
-        Self::remove(pool, self.id).await
-    }
 
     pub async fn save(&mut self, pool: &SqlitePool) -> Result<Self, Error>{
         info!("save");
@@ -254,21 +229,4 @@ impl Episode {
             Ok(saved)
         }
     }
-}
-
-fn get_duration(duration_str: &str) -> String {
-    let partes: Vec<i64> = duration_str
-        .split(':')
-        .map(|x| x.parse::<i64>().unwrap())
-        .collect();
-    let mut valor = 0;
-    for (i, parte) in partes.into_iter().rev().enumerate() {
-        valor += parte * 60_i64.pow(i.try_into().unwrap());
-    }
-    // Creates a new SystemTime from the specified number of whole seconds
-    let d = UNIX_EPOCH + Duration::from_secs(valor.try_into().unwrap());
-    // Create DateTime from SystemTime
-    let datetime = DateTime::<Utc>::from(d);
-    // Formats the combined date and time with the specified format string.
-    datetime.format("%H:%M:%S").to_string()
 }

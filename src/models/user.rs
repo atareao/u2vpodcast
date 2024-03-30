@@ -137,15 +137,6 @@ impl User{
         self.hashed_password == hashed_password
     }
 
-    pub async fn set_password(&mut self, pool: &SqlitePool, config: &Config, password: String) -> Result<Self, Error>{
-        info!("set_password");
-        let salt = &config.salt;
-        let pepper = &config.pepper;
-        let hashed_password = wrap(salt, pepper, &password);
-        self.hashed_password = hashed_password;
-        self.save(pool).await
-    }
-
     pub async fn default(pool: &SqlitePool, config: &Config, name: &str,
         password: &str) -> Result<Self, Error>{
         let new_user = NewUser{
@@ -174,7 +165,7 @@ impl User{
             created_at,
             updated_at,
         };
-        user.save(&pool).await
+        user.save(pool).await
     }
 
     pub async fn save(&mut self, pool: &SqlitePool) -> Result<Self, Error>{
@@ -209,9 +200,9 @@ impl User{
             .bind(&user.name)
             .bind(&user.hashed_password)
             .bind(&user.role)
-            .bind(&user.active)
-            .bind(&user.created_at)
-            .bind(&user.updated_at)
+            .bind(user.active)
+            .bind(user.created_at)
+            .bind(user.updated_at)
             .map(Self::from_row)
             .fetch_one(pool)
             .await

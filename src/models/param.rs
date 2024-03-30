@@ -28,11 +28,6 @@ impl Param{
         &self.key
     }
 
-    pub async fn get_db_url(pool: &SqlitePool) -> Result<String, Error>{
-        Self::get(pool, "db_url")
-            .await
-    }
-
     pub async fn get_url(pool: &SqlitePool) -> Result<String, Error>{
         Self::get(pool, "url")
             .await
@@ -95,14 +90,6 @@ impl Param{
         &self.value
     }
 
-    pub fn get_created_at(&self) -> &DateTime<Utc>{
-        &self.created_at
-    }
-
-    pub fn get_updated_at(&self) -> &DateTime<Utc>{
-        &self.updated_at
-    }
-
     fn from_row(row: SqliteRow) -> Self{
         Self{
             id: row.get("id"),
@@ -137,17 +124,6 @@ impl Param{
             kv.insert(param.key, param.value);
         }
         Ok(kv)
-    }
-
-
-    pub async fn exists(pool: &SqlitePool, key: &str) -> Result<bool, Error>{
-        debug!("exists {key}");
-        let sql = "SELECT count(key) FROM config WHERE key = $1";
-        Ok(query(sql)
-            .bind(key)
-            .map(|row: SqliteRow| -> i64 {row.get(0)})
-            .fetch_one(pool)
-            .await? > 0)
     }
 
     pub async fn set(pool: &SqlitePool, key: &str, value: &str) -> Result<Param, Error>{
