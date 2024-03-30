@@ -9,19 +9,28 @@ mod feed;
 
 
 use actix_web::web;
-use minijinja::{path_loader, Environment};
+use minijinja::{
+    path_loader,
+    Environment,
+    Error,
+    ErrorKind,
+    State,
+    value::{
+        Kwargs,
+        Value,
+    },
+};
 use tracing::{
     info,
     debug,
 };
 use once_cell::sync::Lazy;
+use chrono::{
+    DateTime,
+    FixedOffset,
+};
+use chrono_tz::Tz;
 
-pub static ENV: Lazy<Environment<'static>> = Lazy::new(|| {
-    let mut env = Environment::new();
-    debug!("{:?}", env);
-    env.set_loader(path_loader("templates"));
-    env
-});
 
 use super::{
     middleware::Authentication,
@@ -47,6 +56,48 @@ use options::{
     api_options,
     config_options,
 };
+
+fn value_to_chrono_datetime(
+    value: Value,
+) -> Result<DateTime<FixedOffset>, Error> {
+    match value.as_str(){
+        Some(s) => match DateTime::parse_from_rfc3339(s){
+            Ok(dt) => Ok(dt),
+            Err(e) => Err(Error::new(
+                ErrorKind::MissingArgument,
+                e.to_string()
+            )),
+        },
+        None => Err(Error::new(
+            ErrorKind::MissingArgument,
+            "Not a valid string"
+        )),
+    }
+}
+
+pub fn date(_state: &State, value: Value, kwargs: Kwargs) -> Result<String, Error> {
+    let format = kwargs.get::<Option<&str>>("format")?;
+    match kwargs.get::<Option<&str>>("timezone")?{
+        Some(timezone) => {
+            let tz: Tz = timezone.parse().unwrap();
+            let datetime = value_to_chrono_datetime(value).unwrap().with_timezone(&tz);
+            Ok(format!("{}", datetime.format(format.unwrap())))
+        },
+        None => {
+            let datetime = value_to_chrono_datetime(value).unwrap();
+            Ok(format!("{}", datetime.format(format.unwrap())))
+
+        },
+    }
+}
+
+pub static ENV: Lazy<Environment<'static>> = Lazy::new(|| {
+    let mut env = Environment::new();
+    debug!("{:?}", env);
+    env.set_loader(path_loader("templates"));
+    env.add_filter("date", date);
+    env
+});
 
 pub fn config_services(cfg: &mut web::ServiceConfig) {
     info!("Configuring routes...");

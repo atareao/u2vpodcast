@@ -10,6 +10,7 @@ use actix_web::{
     },
     http::StatusCode,
     post,
+    get,
 };
 use tracing::{
     info,
@@ -21,18 +22,23 @@ use minijinja::{
     value::Value,
 };
 
-use crate::models::Param;
-
 use super::{
     ENV,
     AppState,
-    super::models::CustomResponse,
+    super::{
+        utils::worker::do_the_work,
+        models::{
+            Param,
+            CustomResponse
+        },
+    },
 };
 
 pub fn api_options(cfg: &mut ServiceConfig){
     cfg.service(
         web::scope("options")
             .service(post_options)
+            .service(update)
     );
 }
 
@@ -48,6 +54,21 @@ pub fn config_options(cfg: &mut ServiceConfig){
 struct KeyValue{
     key: String,
     value: String
+}
+
+#[get("update/")]
+async fn update(
+    data: Data<AppState>,
+) -> impl Responder {
+    info!("update");
+    match do_the_work(&data.pool).await{
+        Ok(()) => Ok(Json(CustomResponse::new(
+            StatusCode::OK,
+            "Ok",
+            ""
+        ))),
+        Err(e) => Err(e),
+    }
 }
 
 #[post("/")]

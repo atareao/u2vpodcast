@@ -8,67 +8,73 @@
 <table>
     {% for episode in episodes %}
     <tr>
-        <td><img src="{{ episode.image }}" alt="{{ episode.title }}" width="128" height="128"></td>
         <td>
-            <h3>{{ episode.title }}</h3>
-            <span>{{ episode.published_at }}</span><br/>
-            <a href="https://www.youtube.com/watch?v={{ episode.yt_id }}">YouTube</a>
+            <p>
+                <img src="{{ episode.image }}" alt="{{ episode.title }}" width="128" height="128">
+            </p>
+            <p>
+                {{ episode.published_at | date(format="%d-%m-%Y") }}
+            </p>
+            <p>
+                <a href="https://www.youtube.com/watch?v={{ episode.yt_id }}">YouTube</a>
+            </p>
         </td>
-    </tr>
-    <tr>
-        <td>
-            <audio controls>
-                <source src="{{ base_url }}/media/{{ episode.channel_id }}/{{ episode.yt_id }}.mp3" type="audio/mpeg">
-            </audio>
+        <td style="text-align: left;">
+            <h4>{{ episode.title }}</h4>
+            <p>
+                {{ episode.description }}
+            </p>
+            <div style="text-align: center;">
+                <audio controls>
+                    <source src="{{ base_url }}/media/{{ episode.channel_id }}/{{ episode.yt_id }}.mp3" type="audio/mpeg">
+                </audio>
+            </div>
         </td>
-        <td>{{ episode.description }}
     </tr>
     {% endfor %}
 </table>
 
 <nav data-pagination>
-    <ul>
+    <ul style="margin: auto;">
     {% if page > 1 %}
-        <a href="/channels/{{ channel.id }}?page=1">1</a>
+        <a href="/channels/{{ channel.id }}/?page=1">1</a>
     {% endif %}
     {% if page > 4 %}
         <li>
-            <a href="/channels/{{ channel.id }}?page={{ page / 2 | int }}">...</a>
+            <a href="/channels/{{ channel.id }}/?page={{ page / 2 | int }}">...</a>
         </li>
     {% endif %}
-    {% if page > 3 %}
-        <li>
-            <a href="/channels/{{ channel.id }}?page={{ page - 2 }}">{{ page - 2 }}</a>
-        </li>
-    {% endif %}
-    {% if page > 2 %}
-        <li>
-            <a href="/channels/{{ channel.id }}?page={{ page - 1 }}">{{ page - 1 }}</a>
-        </li>
-    {% endif %}
-        <li class="current">
-            <a href="/channels/{{ channel.id }}?page={{ page }}">{{ page }}</a>
-        </i>
-    {% if page < total - 1 %}
-        <li>
-            <a href="/channels/{{ channel.id }}?page={{ page + 1 }}">{{ page + 1 }}</a>
-        </li>
-    {% endif %}
-    {% if page < total - 2 %}
-        <li>
-            <a href="/channels/{{ channel.id }}?page={{ page + 2 }}">{{ page + 2 }}</a>
-        </li>
-    {% endif %}
-    {% if page < total - 3 %}
-        <li>
-            <a href="/channels/{{ channel.id }}?page={{ (total + page) / 2 | int}}">...</a>
-        </li>
-    {% endif %}
-    {% if page < total %}
-        <a href="/channels/{{ channel.id }}?page={{ total }}">{{ total }}</a>
-    {% endif %}
+        {% if page > 3 %}
+            <li>
+                <a href="/channels/{{ channel.id }}/?page={{ page - 2 }}">{{ page - 2 }}</a>
+            </li>
+        {% endif %}
+        {% if page > 2 %}
+            <li>
+                <a href="/channels/{{ channel.id }}/?page={{ page - 1 }}">{{ page - 1 }}</a>
+            </li>
+        {% endif %}
+            <li class="current">
+                <a href="/channels/{{ channel.id }}/?page={{ page }}">{{ page }}</a>
+            </i>
+        {% if page < total - 1 %}
+            <li>
+                <a href="/channels/{{ channel.id }}/?page={{ page + 1 }}">{{ page + 1 }}</a>
+            </li>
+        {% endif %}
+        {% if page < total - 2 %}
+            <li>
+                <a href="/channels/{{ channel.id }}/?page={{ page + 2 }}">{{ page + 2 }}</a>
+            </li>
+        {% endif %}
+        {% if page < total - 3 %}
+            <li>
+                <a href="/channels/{{ channel.id }}/?page={{ (total + page) / 2 | int}}">...</a>
+            </li>
+        {% endif %}
+        {% if page < total %}
+            <a href="/channels/{{ channel.id }}/?page={{ total }}">{{ total }}</a>
+        {% endif %}
     </ul>
 </nav>
-
-
 {% endblock main %}
