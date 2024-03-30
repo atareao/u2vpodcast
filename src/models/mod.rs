@@ -27,6 +27,7 @@ pub use ytdlp::{
 pub use channel::{
     Channel,
     NewChannel,
+    UpdateChannel,
 };
 use ytinfo::YTInfo;
 pub use episode::Episode;

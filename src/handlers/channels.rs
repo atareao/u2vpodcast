@@ -3,20 +3,23 @@ use actix_web::{
     Responder,
     HttpResponse,
     web::{
+        self,
         Path,
         Data,
         Query,
         Json,
-        ServiceConfig, self,
+        ServiceConfig,
     },
     http::StatusCode,
     get,
+    patch,
     post,
     delete,
 };
 use tracing::{
     info,
     debug,
+    error,
 };
 use minijinja::context;
 
@@ -27,16 +30,20 @@ use super::{
         CustomResponse,
         Channel,
         NewChannel,
+        UpdateChannel,
     },
 };
+
+static FOLDER: &str = "/app/audios";
 
 pub fn api_channels(cfg: &mut ServiceConfig){
     cfg.service(
         web::scope("channels")
             .service(create)
-            .service(delete)
             .service(read)
             .service(read_with_pagination)
+            .service(update)
+            .service(delete)
     );
 }
 
@@ -95,6 +102,23 @@ async fn create(
         }
 }
 
+#[patch("/")]
+async fn update(
+    data: Data<AppState>,
+    channel: Json<UpdateChannel>,
+) -> impl Responder {
+    info!("create");
+    match Channel::update(&data.pool, &channel.into_inner()).await{
+            Ok(channel) => Ok(Json(CustomResponse::new(
+            StatusCode::OK,
+            "Ok",
+            channel,
+        ))),
+            Err(e) => Err(e),
+        }
+}
+
+
 #[get("/{channel_id}/")]
 async fn read( data: Data<AppState>, path: Path<Info>,) -> impl Responder{
     info!("read");
@@ -107,11 +131,19 @@ async fn read( data: Data<AppState>, path: Path<Info>,) -> impl Responder{
 async fn delete( data: Data<AppState>, path: Query<Info>,) -> impl Responder{
     info!("delete");
     match Channel::delete(&data.pool, path.channel_id).await{
-        Ok(channel) => Ok(Json(CustomResponse::new(
-            StatusCode::OK,
-            "Ok",
-            channel,
-        ))),
+            Ok(channel) => {
+                info!("Remove directory {}/{}", FOLDER, &channel.id);
+                match tokio::fs::remove_dir(format!("{}/{}", FOLDER, &channel.id))
+                    .await {
+                    Ok(_) => debug!("Removed directorio {}/{}", FOLDER, &channel.id),
+                    Err(e) => error!("Can't remove directory {}/{}: {}", FOLDER, &channel.id, e),
+                };
+                Ok(Json(CustomResponse::new(
+                    StatusCode::OK,
+                    "Ok",
+                    channel,
+                )))
+        },
         Err(e) => Err(e),
     }
 }

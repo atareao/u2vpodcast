@@ -24,9 +24,9 @@ function setAddElements() {
   const modalAdd = document.getElementById("dialog");
   if (modalAdd != null) {
     dialog = new Dialog(modalAdd);
-    if (addElements != null){
+    if (addElements != null) {
       Array.from(addElements).forEach((element) => {
-        element.addEventListener("click", (event) =>{
+        element.addEventListener("click", (event) => {
           event.preventDefault();
           console.log("Add");
           dialog.open();
@@ -34,6 +34,28 @@ function setAddElements() {
         });
       });
     }
+  }
+}
+function setAddElements() {
+  const addElements = document.getElementsByClassName("update");
+  if (addElements != null) {
+    Array.from(addElements).forEach((element) => {
+      element.addEventListener("click", (event) => {
+        event.preventDefault();
+        console.log("update");
+        fetch(`/api/1.0/options/update/`, {
+          method: "GET",
+          cache: "no-cache",
+          credentials: "same-origin",
+        })
+          .then((response) => response.json())
+          .then((json) => {
+            console.log(json);
+          })
+          .catch((err) => console.log("Error", err));
+
+      });
+    });
   }
 }
 
@@ -108,6 +130,7 @@ class Dialog {
       .addEventListener("click", () => {
         this.close("confirm");
       });
+    this.id = -1;
     this.name = document.getElementById("dialog-name");
     this.url = document.getElementById("dialog-url");
     this.active = document.getElementById("dialog-active");
@@ -121,10 +144,11 @@ class Dialog {
       : false;
   }
   open(element) {
-    if(element != null){
+    if (element != null) {
       this.dialog_role = "edit";
       document.getElementById("dialog-type").innerText = "Edit";
       this.element = element;
+      this.id = parseInt(element.getAttribute("data-id"));
       this.name.value = element.getAttribute("data-name");
       this.url.value = element.getAttribute("data-url");
       this.active.checked = element.getAttribute("data-active") === "true";
@@ -138,7 +162,7 @@ class Dialog {
           `${this.getScrollbarWidth()}px`,
         );
       }
-    }else{
+    } else {
       this.dialog_role = "add";
       document.getElementById("dialog-type").innerText = "Add";
       this.name.value = "";
@@ -158,40 +182,57 @@ class Dialog {
   close(status) {
     if (status == "confirm") {
       if (this.dialog_role == "edit") {
-        fetch("/podcasts", {
-          method: "POST",
+        fetch("/api/1.0/channels/", {
+          method: "PATCH",
           cache: "no-cache",
           credentials: "same-origin",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            active: this.active.checked,
-            name: this.name.value,
-            url: this.url.value,
-          }),
-        })
-          .then((response) => response.json())
-          .then((json) => {
-            if (json.result == "ko") {
-              return;
-            }
-            const items = this.element.parentNode.parentNode.children;
-            const checked = ((this.active.checked) ? "fa-square-check" : "fa-square");
-            items[0].innerHTML = `<i class="fa-regular ${checked}"></i>`;
-            items[1].innerHTML = this.name.value;
-            items[2].innerHTML = this.url.value;
-            console.log(items);
-          })
-          .catch((err) => console.log("Error", err));
-      } else if (this.dialog_role == "add") {
-        const data = JSON.stringify({
+            id: this.id,
             name: this.name.value,
             url: this.url.value,
             active: this.active.checked,
             first: this.first.valueAsDate,
             max: this.max.valueAsNumber,
-          });
+          }),
+        })
+          .then((response) => response.json())
+          .then((json) => {
+            if (!json.status) {
+              return;
+            }
+            const data = json.data;
+            const items = this.element.parentNode.parentNode.children;
+            items[0].innerHTML = `<i class="fa-regular fa-square${data.active ? '-check' : ''}"></i>`;
+            items[3].innerHTML = data.first;
+            items[4].innerHTML = data.max;
+            items[5].innerHTML = `
+              <button role="button"
+                      class="edit"
+                      data-role="edit"
+                      data-tooltip="Edit"
+                      data-id="${data.id}"
+                      data-active="${data.active}"
+                      data-name="${data.name}"
+                      data-url="${data.url}"
+                      data-first="${data.first}"
+                      data-max="${data.max}">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+            `;
+            console.log(items);
+          })
+          .catch((err) => console.log("Error", err));
+      } else if (this.dialog_role == "add") {
+        const data = JSON.stringify({
+          name: this.name.value,
+          url: this.url.value,
+          active: this.active.checked,
+          first: this.first.valueAsDate,
+          max: this.max.valueAsNumber,
+        });
         console.log(data);
         fetch("/api/1.0/channels/", {
           method: "POST",
@@ -211,7 +252,7 @@ class Dialog {
             const data = json.data;
             const tbody = document.getElementById("table-body");
             console.log(data);
-            let active = `<i class="fa-regular fa-square${data.active?'-check':''}"></i>`;
+            let active = `<i class="fa-regular fa-square${data.active ? '-check' : ''}"></i>`;
             tbody.innerHTML += `
                         <tr id="${data.id}">
                             <td>${active}</td>

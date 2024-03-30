@@ -7,7 +7,10 @@ use std::fmt::{
     self,
     Display
 };
-use tracing::info;
+use tracing::{
+    info,
+    debug,
+};
 use chrono::{
     DateTime,
     Utc,
@@ -51,6 +54,16 @@ pub struct NewChannel {
     pub max: i64,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct UpdateChannel {
+    pub id: i64,
+    pub name: String,
+    pub url: String,
+    pub active: bool,
+    pub first: DateTime<Utc>,
+    pub max: i64,
+}
+
 impl Display for Channel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {} - {})", self.id, self.name, self.url)
@@ -83,38 +96,20 @@ impl Channel{
             Ok(ytinfo) => ytinfo,
             Err(_) => YTInfo::default(),
         };
-        let mut channel = Self{
-            id: -1,
-            name: channel.name,
-            url: channel.url,
-            title: ytinfo.title,
-            active: channel.active,
-            description: ytinfo.description,
-            image: ytinfo.image,
-            first: channel.first,
-            max: channel.max,
-            created_at,
-            updated_at,
-        };
-        channel.save(pool).await
-    }
-
-    pub async fn create(pool: &SqlitePool, channel: &Self) -> Result<Self, Error>{
-        info!("create");
         let sql = "INSERT INTO channels (name, url, title, active, description,
                    image, first, max, created_at, updated_at)
                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *;";
         query(sql)
             .bind(&channel.name)
             .bind(&channel.url)
-            .bind(&channel.title)
+            .bind(&ytinfo.title)
             .bind(channel.active)
-            .bind(&channel.description)
-            .bind(&channel.image)
+            .bind(&ytinfo.description)
+            .bind(&ytinfo.image)
             .bind(channel.first)
             .bind(channel.max)
-            .bind(channel.created_at)
-            .bind(channel.updated_at)
+            .bind(created_at)
+            .bind(updated_at)
             .map(Self::from_row)
             .fetch_one(pool)
             .await
@@ -159,19 +154,14 @@ impl Channel{
             .map_err(|e| e.into())
     }
 
-    pub async fn update(pool: &SqlitePool, channel: &Self) -> Result<Self, Error>{
+    pub async fn update(pool: &SqlitePool, channel: &UpdateChannel) -> Result<Self, Error>{
         info!("update");
+        debug!("{:?}", channel);
         let updated_at = Utc::now();
-        let sql = "UPDATE channels SET name = $1, url = $2, title = $3,
-                   active = $4, description= $5, image = $6, first = $7,
-                   max = $8, updated_at = $9 WHERE id = $10 RETURNING *";
+        let sql = "UPDATE channels SET active = $1, first = $2, max = $3,
+                   updated_at = $4 WHERE id = $5 RETURNING *";
         query(sql)
-            .bind(&channel.name)
-            .bind(&channel.url)
-            .bind(&channel.title)
             .bind(channel.active)
-            .bind(&channel.description)
-            .bind(&channel.image)
             .bind(channel.first)
             .bind(channel.max)
             .bind(updated_at)
@@ -180,19 +170,6 @@ impl Channel{
             .fetch_one(pool)
             .await
             .map_err(|e| e.into())
-    }
-
-    pub async fn save(&mut self, pool: &SqlitePool) -> Result<Self, Error>{
-        info!("save");
-        if self.id > -1 {
-            let saved = Self::update(pool, self).await?;
-            self.updated_at = saved.updated_at;
-            Ok(saved)
-        }else{
-            let saved = Self::create(pool, self).await?;
-            self.id = saved.id;
-            Ok(saved)
-        }
     }
 
     pub async fn delete(pool: &SqlitePool, id: i64) -> Result<Self, Error>{

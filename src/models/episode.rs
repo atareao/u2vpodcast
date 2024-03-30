@@ -55,7 +55,7 @@ impl Episode {
             listen: bool) -> Result<Self, Error>{
         info!("new");
         let created_at = Utc::now();
-        let updated_at = created_at.clone();
+        let updated_at = created_at;
         let mut episode = Self {
             id: -1,
             channel_id,
@@ -63,7 +63,7 @@ impl Episode {
             description: description.to_string(),
             yt_id: yt_id.to_string(),
             webpage_url: webpage_url.to_string(),
-            published_at: published_at.clone(),
+            published_at: *published_at,
             duration: duration.to_string(),
             image: image.to_string(),
             listen,
@@ -101,39 +101,12 @@ impl Episode {
 
     pub async fn read_all(pool: &SqlitePool) -> Result<Vec<Self>, Error>{
         info!("read_all");
-        let sql = "SELECT * FROM episodes";
+        let sql = "SELECT * FROM episodes ORDER BY published_at DESC";
         query(sql)
             .map(Self::from_row)
             .fetch_all(pool)
             .await
             .map_err(|e| e.into())
-    }
-
-    pub async fn read(pool: &SqlitePool, id: i64) -> Result<Self, Error>{
-        info!("read");
-        let sql = "SELECT * FROM episodes WHERE id = $1";
-        query(sql)
-            .bind(id)
-            .map(Self::from_row)
-            .fetch_one(pool)
-            .await
-            .map_err(|e| e.into())
-    }
-
-    pub async fn number_of_episodes(pool: &SqlitePool, channel_id: &str) -> i64 {
-        let sql = "SELECT count(*) FROM episodes WHERE channel_id = $1";
-        match query(sql)
-            .bind(channel_id)
-            .map(|row: SqliteRow| -> i64 { row.get(0) })
-            .fetch_one(pool)
-            .await
-        {
-            Ok(value) => value,
-            Err(e) => {
-                tracing::info!("Error on exists {}", e);
-                0
-            }
-        }
     }
 
     pub async fn exists(pool: &SqlitePool, channel_id: i64, yt_id: &str) -> bool {
@@ -179,17 +152,6 @@ impl Episode {
             .map_err(|e| e.into())
     }
 
-    pub async fn get_max_date(pool: &SqlitePool, channel_id: i64) -> DateTime<Utc> {
-        let sql = "SELECT MAX(published_at) as last_date FROM episodes
-                   WHERE channel_id = $1";
-        match query(sql).bind(channel_id).fetch_one(pool).await {
-            Ok(row) => row.get(0),
-            Err(e) => {
-                tracing::info!("Not last: {}", e);
-                Utc::now()
-            }
-        }
-    }
     pub async fn update(pool: &SqlitePool, episode: &Self) -> Result<Self, Error> {
         info!("update");
         let sql = "UPDATE episodes SET channel_id = $2, title = $3,
