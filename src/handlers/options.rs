@@ -61,7 +61,7 @@ async fn update(
     data: Data<AppState>,
 ) -> impl Responder {
     info!("update");
-    match do_the_work(&data.pool).await{
+    match do_the_work(&data.pool, false).await{
         Ok(()) => Ok(Json(CustomResponse::new(
             StatusCode::OK,
             "Ok",

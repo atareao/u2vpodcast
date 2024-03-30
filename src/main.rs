@@ -134,7 +134,7 @@ async fn main() -> Result<(), Error> {
     spawn(async move{
         //let auth = HttpAuthentication::bearer(validator);
         loop {
-            match do_the_work(&pool2).await{
+            match do_the_work(&pool2, true).await{
                 Ok(_) => {},
                 Err(e) => {
                     error!("Error doing the work: {e}");

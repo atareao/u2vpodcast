@@ -99,6 +99,16 @@ impl Episode {
             .map_err(|e| e.into())
     }
 
+    pub async fn read_episodes_for_channel(pool: &SqlitePool, channel_id: i64) -> Result<Vec<Self>, Error>{
+        info!("read_all");
+        let sql = "SELECT * FROM episodes WHERE channel_id =$1 ORDER BY published_at DESC";
+        query(sql)
+            .bind(channel_id)
+            .map(Self::from_row)
+            .fetch_all(pool)
+            .await
+            .map_err(|e| e.into())
+    }
     pub async fn read_all(pool: &SqlitePool) -> Result<Vec<Self>, Error>{
         info!("read_all");
         let sql = "SELECT * FROM episodes ORDER BY published_at DESC";

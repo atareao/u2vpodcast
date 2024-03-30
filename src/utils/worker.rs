@@ -12,6 +12,7 @@ use chrono::{
         NaiveDateTime
     },
 };
+use std::convert::TryFrom;
 use tokio::fs::create_dir_all;
 use super::super::models::{
     Error,
@@ -24,19 +25,52 @@ use super::super::models::{
 static FOLDER: &str = "/app/audios";
 static YTDLP: &str = "/app/.local/bin/yt-dlp";
 
-pub async fn do_the_work(pool: &SqlitePool) -> Result<(), Error>{
-    info!("**** Start updating yt-dlp ****");
-    match Ytdlp::auto_update().await{
-        Ok(()) => {},
-        Err(e) => error!("{}", e),
+pub async fn do_the_work(pool: &SqlitePool, update: bool) -> Result<(), Error>{
+    if update {
+        info!("**** Start updating yt-dlp ****");
+        match Ytdlp::auto_update().await{
+            Ok(()) => {},
+            Err(e) => error!("{}", e),
+        }
+        info!("**** Finish updating yt-dlp ****");
     }
-    info!("**** Finish updating yt-dlp ****");
     let ytdlp = Ytdlp::new(YTDLP, "cookies-cp.txt");
     for channel in Channel::read_all(pool).await?.as_slice(){
-        info!("Processing: {}", channel.name);
+        info!("Processing: {}", channel.url);
         match process_channel(pool, channel, &ytdlp).await{
             Ok(_) => {},
             Err(e) => error!{"Cant process channel: {channel}. Error: {e}"},
+        }
+        match clean_channel(pool, channel).await{
+            Ok(()) => info!("Channel {} cleaned", &channel.id),
+            Err(e) => error!("Can't clean channel {}. {}", &channel.id, e),
+        }
+    }
+    Ok(())
+}
+
+async fn clean_channel(pool: &SqlitePool, channel: &Channel) -> Result<(), Error>{
+    let max = usize::try_from(channel.max)
+        .map_err(|e| Error::new(&e.to_string()))?;
+    let episodes = Episode::read_episodes_for_channel(pool, channel.id).await?;
+    for (index, episode) in episodes.iter().enumerate(){
+        if index >= max { // remove
+            let filename = format!("{}/{}/{}.mp3", FOLDER, &channel.id, episode.yt_id);
+            info!("Deleting file {filename}");
+            let exists = tokio::fs::metadata(&filename)
+                .await
+                .map(|f| f.is_file())
+                .unwrap_or(false);
+            let removed = tokio::fs::remove_file(&filename)
+                .await
+                .map(|_| true)
+                .unwrap_or(false);
+            if !exists || removed {
+                match Episode::remove(pool, episode.id).await{
+                    Ok(_) => info!("Removed {}", &filename),
+                    Err(e) => error!("Cant remove {}. {}", &filename, e),
+                }
+            }
         }
     }
     Ok(())
