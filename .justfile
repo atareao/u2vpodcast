@@ -29,3 +29,5 @@ log:
     docker compose -f ./docker-compose.standalone.yml logs
 logs:
     docker compose -f ./docker-compose.standalone.yml logs -f
+enter:
+    docker compose -f ./docker-compose.standalone.yml exec u2vpodcast sh
