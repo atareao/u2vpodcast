@@ -128,7 +128,7 @@ async fn read_web(
             debug!("{:?}", users);
             let template = ENV.get_template("config/users.html").unwrap();
             let ctx = context! {
-                page_title => &format!("{title} - Configure users"),
+                app_title => &format!("{title} - Configure users"),
                 users => users,
                 roles => Role::get_roles(),
             };
@@ -137,7 +137,7 @@ async fn read_web(
         Err(error) => {
             let template = ENV.get_template("error.html").unwrap();
             let ctx = context! {
-                page_title => &title,
+                app_title => &title,
                 error => error,
             };
             HttpResponse::Ok().body(template.render(ctx).unwrap())

@@ -52,7 +52,7 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("")
             .service(
-                web::redirect("/", "/channels")
+                web::redirect("/", "/channels/")
             )
             .configure(web_channels)
             .configure(web_episodes)

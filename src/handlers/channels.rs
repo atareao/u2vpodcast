@@ -131,7 +131,7 @@ async fn read_config_channels(
             debug!("{:?}", channels);
             let template = ENV.get_template("config/channels.html").unwrap();
             let ctx = context! {
-                page_title => &format!("{title} - Configure channels"),
+                app_title => title,
                 channels => channels,
 
             };
@@ -140,7 +140,7 @@ async fn read_config_channels(
         Err(error) => {
             let template = ENV.get_template("error.html").unwrap();
             let ctx = context! {
-                page_title => &title,
+                app_title => &title,
                 error => error,
             };
             HttpResponse::Ok().body(template.render(ctx).unwrap())
@@ -163,7 +163,7 @@ async fn read_web_channels(
             debug!("{:?}", channels);
             let template = ENV.get_template("web/channels.html").unwrap();
             let ctx = context! {
-                page_title => &format!("{title} - Channels"),
+                app_title => title,
                 channels => channels,
                 page => page,
                 total => total / per_page + 1,
@@ -173,7 +173,7 @@ async fn read_web_channels(
         Err(error) => {
             let template = ENV.get_template("error.html").unwrap();
             let ctx = context! {
-                page_title => &title,
+                app_title => title,
                 error => error,
             };
             HttpResponse::Ok().body(template.render(ctx).unwrap())

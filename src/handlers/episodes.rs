@@ -56,7 +56,7 @@ async fn read_web_episodes(
         .map_err(|e| {
             let template = ENV.get_template("error.html").unwrap();
             let ctx = context! {
-                page_title => &title,
+                app_title => &title,
                 error => e,
             };
             HttpResponse::Ok().body(template.render(ctx).unwrap())
@@ -67,7 +67,7 @@ async fn read_web_episodes(
             debug!("{:?}", episodes);
             let template = ENV.get_template("web/episodes.html").unwrap();
             let ctx = context! {
-                page_title => title,
+                app_title => title,
                 channel => channel,
                 episodes => episodes,
                 page => page,
@@ -78,7 +78,7 @@ async fn read_web_episodes(
         Err(error) => {
             let template = ENV.get_template("error.html").unwrap();
             let ctx = context! {
-                page_title => &title,
+                app_title => &title,
                 error => error,
             };
             HttpResponse::Ok().body(template.render(ctx).unwrap())

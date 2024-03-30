@@ -29,7 +29,7 @@ pub async fn get_login(data: Data<AppState>) -> impl Responder{
     let title = &config.title;
     let template = ENV.get_template("login.html").unwrap();
     let ctx = context! {
-        page_title => &title,
+        app_title => &title,
     };
     HttpResponse::Ok().body(template.render(ctx).unwrap())
 }
@@ -58,7 +58,7 @@ pub async fn post_login(data: Data<AppState>, Form(credentials): Form<Credential
                 error!("Invalid credentials");
                 let template = ENV.get_template("error.html").unwrap();
                 let ctx = context! {
-                    title => &title,
+                    app_title => &title,
                     error_description => "Invalid credentials",
                 };
                 HttpResponse::NonAuthoritativeInformation()
@@ -70,7 +70,7 @@ pub async fn post_login(data: Data<AppState>, Form(credentials): Form<Credential
             error!("{}", e);
             let template = ENV.get_template("error.html").unwrap();
             let ctx = context! {
-                title => &title,
+                app_title => &title,
                 error_description => e.to_string(),
 
             };
