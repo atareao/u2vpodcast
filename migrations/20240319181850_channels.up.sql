@@ -10,5 +10,5 @@ CREATE TABLE IF NOT EXISTS channels(
     max INTEGER NOT NULL DEFAULT -1,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
-    UNIQUE(url)
+    UNIQUE(name)
 );
