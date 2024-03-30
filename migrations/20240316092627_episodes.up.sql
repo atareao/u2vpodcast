@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS episodes(
     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    channel_id TEXT NOT NULL,
+    channel_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     yt_id TEXT NOT NULL,
