@@ -25,7 +25,7 @@ up:
     docker compose -f ./docker-compose.standalone.yml up -d --force-recreate
 down:
     docker compose -f ./docker-compose.standalone.yml down
-logs:
+log:
     docker compose -f ./docker-compose.standalone.yml logs
-logsf:
+logs:
     docker compose -f ./docker-compose.standalone.yml logs -f
