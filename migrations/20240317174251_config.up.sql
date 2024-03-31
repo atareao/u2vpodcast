@@ -5,14 +5,3 @@ CREATE TABLE IF NOT EXISTS config(
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-INSERT INTO config (key, value) VALUES
-    ('url', 'http://localhost'),
-    ('port', '6996'),
-    ('salt', 'salt'),
-    ('pepper', 'pepper'),
-    ('sleep_time', '24'),
-    ('per_page', '10'),
-    ('jwt_secret', 'a-secret-very-secret'),
-    ('jwt_expires_in', '60m'),
-    ('jwt_maxage', '60'),
-    ('title', 'U2VPodcast');

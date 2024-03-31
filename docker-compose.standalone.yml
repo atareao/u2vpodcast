@@ -6,6 +6,18 @@ services:
     restart: always
     environment:
       RUST_ENV: production
+      TITLE: U2VPodcast
+      URL: http://localhost
+      PORT: "6996"
+      SALT: salt
+      PEPPER: pepper
+      SLEEP_TIME: "24"
+      PER_PAGE: 5
+      JWT_SECRET: "un secreto muy secreto"
+      JWT_EXPIRES_IN: "60m"
+      JWT_MAXAGE: "60"
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: nimda
     volumes:
       - audios:/app/audios
       - db:/app/db

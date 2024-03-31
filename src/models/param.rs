@@ -25,6 +25,7 @@ impl Param{
     }
 
     pub fn get_key(&self) -> &str{
+        debug!("get {}", &self.key);
         &self.key
     }
 

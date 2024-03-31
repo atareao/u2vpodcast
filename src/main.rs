@@ -8,7 +8,7 @@ use sqlx::{
     migrate::{
         Migrator,
         MigrateDatabase
-    },
+    }, SqlitePool,
 };
 
 use tokio::{
@@ -39,6 +39,7 @@ use models::{
     Config,
     AppState,
     User,
+    Param,
 };
 use utils::worker::do_the_work;
 use actix_files as af;
@@ -99,8 +100,9 @@ async fn main() -> Result<(), Error> {
             .to_string()
     };
     info!("DB url: {db_url}");
-
-    if !sqlx::Sqlite::database_exists(&db_url).await.unwrap(){
+    let db_exists = sqlx::Sqlite::database_exists(&db_url).await.unwrap();
+    info!("DB exists: {db_exists}");
+    if !db_exists{
         sqlx::Sqlite::create_database(&db_url).await.unwrap();
     }
 
@@ -123,12 +125,18 @@ async fn main() -> Result<(), Error> {
         .run(&pool)
         .await?;
 
+    let forze: bool = var("FORZE")
+        .unwrap_or("false".to_string())
+        .parse()
+        .unwrap_or(false);
+    if forze || ! db_exists{
+        let _ = init(&pool).await;
+    }
 
     let config = Config::load(&pool).await?;
     let sleep_time = config.sleep_time;
     let url = config.url.clone();
     let port = config.port;
-    let _ = User::default(&pool, &config, "admin", "admin").await;
 
     let pool2 = pool.clone();
     spawn(async move{
@@ -176,4 +184,47 @@ async fn main() -> Result<(), Error> {
     .run()
     .await
     .map_err(|e| e.into())
+}
+
+async fn init(pool: &SqlitePool) -> Result<(), Error>{
+    if let Ok(title) = var("TITLE"){
+        let _ = Param::set(pool, "title", &title).await?;
+    }
+    if let Ok(url) = var("URL"){
+        let _ = Param::set(pool, "url", &url).await?;
+    }
+    if let Ok(port) = var("PORT"){
+        let _ = Param::set(pool, "port", &port).await?;
+    }
+    if let Ok(salt) = var("SALT") {
+        let _ = Param::set(pool, "salt", &salt).await?;
+    }
+    if let Ok(pepper) = var("PEPPER") {
+        let _ = Param::set(pool, "pepper", &pepper).await?;
+    }
+    if let Ok(sleep_time) = var("SLEEP_TIME") {
+        let _ = Param::set(pool, "sleep_time", &sleep_time).await?;
+    }
+    if let Ok(per_page) = var("PER_PAGE") {
+        let _ = Param::set(pool, "per_page", &per_page).await?;
+    }
+    if let Ok(jwt_secret) = var("JWT_SECRET") {
+        let _ = Param::set(pool, "jwt_secret", &jwt_secret).await?;
+    }
+    if let Ok(jwt_expires_in) = var("JWT_EXPIRES_IN") {
+        let _ = Param::set(pool, "jwt_expires_in", &jwt_expires_in).await?;
+    }
+    if let Ok(jwt_maxage) = var("JWT_MAXAGE") {
+        let _ = Param::set(pool, "jwt_maxage", &jwt_maxage).await?;
+    }
+    if let Ok(title) = var("TITLE") {
+        let _ = Param::set(pool, "title", &title).await?;
+    }
+    if let Ok(admin_user) = var("ADMIN_USERNAME") {
+        if let Ok(admin_pass) = var("ADMIN_PASSWORD") {
+            let config = Config::load(pool).await?;
+            let _ = User::default(pool, &config, &admin_user, &admin_pass).await;
+        }
+    }
+    Ok(())
 }

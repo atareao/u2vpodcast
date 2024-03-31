@@ -15,7 +15,6 @@ block head %} {{ super() }}
                 <header>
                     <h4>Error</h4>
                 </header>
-                <p class="alert-danger">{{error.status_code}}</p>
                 <p class="alert-danger">{{error.details|safe}}</p>
             </div>
         </section>
