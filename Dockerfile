@@ -1,7 +1,7 @@
 ###############################################################################
-## Builder
+## Backend builder
 ###############################################################################
-FROM rust:alpine3.19 AS builder
+FROM rust:alpine3.19 AS backend_builder
 
 LABEL maintainer="Lorenzo Carbonell <a.k.a. atareao> lorenzo.carbonell.cerezo@gmail.com"
 
@@ -15,6 +15,25 @@ COPY src src
 
 RUN cargo build --release && \
     cp /app/target/release/u2vpodcast /app/u2vpodcast
+
+###############################################################################
+## Frontend builder
+###############################################################################
+FROM node:20-alpine AS frontend_base
+ENV PNPM_HOME="/pnpm" \
+    PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+COPY ./frontend/ /app
+WORKDIR /app
+
+FROM frontend_base AS frontend_deps
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --prod --frozen-lockfile
+
+FROM frontend_base AS frontend_builder
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install \
+    --frozen-lockfile && \
+    pnpm run build
 
 ###############################################################################
 ## Final image
@@ -33,8 +52,10 @@ RUN apk add --update --no-cache \
     rm -rf /var/cache/apk && \
     rm -rf /var/lib/app/lists*
 
-# Copy our build
-COPY --from=builder /app/u2vpodcast /app/
+# Copy from backend_builder
+COPY --from=backend_builder /app/u2vpodcast /app/
+COPY --from=frontend_deps /app/node_modules /app/html/node_modules
+COPY --from=frontend_builder /app/build /app/html
 
 COPY migrations/ /app/migrations/
 COPY templates/ /app/templates/
