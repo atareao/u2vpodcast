@@ -167,6 +167,7 @@ async fn main() -> Result<(), Error> {
             .wrap(
                 Cors::default() // allowed_origin return access-control-allow-origin: * by default
                     .allowed_origin(&url)
+                    .allow_any_origin()
                     .send_wildcard()
                     .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
                     .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
@@ -176,6 +177,10 @@ async fn main() -> Result<(), Error> {
             .app_data(Data::clone(&data))
             .service(af::Files::new("/assets", "./assets").show_files_listing())
             .service(af::Files::new("/media", "./audios"))
+            .service(af::Files::new("/app", "./html")
+                .index_file("index.html"))
+            .service(af::Files::new("/test", "./html")
+                    .show_files_listing())
             .configure(handlers::config_services)
 
     })

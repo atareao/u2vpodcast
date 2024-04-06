@@ -2,12 +2,13 @@ use serde::Deserialize;
 use actix_web::{
     Responder,
     HttpResponse,
+    get,
     web::{
         self,
         ServiceConfig,
         Path,
         Data,
-        Query,
+        Query, Json,
     },
 };
 use tracing::{
@@ -24,9 +25,10 @@ use super::{
     super::models::Episode,
 };
 
+
 pub fn web_episodes(cfg: &mut ServiceConfig){
     cfg.service(
-        web::resource("/channels/{channel_id}/")
+        web::resource("/channels/{channel_id}/episodes/")
             .route(web::get().to(read_web_episodes))
     );
 }
@@ -38,6 +40,23 @@ struct Page{
 #[derive(Deserialize)]
 struct Info{
     channel_id: i64,
+}
+
+#[get("/{channel_id}/episodes/")]
+async fn read_api_episodes(
+    data: Data<AppState>,
+    params: Query<Page>,
+    path: Path<Info>
+) -> impl Responder{
+    info!("read_api_channels");
+    let config = &data.config;
+    let per_page = config.per_page;
+    let channel_id = path.channel_id;
+    let page = params.page.unwrap_or(1);
+    match Episode::read_with_pagination(&data.pool, channel_id, page, per_page).await{
+        Ok(episodes) => Ok(Json(episodes)),
+        Err(e) => Err(e),
+    }
 }
 
 async fn read_web_episodes(

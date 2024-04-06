@@ -1,6 +1,7 @@
 user    := "atareao"
 name    := `basename ${PWD}`
-version := `git tag -l  | tail -n1`
+#version := `git tag -l  | tail -n1`
+version := "ui"
 os      := `uname -m`
 
 build:
@@ -12,7 +13,7 @@ build:
 
 push:
     docker push {{user}}/{{name}}:{{version}}
-    docker push {{user}}/{{name}}:latest
+    # docker push {{user}}/{{name}}:latest
 
 build-arm64:
     echo {{version}}

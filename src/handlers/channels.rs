@@ -26,6 +26,7 @@ use minijinja::context;
 use super::{
     ENV,
     AppState,
+    episodes::read_api_episodes,
     super::models::{
         CustomResponse,
         Channel,
@@ -44,6 +45,7 @@ pub fn api_channels(cfg: &mut ServiceConfig){
             .service(read_with_pagination)
             .service(update)
             .service(delete)
+            .service(read_api_episodes)
     );
 }
 

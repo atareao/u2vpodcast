@@ -105,7 +105,7 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("")
             .service(
-                web::redirect("/", "/channels/")
+                web::redirect("/", "/app/")
             )
             .configure(web_channels)
             .configure(web_episodes)
@@ -123,7 +123,7 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
                     .route(web::post().to(login::post_login))
             ).service(
                 web::scope("/api")
-                    //.wrap(Authentication)
+                    .wrap(Authentication)
                     .service(
                         web::scope("/1.0")
                             .configure(api_channels)
