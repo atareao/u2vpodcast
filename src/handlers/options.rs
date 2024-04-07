@@ -1,7 +1,6 @@
 use serde::{Serialize, Deserialize};
 use actix_web::{
     Responder,
-    HttpResponse,
     web::{
         self,
         Data,
@@ -17,13 +16,8 @@ use tracing::{
     debug,
     error,
 };
-use minijinja::{
-    context,
-    value::Value,
-};
 
 use super::{
-    ENV,
     AppState,
     super::{
         utils::worker::do_the_work,
@@ -40,14 +34,6 @@ pub fn api_options(cfg: &mut ServiceConfig){
             .service(post_options)
             .service(update)
     );
-}
-
-pub fn config_options(cfg: &mut ServiceConfig){
-    cfg.service(
-        web::resource("options/")
-            .route(web::get().to(get_options))
-    );
-
 }
 
 #[derive(Serialize, Deserialize)]
@@ -104,20 +90,4 @@ async fn post_options(
         "Ok",
         response_pairs,
     ))
-}
-
-async fn get_options(
-    data: Data<AppState>,
-) -> impl Responder{
-    info!("get_options");
-    let config = &data.config;
-    let title = &config.title;
-    let params = Param::get_all(&data.pool).await.unwrap();
-    debug!("{:?}", params);
-    let template = ENV.get_template("config/options.html").unwrap();
-    let ctx = context! {
-        app_title => title,
-        ..Value::from_serializable(&params),
-    };
-    HttpResponse::Ok().body(template.render(ctx).unwrap())
 }

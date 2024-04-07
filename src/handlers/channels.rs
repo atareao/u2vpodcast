@@ -1,7 +1,6 @@
 use serde::Deserialize;
 use actix_web::{
     Responder,
-    HttpResponse,
     web::{
         self,
         Path,
@@ -21,12 +20,9 @@ use tracing::{
     debug,
     error,
 };
-use minijinja::context;
 
 use super::{
-    ENV,
     AppState,
-    episodes::read_api_episodes,
     super::models::{
         CustomResponse,
         Channel,
@@ -36,32 +32,6 @@ use super::{
 };
 
 static FOLDER: &str = "/app/audios";
-
-pub fn api_channels(cfg: &mut ServiceConfig){
-    cfg.service(
-        web::scope("channels")
-            .service(create)
-            .service(read)
-            .service(read_with_pagination)
-            .service(update)
-            .service(delete)
-            .service(read_api_episodes)
-    );
-}
-
-pub fn config_channels(cfg: &mut ServiceConfig){
-    cfg.service(
-        web::resource("channels/")
-            .route(web::get().to(read_config_channels))
-    );
-}
-
-pub fn web_channels(cfg: &mut ServiceConfig){
-    cfg.service(
-        web::resource("channels/")
-            .route(web::get().to(read_web_channels))
-    );
-}
 
 #[derive(Deserialize)]
 struct Page{
@@ -74,7 +44,7 @@ struct Info{
 }
 
 
-#[get("/")]
+#[get("/channels/")]
 async fn read_with_pagination(
     data: Data<AppState>,
     page: Query<Page>,
@@ -88,7 +58,7 @@ async fn read_with_pagination(
     }
 }
 
-#[post("/")]
+#[post("/channels/")]
 async fn create(
     data: Data<AppState>,
     channel: Json<NewChannel>,
@@ -104,7 +74,7 @@ async fn create(
         }
 }
 
-#[patch("/")]
+#[patch("/channels/")]
 async fn update(
     data: Data<AppState>,
     channel: Json<UpdateChannel>,
@@ -121,7 +91,7 @@ async fn update(
 }
 
 
-#[get("/{channel_id}/")]
+#[get("/channels/{channel_id}/")]
 async fn read( data: Data<AppState>, path: Path<Info>,) -> impl Responder{
     info!("read");
     match Channel::read(&data.pool, path.channel_id).await{
@@ -129,7 +99,7 @@ async fn read( data: Data<AppState>, path: Path<Info>,) -> impl Responder{
         Err(e) => Err(e),
     }
 }
-#[delete("/")]
+#[delete("/channels/")]
 async fn delete( data: Data<AppState>, path: Query<Info>,) -> impl Responder{
     info!("delete");
     match Channel::delete(&data.pool, path.channel_id).await{
@@ -147,70 +117,5 @@ async fn delete( data: Data<AppState>, path: Query<Info>,) -> impl Responder{
                 )))
         },
         Err(e) => Err(e),
-    }
-}
-
-
-async fn read_config_channels(
-    data: Data<AppState>,
-    page: Query<Page>,
-) -> impl Responder{
-    info!("read_all");
-    let config = &data.config;
-    let title = &config.title;
-    let per_page = config.per_page;
-    let page = page.page.unwrap_or(1);
-    match Channel::read_with_pagination(&data.pool, page, per_page).await{
-        Ok(channels) => {
-            debug!("{:?}", channels);
-            let template = ENV.get_template("config/channels.html").unwrap();
-            let ctx = context! {
-                app_title => title,
-                channels => channels,
-
-            };
-            HttpResponse::Ok().body(template.render(ctx).unwrap())
-        },
-        Err(error) => {
-            let template = ENV.get_template("error.html").unwrap();
-            let ctx = context! {
-                app_title => &title,
-                error => error,
-            };
-            HttpResponse::Ok().body(template.render(ctx).unwrap())
-        },
-    }
-}
-
-async fn read_web_channels(
-    data: Data<AppState>,
-    page: Query<Page>,
-) -> impl Responder{
-    info!("read_web_channels");
-    let config = &data.config;
-    let title = &config.title;
-    let per_page = config.per_page;
-    let page = page.page.unwrap_or(1);
-    let total = Channel::number_of_channels(&data.pool).await;
-    match Channel::read_with_pagination(&data.pool, page, per_page).await{
-        Ok(channels) => {
-            debug!("{:?}", channels);
-            let template = ENV.get_template("web/channels.html").unwrap();
-            let ctx = context! {
-                app_title => title,
-                channels => channels,
-                page => page,
-                total => total / per_page + 1,
-            };
-            HttpResponse::Ok().body(template.render(ctx).unwrap())
-        },
-        Err(error) => {
-            let template = ENV.get_template("error.html").unwrap();
-            let ctx = context! {
-                app_title => title,
-                error => error,
-            };
-            HttpResponse::Ok().body(template.render(ctx).unwrap())
-        },
     }
 }
