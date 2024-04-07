@@ -162,6 +162,8 @@ async fn main() -> Result<(), Error> {
             pool: pool.clone(),
         };
         let data = Data::new(appstate);
+        let path = "/app/html";
+        let static_files = String::from(path.strip_suffix('/').unwrap_or(path));
         App::new()
             .wrap(Logger::default())
             .wrap(
@@ -175,14 +177,17 @@ async fn main() -> Result<(), Error> {
                     .max_age(3600),
             )
             .app_data(Data::clone(&data))
-            .service(af::Files::new("/assets", "./assets").show_files_listing())
             .service(af::Files::new("/media", "./audios"))
-            .service(af::Files::new("/app", "./html")
-                .index_file("index.html"))
-            .service(af::Files::new("/test", "./html")
-                    .show_files_listing())
+            .service(af::Files::new("/app", static_files.clone())
+                .index_file("index.html")
+                .default_handler(
+                    af::NamedFile::open(
+                        [static_files.clone(), "index.html".to_string()].join("/"),
+                    )
+                    .expect("index file should exist"),
+                )
+            )
             .configure(handlers::config_services)
-
     })
     .workers(2)
     .bind(("0.0.0.0", port))?
