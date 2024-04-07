@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { Button, Modal, Label, Input, Checkbox } from 'flowbite-svelte';
+    import { Button, Dropdown, DropdownItem } from 'flowbite-svelte';
     import { DarkMode, Navbar, NavBrand, NavLi, NavUl, NavHamburger } from 'flowbite-svelte'
+    import { ChevronDownOutline } from 'flowbite-svelte-icons';
     import "../app.css";
     import logo from '$lib/assets/favicon/favicon-48x48.png';
     import LoginForm from '$lib/components/LoginForm.svelte';
@@ -22,10 +23,14 @@
   <NavHamburger on:click={toggle} />
   <NavUl {hidden}>
     <NavLi href="/" active={true}>Home</NavLi>
-    <NavLi href="/about">About</NavLi>
-    <NavLi href="/services">Services</NavLi>
-    <NavLi href="/pricing">Pricing</NavLi>
-    <NavLi href="/app/login/">Login</NavLi>
+    <NavLi class="cursor-pointer">
+        Configuration<ChevronDownOutline class="w-3 h-3 ms-2 text-primary-800 dark:text-white inline" />
+        <Dropdown class="w-44 z-20">
+            <DropdownItem href="/app/configure/channels">Channels</DropdownItem>
+            <DropdownItem href="/app/configure/users">Users</DropdownItem>
+            <DropdownItem href="/app/configure/general">General</DropdownItem>
+        </Dropdown>
+    </NavLi>
     <Button on:click={() => (loginFormShow = true)}>Login</Button>
     <DarkMode {btnClass} />
   </NavUl>

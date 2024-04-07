@@ -52,6 +52,9 @@ devDependencies:
   eslint-plugin-svelte:
     specifier: ^2.35.1
     version: 2.35.1(eslint@8.57.0)(svelte@4.2.12)
+  flowbite-svelte-icons:
+    specifier: ^1.5.0
+    version: 1.5.0(svelte@4.2.12)(tailwind-merge@2.2.2)(tailwindcss@3.4.3)
   postcss:
     specifier: ^8.4.38
     version: 8.4.38
@@ -107,7 +110,6 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       regenerator-runtime: 0.14.1
-    dev: false
 
   /@esbuild/aix-ppc64@0.20.2:
     resolution: {integrity: sha512-D+EBOJHXdNZcLJRBkhENNG8Wji2kgc9AZ9KiPr1JuZjsNtyHzrsfLRrY0tk2H2aoFu6RANO1y1iPPUCDYWkb5g==}
@@ -1403,6 +1405,18 @@ packages:
     resolution: {integrity: sha512-X8cqMLLie7KsNUDSdzeN8FYK9rEt4Dt67OsG/DNGnYTSDBG4uFAJFBnUeiV+zCVAvwFy56IjM9sH51jVaEhNxw==}
     dev: true
 
+  /flowbite-svelte-icons@1.5.0(svelte@4.2.12)(tailwind-merge@2.2.2)(tailwindcss@3.4.3):
+    resolution: {integrity: sha512-8s0pb7MplWcWDI3/QB6sqH1aXMuChom7iDZqtjFd7VAoqae5vlSusi+J8JdF4Y/9l1cav5gQrAyK1+WcYTUMBw==}
+    peerDependencies:
+      svelte: ^3.54.0 || ^4.0.0 || ^5.0.0
+      tailwind-merge: ^2.0.0
+      tailwindcss: ^3.3.2
+    dependencies:
+      svelte: 4.2.12
+      tailwind-merge: 2.2.2
+      tailwindcss: 3.4.3
+    dev: true
+
   /flowbite-svelte@0.44.24(svelte@4.2.12):
     resolution: {integrity: sha512-kXhJZHGpBVq5RFOoYnzRCEM8eFa81DVp4KjUbBsLJptKhizbSSBJuYApWIQb9pBCS8EBhX4PAX+RsgEDZfEqtA==}
     engines: {node: '>=18.0.0', pnpm: '>=8.0.0'}
@@ -2077,7 +2091,6 @@ packages:
 
   /regenerator-runtime@0.14.1:
     resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
-    dev: false
 
   /resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
@@ -2464,7 +2477,6 @@ packages:
     resolution: {integrity: sha512-tWANXsnmJzgw6mQ07nE3aCDkCK4QdT3ThPMCzawoYA2Pws7vSTCvz3Vrjg61jVUGfFZPJzxEP+NimbcW+EdaDw==}
     dependencies:
       '@babel/runtime': 7.24.4
-    dev: false
 
   /tailwindcss@3.4.3:
     resolution: {integrity: sha512-U7sxQk/n397Bmx4JHbJx/iSOOv5G+II3f1kpLpY2QeUv5DcPdcTsYLlusZfq1NthHS1c1cZoyFmmkex1rzke0A==}
