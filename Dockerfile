@@ -58,8 +58,6 @@ COPY --from=frontend_deps /app/node_modules /app/html/node_modules
 COPY --from=frontend_builder /app/build /app/html
 
 COPY migrations/ /app/migrations/
-COPY templates/ /app/templates/
-COPY assets/ /app/assets/
 
 # Create the user
 RUN adduser \
