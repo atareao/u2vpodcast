@@ -4,7 +4,7 @@
     export let open: boolean;
     export let data: PageData;
     export let form: ActionData;
-    const loginEndpoint = "http://localhost:6996/login/";
+    const loginEndpoint = "/login/";
 </script>
 
 <Modal bind:open autoclose outsideclose size="xs" class="w-full">
