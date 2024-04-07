@@ -5,7 +5,7 @@
 	export let data: PageData;
 	
 	export let form: ActionData;
-    const loginEndpoint = "/login/";
+    const loginEndpoint = "/api/1.0/login/";
 </script>
 
 {#if form?.success}
