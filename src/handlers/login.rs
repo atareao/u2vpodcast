@@ -38,7 +38,7 @@ pub async fn post_login(data: Data<AppState>, Form(credentials): Form<Credential
                     .same_site(SameSite::Strict)
                     .finish();
                 Ok(HttpResponse::SeeOther()
-                    .insert_header((header::LOCATION, "/config/channels/"))
+                    .insert_header((header::LOCATION, "/app/configure/channels/"))
                     .cookie(cookie)
                     .finish())
             }else{
