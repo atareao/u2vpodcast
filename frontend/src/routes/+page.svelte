@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
     import { type Channel, } from '$lib/channel';
     import ChannelCard from '$lib/components/ChannelCard.svelte';
-	const endpoint = 'http://localhost:6996/api/1.0/channels/';
+	const endpoint = '/api/1.0/channels/';
 	let channels: Channel[] = [];
 
     async function getChannels(): Promise<Channel[]>{

@@ -3,36 +3,10 @@
     import { DarkMode, Navbar, NavBrand, NavLi, NavUl, NavHamburger } from 'flowbite-svelte'
     import "../app.css";
     import logo from '$lib/assets/favicon/favicon-48x48.png';
-    import LoginForm from '$lib/components/player/LoginForm.svelte';
+    import LoginForm from '$lib/components/LoginForm.svelte';
 
     let btnClass = "text-primary-500 dark:text-primary-600 border dark:border-gray-800";
     let loginFormShow = false;
-	let iconColorMode: string;
-	let isOpen = false;
-    //let nada = localStorage.getItem("username");
-    //console.log(nada);
-
-    //if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    //    document.documentElement.classList.add('dark');
-    //} else {
-    //    document.documentElement.classList.remove('dark')
-    //}
-
-	function setIconColorMode() {
-		if (currentColorMode && currentColorMode == 'light') {
-			iconColorMode = 'moon-stars-fill';
-		} else {
-			iconColorMode = 'sun-fill';
-		}
-	}
-
-	function toggle() {
-		isOpen = !isOpen;
-	}
-
-	function handleUpdate(event) {
-		isOpen = event.detail.isOpen;
-	}
 </script>
 <Navbar class="mb-8" let:hidden let:toggle>
   <NavBrand href="/">

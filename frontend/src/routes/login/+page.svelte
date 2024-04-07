@@ -5,7 +5,7 @@
 	export let data: PageData;
 	
 	export let form: ActionData;
-    const loginEndpoint = "http://localhost:6996/login/";
+    const loginEndpoint = "/login/";
 </script>
 
 {#if form?.success}
