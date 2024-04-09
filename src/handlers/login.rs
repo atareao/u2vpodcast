@@ -1,9 +1,11 @@
+use serde::{Serialize, Deserialize};
+use serde_json::{json, Value};
 use actix_web::{
     HttpResponse,
     Responder,
-    http::header,
+    http::{header, StatusCode},
     web::{
-        Form,
+        Json,
         Data,
     },
     cookie::{
@@ -13,7 +15,7 @@ use actix_web::{
 };
 use tracing::{info, error};
 
-use crate::models::User;
+use crate::models::{User, CustomResponse};
 
 use super::{
     super::Error,
@@ -22,7 +24,21 @@ use super::{
     AppState,
 };
 
-pub async fn post_login(data: Data<AppState>, Form(credentials): Form<Credentials>) -> impl Responder{
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct AccessToken{
+    access_token: String,
+}
+
+impl AccessToken {
+    fn new(access_token: String) -> Self{
+        Self{
+            access_token,
+        }
+    }
+    
+}
+
+pub async fn post_login(data: Data<AppState>, Json(credentials): Json<Credentials>) -> impl Responder{
     info!("post_login");
     let config = &data.config;
     match User::get_by_name(&data.pool, &credentials.username).await{
@@ -31,25 +47,25 @@ pub async fn post_login(data: Data<AppState>, Form(credentials): Form<Credential
             if user.active && user.check_password(config, &credentials.password) {
                 let token = TokenClaims::generate_token(config.to_owned(), &user);
                 info!("Ok");
-                let cookie = Cookie::build("session_auth", token)
-                    .path("/")
-                    .secure(true)
-                    .http_only(true)
-                    .same_site(SameSite::Strict)
-                    .finish();
-                Ok(HttpResponse::SeeOther()
-                    .insert_header((header::LOCATION, "/app/configure/channels/"))
-                    .cookie(cookie)
-                    .finish())
+                Json(CustomResponse::new(
+                    StatusCode::OK,
+                    "Authorized",
+                    Some(json!({"access_token":token}))),
+                )
             }else{
-                error!("Invalid credentials");
-                Err(Error::new("Invalid credentials"))
+                let response: CustomResponse<Option<Value>> = CustomResponse::new(
+                        StatusCode::UNAUTHORIZED,
+                        "Authorized",
+                        None);
+                Json(response)
             }
-
         },
         Err(e) => {
-            error!("{}", e);
-            Err(Error::new(&format!("Error: {e}")))
+                let response: CustomResponse<Option<Value>> = CustomResponse::new(
+                        StatusCode::UNAUTHORIZED,
+                        &format!("Authorized: {e}"),
+                        None);
+                Json(response)
         }
     }
 }

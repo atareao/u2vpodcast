@@ -49,15 +49,12 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
                                     .service(channels::read)
                                     .service(channels::read_with_pagination)
                                     .service(episodes::read_with_pagination)
-                            )
-                            .service(
-                                web::scope("")
-                                    .wrap(Authentication)
+                                    //.wrap(Authentication)
                                     .service(channels::create)
                                     .service(channels::update)
                                     .service(channels::delete)
                             )
-                )
+                    )
             ).service(
                 web::scope("/config")
                     .wrap(Authentication)

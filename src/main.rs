@@ -168,7 +168,7 @@ async fn main() -> Result<(), Error> {
             .wrap(Logger::default())
             .wrap(
                 Cors::default() // allowed_origin return access-control-allow-origin: * by default
-                    .allowed_origin(&url)
+                    //.allowed_origin(&url)
                     .allow_any_origin()
                     .send_wildcard()
                     .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
