@@ -2,16 +2,14 @@ use serde::Deserialize;
 use actix_web::{
     Responder,
     web::{
-        self,
         Path,
         Data,
         Query,
         Json,
-        ServiceConfig,
     },
     http::StatusCode,
     get,
-    patch,
+    put,
     post,
     delete,
 };
@@ -74,12 +72,12 @@ async fn create(
         }
 }
 
-#[patch("/channels/")]
+#[put("/channels/")]
 async fn update(
     data: Data<AppState>,
     channel: Json<UpdateChannel>,
 ) -> impl Responder {
-    info!("create");
+    info!("update");
     match Channel::update(&data.pool, &channel.into_inner()).await{
             Ok(channel) => Ok(Json(CustomResponse::new(
             StatusCode::OK,
