@@ -7,6 +7,7 @@
     import { GradientButton, Modal, Button, Toggle, Label, Input } from 'flowbite-svelte';
     import { CirclePlusSolid } from 'flowbite-svelte-icons';
 	const endpoint = `${base_endpoint}/api/1.0/channels/`;
+    export let showConfirmDialog: boolean;
 	export let newData: PageData;
 	export let newForm: ActionData;
     let isNewFormOpen: boolean;

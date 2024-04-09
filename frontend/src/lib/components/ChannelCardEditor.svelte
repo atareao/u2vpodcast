@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { base_endpoint } from '$lib/global';
 	import type { PageData, ActionData } from './$types';
+    import ConfirmDialog from './ConfirmDialog.svelte';
 
 	let isFormOpen: boolean;
+    let showConfirmDialog: boolean;
 	export let data: PageData;
 	export let form: ActionData;
 	import { GradientButton, Modal, Button, Label, Input, Toggle } from 'flowbite-svelte';
@@ -10,9 +12,13 @@
 	import { type Channel } from '$lib/channel';
 	let nodeRef: any;
 	export let channel: Channel;
+
 	const endPoint = `${base_endpoint}/api/1.0/channels/`;
 	function deleteChannel() {
+        console.log("deleteChannel");
 		nodeRef.parentNode.removeChild(nodeRef);
+        console.log(nodeRef);
+        console.log("deleted");
 	}
 	function editChannel() {
 		isFormOpen = true;
@@ -22,30 +28,30 @@
 			channel.max = 1;
 		}
 	}
-    async function onButtonUpdateClicked(){
-        const data = {
-                id: channel.id,
-                url: channel.url,
-                active: channel.active,
-                first: new Date(channel.first),
-                max: parseInt(channel.max)
-            };
-        console.log(data);
-        const config = {
-            method: "PUT",
-            headers: {
-                 Accept: 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        }
-        const request = await fetch(endPoint, config);
-        const response = await request.json();
-        console.log(response);
-        if(response.status){
-            channel = response.data;
-        }
-    }
+	async function onButtonUpdateClicked() {
+		const data = {
+			id: channel.id,
+			url: channel.url,
+			active: channel.active,
+			first: new Date(channel.first),
+			max: parseInt(channel.max)
+		};
+		console.log(data);
+		const config = {
+			method: 'PUT',
+			headers: {
+				Accept: 'application/json',
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(data)
+		};
+		const request = await fetch(endPoint, config);
+		const response = await request.json();
+		console.log(response);
+		if (response.status) {
+			channel = response.data;
+		}
+	}
 	function onChangeFirst(e: any) {
 		console.log(e);
 	}
@@ -76,7 +82,7 @@
 			<GradientButton class="mb-2" color="cyanToBlue" on:click={editChannel} pill>
 				<EditSolid class="w-6 h-6" />
 			</GradientButton>
-			<GradientButton color="pinkToOrange" on:click={deleteChannel} pill>
+			<GradientButton color="pinkToOrange" on:click={()=>showConfirmDialog=true} pill>
 				<TrashBinSolid class="w-6 h-6" />
 			</GradientButton>
 		</div>
@@ -119,10 +125,15 @@
 				required
 			/>
 		</Label>
-		<Button
-            on:click={onButtonUpdateClicked}
-            type="submit">
-            Update channel
-        </Button>
+		<Button on:click={onButtonUpdateClicked} type="submit">Update channel</Button>
 	</form>
 </Modal>
+
+<ConfirmDialog
+    bind:open={showConfirmDialog}
+    title="Warning"
+    message="Are you sure?"
+    okFunction={deleteChannel}
+    on:close={() => console.log('closed')}>
+	Are you sure?
+</ConfirmDialog>

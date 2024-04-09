@@ -24,6 +24,3 @@
     <ChannelCard {channel}/>
 {/each}
 </div>
-
-
-
