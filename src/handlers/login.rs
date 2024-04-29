@@ -1,16 +1,11 @@
 use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 use actix_web::{
-    HttpResponse,
     Responder,
     http::{header, StatusCode},
     web::{
         Json,
         Data,
-    },
-    cookie::{
-        Cookie,
-        SameSite,
     },
 };
 use tracing::{info, error};
@@ -18,7 +13,6 @@ use tracing::{info, error};
 use crate::models::{User, CustomResponse};
 
 use super::{
-    super::Error,
     Credentials,
     TokenClaims,
     AppState,
