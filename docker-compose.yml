@@ -1,5 +1,3 @@
-version: "3.7"
-
 services:
   u2vpodcast:
     image: atareao/u2vpodcast:latest
@@ -10,15 +8,18 @@ services:
       - audios:/app/audios
       - db:/app/db
       - ./cookies.txt:/app/cookies.txt:ro
-      - ./config.yml:/app/config.yml:ro
-    networks:
-      - proxy
+    ports:
+      - 6996:6996
+    environment:
+      RUST_ENV: production
+    # networks:
+    #   - proxy
 
 volumes:
   audios: {}
   db: {}
 
-networks:
-  proxy:
-    external: true
+#networks:
+#  proxy:
+#    external: true
 

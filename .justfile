@@ -1,7 +1,6 @@
 user    := "atareao"
-name    := `basename ${PWD}`
-#version := `git tag -l  | tail -n1`
-version := "ui"
+name    := `toml get Cargo.toml package.name --raw`
+version := `toml get Cargo.toml package.version --raw`
 os      := `uname -m`
 
 build:

@@ -135,7 +135,6 @@ async fn main() -> Result<(), Error> {
 
     let config = Config::load(&pool).await?;
     let sleep_time = config.sleep_time;
-    let url = config.url.clone();
     let port = config.port;
 
     let pool2 = pool.clone();
