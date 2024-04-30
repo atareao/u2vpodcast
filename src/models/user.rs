@@ -19,6 +19,8 @@ use base64::{
     Engine as _,
 };
 
+use crate::utils::token_utils::{verify_password, self};
+
 use super::{
     Error,
     role::Role,
@@ -108,13 +110,6 @@ pub struct FilteredUser {
     pub updated_at: DateTime<Utc>,
 }
 
-fn wrap(salt: &str, pepper: &str, word: &str) -> String{
-    info!("wrap");
-    let composition = format!("{}{}{}", salt, word, pepper);
-    format!("{:x}", md5::compute(composition))
-}
-
-
 impl User{
     fn from_row(row: SqliteRow) -> Self{
         info!("from_row");
@@ -129,15 +124,15 @@ impl User{
         }
     }
 
-    pub fn check_password(&self, config: &Config, password: &str) -> bool{
+    pub async fn check_password(&self, password: &str) -> bool{
         info!("check_password");
-        let salt = &config.salt;
-        let pepper = &config.pepper;
-        let hashed_password = wrap(salt, pepper, password);
-        self.hashed_password == hashed_password
+        match verify_password(password, &self.hashed_password).await{
+            Ok(_) => true,
+            Err(_) => false
+        }
     }
 
-    pub async fn default(pool: &SqlitePool, config: &Config, name: &str,
+    pub async fn default(pool: &SqlitePool, name: &str,
         password: &str) -> Result<Self, Error>{
         let new_user = NewUser{
             name: name.to_string(),
@@ -145,15 +140,13 @@ impl User{
             role: Role::Admin,
             active: true,
         };
-        Self::new(pool, config, new_user).await
+        Self::new(pool, new_user).await
 
     }
 
-    pub async fn new(pool: &SqlitePool, config: &Config, user: NewUser) -> Result<Self, Error>{
+    pub async fn new(pool: &SqlitePool, user: NewUser) -> Result<Self, Error>{
         info!("new");
-        let salt = &config.salt;
-        let pepper = &config.pepper;
-        let hashed_password = wrap(salt, pepper, &user.password);
+        let hashed_password = token_utils::hash_password(&user.password).await;
         let created_at = Utc::now();
         let updated_at = created_at;
         let mut user = Self{

@@ -37,7 +37,7 @@ pub async fn post_login(data: Data<AppState>, Json(credentials): Json<Credential
     let config = &data.config;
     match User::get_by_name(&data.pool, &credentials.username).await{
         Ok(user) => {
-            if user.active && user.check_password(config, &credentials.password) {
+            if user.active && user.check_password(&credentials.password).await {
                 let token = TokenClaims::generate_token(config.to_owned(), &user);
                 info!("Ok");
                 Json(CustomResponse::new(

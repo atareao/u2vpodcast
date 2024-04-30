@@ -232,7 +232,7 @@ async fn init(pool: &SqlitePool) -> Result<(), Error>{
     if let Ok(admin_user) = var("ADMIN_USERNAME") {
         if let Ok(admin_pass) = var("ADMIN_PASSWORD") {
             let config = Config::load(pool).await?;
-            let _ = User::default(pool, &config, &admin_user, &admin_pass).await;
+            let _ = User::default(pool, &admin_user, &admin_pass).await;
         }
     }
     Ok(())

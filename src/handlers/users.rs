@@ -72,7 +72,7 @@ async fn create(
     user: Json<NewUser>,
 ) -> impl Responder {
     info!("create");
-    match User::new(&data.pool, &data.config, user.into_inner()).await{
+    match User::new(&data.pool, user.into_inner()).await{
             Ok(user) => Ok(Json(CustomResponse::new(
             StatusCode::OK,
             "Ok",
