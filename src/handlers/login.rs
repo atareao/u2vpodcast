@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 use actix_web::{
     Responder,
-    http::{header, StatusCode},
+    http::StatusCode,
     web::{
         Json,
         Data,
@@ -36,7 +36,6 @@ pub async fn post_login(data: Data<AppState>, Json(credentials): Json<Credential
     info!("post_login");
     let config = &data.config;
     match User::get_by_name(&data.pool, &credentials.username).await{
-    //match config.get_user(&credentials.username) {
         Ok(user) => {
             if user.active && user.check_password(config, &credentials.password) {
                 let token = TokenClaims::generate_token(config.to_owned(), &user);
@@ -44,13 +43,14 @@ pub async fn post_login(data: Data<AppState>, Json(credentials): Json<Credential
                 Json(CustomResponse::new(
                     StatusCode::OK,
                     "Authorized",
-                    Some(json!({"access_token":token}))),
+                    Some(json!({"access_token": token}))),
                 )
             }else{
                 let response: CustomResponse<Option<Value>> = CustomResponse::new(
                         StatusCode::UNAUTHORIZED,
                         "Authorized",
                         None);
+                error!("Unauthorized");
                 Json(response)
             }
         },
@@ -59,6 +59,7 @@ pub async fn post_login(data: Data<AppState>, Json(credentials): Json<Credential
                         StatusCode::UNAUTHORIZED,
                         &format!("Authorized: {e}"),
                         None);
+                error!("Not found");
                 Json(response)
         }
     }
