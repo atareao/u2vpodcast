@@ -1,29 +1,77 @@
 <script lang="ts">
-    import { Button, Modal, Label, Input } from 'flowbite-svelte';
-	import type { PageData, ActionData } from './$types';
-	
-	export let data: PageData;
-	
+	import { applyAction, enhance, type SubmitFunction } from '$app/forms';
+	import { loading } from '$lib/stores/loading.store';
+	import { notification } from '$lib/stores/notification.store';
+	import { happyEmoji } from '$lib/utils/constant';
+	import type { ActionData } from './$types';
+	import { receive, send } from '$lib/utils/helpers/animate.crossfade';
+	import { page } from '$app/stores';
+
 	export let form: ActionData;
-    const loginEndpoint = "/api/1.0/login/";
+
+	const handleLogin: SubmitFunction = async () => {
+		loading.setLoading(true, 'Please wait while we log you in...');
+
+		return async ({ result }) => {
+			loading.setLoading(false);
+			if (result.type === 'success' || result.type === 'redirect') {
+				$notification = {
+					message: `Login successfull ${happyEmoji}...`,
+					colorName: `emerald`
+				};
+			}
+			await applyAction(result);
+		};
+	};
+
+	let message = '';
+
+	if ($page.url.search) {
+		message = $page.url.search.split('=')[1].replaceAll('%20', ' ');
+	}
+
+	if (message) {
+		$notification = {
+			message: `${message} ${happyEmoji}...`,
+			colorName: 'emerald'
+		};
+	}
 </script>
 
-{#if form?.success}
-	<!-- this message is ephemeral; it exists because the page was rendered in
-		   response to a form submission. it will vanish if the user reloads -->
-	<p>Successfully logged in! Welcome back, {data.user.name}</p>
-{/if}
-<form class="flex flex-col space-y-6" action={loginEndpoint} method="POST">
-	{#if form?.missing}<p class="error">The email field is required</p>{/if}
-	{#if form?.incorrect}<p class="error">Invalid credentials!</p>{/if}
-    <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Sign in</h3>
-    <Label class="space-y-2">
-      <span>User</span>
-      <Input type="text" name="username" placeholder="username" value={form?.username ?? ""} required />
-    </Label>
-    <Label class="space-y-2">
-      <span>Password</span>
-      <Input type="password" name="password" placeholder="•••••" required />
-    </Label>
-    <Button type="submit" class="">Login</Button>
+<svelte:head>
+	<title>Auth - Login | Auth Systems with SvelteKit</title>
+</svelte:head>
+
+<form class="form" method="POST" action="?/login" use:enhance={handleLogin}>
+	<h1 style="text-align:center">Login</h1>
+
+	{#if form?.errors}
+		{#each form?.errors as error (error.id)}
+			<p
+				class="text-center text-rose-600"
+				in:receive={{ key: error.id }}
+				out:send={{ key: error.id }}
+			>
+				{error.error}
+			</p>
+		{/each}
+	{/if}
+
+	<input type="hidden" name="next" value={$page.url.searchParams.get('next')} />
+
+	<input type="email" name="email" id="email" placeholder="Email address" required />
+
+	<input type="password" name="password" id="password" placeholder="Password" required />
+
+	<p style="text-align: right; margin-bottom: 0.5rem">
+		<a href="/auth/password/request-change" class="text-sm text-slate-400"> Forgot password? </a>
+	</p>
+
+	<button type="submit" class="btn"> Login </button>
+
+	<p class="text-sm text-sky-400" style="text-align: center; margin-top: 0.5rem">
+		No account?
+		<a href="/auth/register" class="ml-2 text-slate-400">Create an account.</a>
+	</p>
 </form>
+
