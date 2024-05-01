@@ -22,6 +22,9 @@ use super::super::models::{
     TokenClaims,
 };
 
+/// Store the session key prefix as a const so it can't be typo'd anywhere it's used.
+const SESSION_KEY_PREFIX: &str = "valid_session_key_for_{}";
+
 pub fn check_token_sync(
     appstate: &AppState,
     token: &str,

@@ -30,7 +30,7 @@ use super::{
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct User{
-    id: i64,
+    pub id: i64,
     pub name: String,
     pub hashed_password: String,
     pub role: Role,

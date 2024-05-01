@@ -8,42 +8,48 @@ use actix_web::{
         Data,
     },
 };
+use actix_session::Session;
 use tracing::{info, error};
 
 use crate::models::{User, CustomResponse};
 
 use super::{
     Credentials,
-    TokenClaims,
     AppState,
+    super::utils::{
+        USER_ID_KEY,
+        USER_NAME_KEY,
+        USER_ROLE_KEY,
+    }
 };
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct AccessToken{
-    access_token: String,
-}
 
-impl AccessToken {
-    fn new(access_token: String) -> Self{
-        Self{
-            access_token,
-        }
-    }
-    
-}
-
-pub async fn post_login(data: Data<AppState>, Json(credentials): Json<Credentials>) -> impl Responder{
+pub async fn post_login(
+    data: Data<AppState>,
+    Json(credentials): Json<Credentials>,
+    session: Session,
+) -> impl Responder{
     info!("post_login");
-    let config = &data.config;
     match User::get_by_name(&data.pool, &credentials.username).await{
         Ok(user) => {
             if user.active && user.check_password(&credentials.password).await {
-                let token = TokenClaims::generate_token(config.to_owned(), &user);
                 info!("Ok");
+                session.renew();
+                session.insert(USER_ID_KEY, user.id)
+                    .expect("`user_id` cannot be inserted into session");
+                session.insert(USER_NAME_KEY, &user.name)
+                    .expect("`user_name` cannot be inserted into session");
+                session.insert(USER_ROLE_KEY, &user.role)
+                    .expect("`user_role` cannot be inserted into session");
                 Json(CustomResponse::new(
                     StatusCode::OK,
                     "Authorized",
-                    Some(json!({"access_token": token}))),
+                    Some(json!({
+                        "id": user.id,
+                        "name": user.name,
+                        "role": user.role,
+                        "active": user.active,
+                    }))),
                 )
             }else{
                 let response: CustomResponse<Option<Value>> = CustomResponse::new(
