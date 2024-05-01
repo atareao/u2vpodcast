@@ -190,6 +190,8 @@ async fn main() -> Result<(), Error> {
                     .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
                     .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
                     .allowed_header(header::CONTENT_TYPE)
+                    .expose_headers(&[header::CONTENT_DISPOSITION])
+                    .supports_credentials()
                     .max_age(3600),
             )
             .app_data(Data::clone(&data))
