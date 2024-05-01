@@ -12,11 +12,9 @@ use actix_web::web;
 use tracing::info;
 
 use super::{
-    middleware::Authentication,
     models::{
         CustomResponse,
         Credentials,
-        TokenClaims,
         AppState,
     }
 };
@@ -57,7 +55,6 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
                     )
             ).service(
                 web::scope("/config")
-                    .wrap(Authentication)
                     //.configure(config_users)
             )
     );

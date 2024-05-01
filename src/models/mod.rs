@@ -36,7 +36,6 @@ pub use user::{
     User,
     NewUser,
     Credentials,
-    TokenClaims,
 };
 pub use role::Role;
 

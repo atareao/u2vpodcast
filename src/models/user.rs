@@ -1,6 +1,5 @@
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
-use jsonwebtoken::{EncodingKey, Header};
 use sqlx::{
     sqlite::{
         SqlitePool,
@@ -61,38 +60,6 @@ pub struct UserClaims {
     pub role: Role,
 }
 
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TokenClaims {
-    pub sub: String,
-    pub role: String,
-    pub iat: i64,
-    pub exp: i64,
-}
-
-impl TokenClaims {
-    pub fn generate_token(config: Config, user: &User) -> String {
-        let max_age = config.jwt_maxage;
-        debug!("Token Max Age: {}", max_age);
-        let secret = STANDARD.encode(config.jwt_secret);
-        debug!("Secret: {}", secret);
-
-        let now = Utc::now().timestamp_nanos_opt().unwrap() / 1_000_000_000; // nanosecond -> second
-        let payload = TokenClaims {
-            iat: now,
-            exp: now + max_age * 60, //max_age are minutes
-            sub: user.name.to_string(),
-            role: user.role.to_string(),
-        };
-
-        jsonwebtoken::encode(
-            &Header::default(),
-            &payload,
-            &EncodingKey::from_base64_secret(&secret).unwrap(),
-        )
-        .unwrap()
-    }
-}
 
 #[derive(Debug, Deserialize)]
 pub struct UserSchema {
