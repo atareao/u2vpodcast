@@ -4,6 +4,7 @@ use tracing::{info, debug};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config{
+    pub production: bool,
     pub title: String,
     pub url: String,
     pub port: u16,
