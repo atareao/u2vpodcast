@@ -1,4 +1,5 @@
 use tokio::process::Command;
+use std::process::Command as StdCommand;
 use serde::{Serialize, Deserialize};
 use tracing::{
     info,
@@ -74,17 +75,16 @@ impl Ytdlp {
         let python3 = "python3";
         let args = vec!["-m", "pip", "install", "--user", "--upgrade",
             "--break-system-packages", "yt-dlp"];
-        if Command::new(python3)
+        if StdCommand::new(python3)
             .args(&args)
             .spawn()
-            .map_err(|e| Error::new(&e.to_string()))?
+            .map_err(|e| Error::default(&e.to_string()))?
             .wait()
-            .await
-            .map_err(|e| Error::new(&e.to_string()))?
+            .map_err(|e| Error::default(&e.to_string()))?
             .success(){
             Ok(())
         }else{
-            Err(Error::new("Can't update yt-dlp"))
+            Err(Error::default("Can't update yt-dlp"))
         }
     }
 }

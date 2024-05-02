@@ -13,11 +13,13 @@ pub enum Role {
 }
 
 impl Role {
+    #[allow(unused)]
     fn iterator() -> Iter<'static, Role>{
         static ROLES: [Role; 2] = [Role::User, Role::Admin];
         ROLES.iter()
     }
 
+    #[allow(unused)]
     pub fn get_roles() -> Vec<String>{
         let mut roles = Vec::new();
         for role in Role::iterator(){

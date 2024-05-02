@@ -1,4 +1,5 @@
 use actix_web::http::StatusCode;
+use serde_json::Value;
 use serde::{
     Serialize,
     Deserialize
@@ -178,6 +179,7 @@ impl Channel{
         .map_err(|e| e.into())
     }
 
+    #[allow(unused)]
     pub async fn number_of_channels(pool: &SqlitePool) -> i64 {
         let sql = "SELECT count(*) FROM channels";
         match query(sql)
@@ -227,5 +229,11 @@ impl Channel{
                 Utc::now()
             }
         }
+    }
+}
+
+impl Into<Value> for Channel {
+    fn into(self) -> Value {
+        serde_json::to_value(self).unwrap()
     }
 }

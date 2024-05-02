@@ -11,12 +11,9 @@ mod feed;
 use actix_web::web;
 use tracing::info;
 
-use super::{
-    models::{
-        CustomResponse,
-        Credentials,
-        AppState,
-    }
+use super::models::{
+    Credentials,
+    AppState,
 };
 use feed::web_feed;
 

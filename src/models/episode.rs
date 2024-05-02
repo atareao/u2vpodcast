@@ -1,3 +1,4 @@
+use serde_json::Value;
 use super::Error;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -209,5 +210,11 @@ impl Episode {
             self.id = saved.id;
             Ok(saved)
         }
+    }
+}
+
+impl Into<Value> for Episode {
+    fn into(self) -> Value {
+        serde_json::to_value(self).unwrap()
     }
 }

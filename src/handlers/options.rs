@@ -1,13 +1,11 @@
+use actix_session::Session;
 use serde::{Serialize, Deserialize};
 use actix_web::{
     Responder,
     web::{
-        self,
         Data,
         Json,
-        ServiceConfig,
     },
-    http::StatusCode,
     post,
     get,
 };
@@ -22,19 +20,11 @@ use super::{
     super::{
         utils::worker::do_the_work,
         models::{
+            CResponse,
             Param,
-            CustomResponse
         },
     },
 };
-
-pub fn api_options(cfg: &mut ServiceConfig){
-    cfg.service(
-        web::scope("options")
-            .service(post_options)
-            .service(update)
-    );
-}
 
 #[derive(Serialize, Deserialize)]
 struct KeyValue{
@@ -45,14 +35,11 @@ struct KeyValue{
 #[get("update/")]
 async fn update(
     data: Data<AppState>,
+    session: Session,
 ) -> impl Responder {
     info!("update");
-    match do_the_work(&data.pool, false).await{
-        Ok(()) => Ok(Json(CustomResponse::new(
-            StatusCode::OK,
-            "Ok",
-            ""
-        ))),
+    match do_the_work(&data.pool).await{
+        Ok(()) => Ok(CResponse::ok(session, "")),
         Err(e) => Err(e),
     }
 }
@@ -60,6 +47,7 @@ async fn update(
 #[post("/")]
 async fn post_options(
     data: Data<AppState>,
+    session: Session,
     pairs: Json<Vec<KeyValue>>,
 ) -> impl Responder {
     info!("post_options");
@@ -84,10 +72,5 @@ async fn post_options(
             }
         }
     }
-    // TODO: update AppState => Mutex ???
-    Json(CustomResponse::new(
-        StatusCode::OK,
-        "Ok",
-        response_pairs,
-    ))
+    CResponse::ok(session, response_pairs)
 }

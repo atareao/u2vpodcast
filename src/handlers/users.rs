@@ -1,3 +1,4 @@
+use actix_session::Session;
 use serde::Deserialize;
 use actix_web::{
     Responder,
@@ -8,7 +9,6 @@ use actix_web::{
         Json,
         ServiceConfig, self,
     },
-    http::StatusCode,
     get,
     post,
     delete,
@@ -16,18 +16,19 @@ use actix_web::{
 use tracing::{
     info,
     error,
-    debug,
 };
+
+use crate::models::CResponse;
 
 use super::{
     AppState,
     super::models::{
-        CustomResponse,
         User,
         NewUser,
     },
 };
 
+#[allow(unused)]
 pub fn api_users(cfg: &mut ServiceConfig){
     cfg.service(
         web::scope("users/")
@@ -69,27 +70,28 @@ async fn read_with_pagination(
 #[post("/")]
 async fn create(
     data: Data<AppState>,
+    session: Session,
     user: Json<NewUser>,
 ) -> impl Responder {
     info!("create");
     match User::new(&data.pool, user.into_inner()).await{
-            Ok(user) => Ok(Json(CustomResponse::new(
-            StatusCode::OK,
-            "Ok",
-            user,
-        ))),
-            Err(e) => {
-                error!("Error: {e}");
-                Err(e)
-            },
-        }
+        Ok(user) => Ok(CResponse::ok(session, user)),
+        Err(e) => {
+            error!("Error: {e}");
+            Err(e)
+        },
+    }
 }
 
 #[get("/{user_id}/")]
-async fn read( data: Data<AppState>, path: Path<Info>,) -> impl Responder{
+async fn read(
+    data: Data<AppState>,
+    session: Session,
+    path: Path<Info>
+) -> impl Responder{
     info!("read");
     match User::read(&data.pool, path.user_id).await{
-        Ok(user) => Ok(Json(user)),
+        Ok(user) => Ok(CResponse::ok(session, user)),
         Err(e) => {
             error!("Error: {e}");
             Err(e)
@@ -98,17 +100,14 @@ async fn read( data: Data<AppState>, path: Path<Info>,) -> impl Responder{
 }
 
 #[delete("/")]
-async fn delete( data: Data<AppState>, path: Query<Info>,) -> impl Responder{
+async fn delete(
+    data: Data<AppState>,
+    session: Session,
+    path: Query<Info>
+) -> impl Responder{
     info!("delete");
     match User::delete(&data.pool, path.user_id).await{
-        Ok(channel) => {
-            debug!("{:?}", channel);
-            Ok(Json(CustomResponse::new(
-                StatusCode::OK,
-                "Ok",
-                channel,
-            )))
-        },
+        Ok(user) => Ok(CResponse::ok(session, user)),
         Err(e) => {
             error!("Error: {e}");
             Err(e)

@@ -19,7 +19,10 @@ use chrono::{
 pub use error::Error;
 pub use config::Config;
 pub use param::Param;
-pub use response::CustomResponse;
+pub use response::{
+    CResponse,
+    CustomResponse
+};
 pub use ytdlp::{
     Ytdlp,
     YtVideo
@@ -37,7 +40,6 @@ pub use user::{
     NewUser,
     Credentials,
 };
-pub use role::Role;
 
 pub fn default_datetime() -> DateTime<Utc> {
     Utc::now()

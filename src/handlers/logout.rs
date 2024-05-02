@@ -1,18 +1,10 @@
 use actix_web::{
-    cookie::{
-        Cookie,
-        SameSite
-    },
-    web::Json,
     http::StatusCode,
-    HttpResponse,
     Responder,
-    HttpRequest,
-    http::header,
 };
 use actix_session::Session;
 use tracing::{info, error};
-use crate::models::CustomResponse;
+use crate::models::CResponse;
 
 use super::super::utils::USER_ID_KEY;
 
@@ -21,19 +13,11 @@ pub async fn get_logout(session: Session) -> impl Responder{
     match session_user_id(&session).await{
         Ok(_) => {
             info!("Logout");
-            Json(CustomResponse::new(
-                StatusCode::OK,
-                "You have succesfully logged out",
-                Some(""),
-            ))
+            CResponse::ok(session, "")
         },
         Err(e) => {
             error!("Error: {}", e);
-            Json(CustomResponse::new(
-                StatusCode::BAD_REQUEST,
-                "We currently have some issues. Kindly try again and ensure you are logged in",
-                Some(""),
-            ))
+            CResponse::ko(StatusCode::BAD_REQUEST, session)
         }
     }
 }

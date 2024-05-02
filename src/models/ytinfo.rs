@@ -25,9 +25,9 @@ impl YTInfo{
 
         let html: String = ureq::get(url)
             .call()
-            .map_err(|e| Error::new(&e.to_string()))?
+            .map_err(|e| Error::default(&e.to_string()))?
             .into_string()
-            .map_err(|e| Error::new(&e.to_string()))?;
+            .map_err(|e| Error::default(&e.to_string()))?;
 
         let title = get_metadata(&html, "og:title");
         let description = get_metadata(&html, "og:description");

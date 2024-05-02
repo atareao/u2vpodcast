@@ -7,7 +7,7 @@ use sqlx::{
     migrate::{
         Migrator,
         MigrateDatabase
-    }, SqlitePool,
+    }
 };
 
 use tokio::{
@@ -38,7 +38,7 @@ use models::{
     Config,
     AppState,
     User,
-    Param,
+    Ytdlp,
 };
 use utils::worker::do_the_work;
 use actix_files as af;
@@ -148,7 +148,13 @@ async fn main() -> Result<(), Error> {
     spawn(async move{
         //let auth = HttpAuthentication::bearer(validator);
         loop {
-            match do_the_work(&pool2, true).await{
+            info!("**** Start updating yt-dlp ****");
+            match Ytdlp::auto_update().await{
+                Ok(()) => {},
+                Err(e) => error!("{}", e),
+            }
+            info!("**** Finish updating yt-dlp ****");
+            match do_the_work(&pool2).await{
                 Ok(_) => {},
                 Err(e) => {
                     error!("Error doing the work: {e}");

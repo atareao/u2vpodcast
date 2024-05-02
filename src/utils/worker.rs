@@ -25,17 +25,10 @@ use super::super::models::{
 static FOLDER: &str = "/app/audios";
 static YTDLP: &str = "/app/.local/bin/yt-dlp";
 
-pub async fn do_the_work(pool: &SqlitePool, update: bool) -> Result<(), Error>{
-    if update {
-        info!("**** Start updating yt-dlp ****");
-        match Ytdlp::auto_update().await{
-            Ok(()) => {},
-            Err(e) => error!("{}", e),
-        }
-        info!("**** Finish updating yt-dlp ****");
-    }
+pub async fn do_the_work(pool: &SqlitePool) -> Result<(), Error>{
     let ytdlp = Ytdlp::new(YTDLP, "cookies-cp.txt");
-    for channel in Channel::read_all(pool).await?.as_slice(){
+    let channels = Channel::read_all(pool).await?;
+    for channel in channels.as_slice(){
         info!("Processing: {}", channel.url);
         match process_channel(pool, channel, &ytdlp).await{
             Ok(_) => {},
@@ -51,7 +44,7 @@ pub async fn do_the_work(pool: &SqlitePool, update: bool) -> Result<(), Error>{
 
 async fn clean_channel(pool: &SqlitePool, channel: &Channel) -> Result<(), Error>{
     let max = usize::try_from(channel.max)
-        .map_err(|e| Error::new(&e.to_string()))?;
+        .map_err(|e| Error::default(&e.to_string()))?;
     let episodes = Episode::read_episodes_for_channel(pool, channel.id).await?;
     for (index, episode) in episodes.iter().enumerate(){
         if index >= max { // remove
@@ -134,7 +127,7 @@ async fn process_episode(
     );
 
     if !ytdlp.download(&ytvideo.id, &filename).await?.success(){
-        Err(Error::new(&format!("Cant download {filename}")))?
+        Err(Error::default(&format!("Cant download {filename}")))?
     }
     let title = &ytvideo.title;
     let description = &ytvideo.description;

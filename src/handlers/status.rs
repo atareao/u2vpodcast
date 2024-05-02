@@ -1,10 +1,8 @@
+use actix_session::Session;
 use serde::Serialize;
-use actix_web::{
-    Responder,
-    Result,
-    web, http::StatusCode,
-};
-use super::CustomResponse;
+use actix_web::Responder;
+use crate::models::CResponse;
+
 
 #[derive(Serialize)]
 struct Response {
@@ -12,8 +10,9 @@ struct Response {
     message: String,
 }
 
-pub async fn get_status() -> Result<impl Responder>{
-    let response: CustomResponse<Option<String>> = CustomResponse::new(StatusCode::OK, "Up and running", None);
-    Ok(web::Json(response))
+pub async fn get_status(
+    session: Session
+) -> impl Responder{
+    CResponse::ok(session, "Up and running")
 }
 

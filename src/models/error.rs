@@ -21,8 +21,6 @@ use actix_session::Session;
 
 use super::CustomResponse;
 
-type OptionSession = Session;
-
 pub struct Error{
     details: String,
     session: Option<Session>,
@@ -51,6 +49,9 @@ impl Serialize for Error {
 }
 
 impl Error{
+    pub fn set_session(&mut self, session: Session) {
+        self.session = Some(session);
+    }
     pub fn default(msg: &str) -> Self{
         Error{
             details: msg.to_string(),
@@ -58,19 +59,19 @@ impl Error{
             session: None,
         }
     }
-    pub fn new(msg: &str, session: Session) -> Self{
+    pub fn new(msg: &str, session: &Session) -> Self{
         Error{
             details: msg.to_string(),
             status_code: None,
-            session: Some(session),
+            session: Some(session.clone()),
         }
     }
 
-    pub fn new_with_status_code(msg: &str, status_code: StatusCode, session: Session) -> Self{
+    pub fn new_with_status_code(msg: &str, status_code: StatusCode) -> Self{
         Error{
             details: msg.to_string(),
             status_code: Some(status_code),
-            session: Some(session),
+            session: None,
         }
     }
 
@@ -137,7 +138,7 @@ impl ResponseError for Error {
         let response: CustomResponse<Option<String>> = CustomResponse::new(
             self.status_code(),
             &self.details,
-            self.session.unwrap(),
+            self.session.clone().unwrap(),
             None
         );
         HttpResponse::build(self.status_code())

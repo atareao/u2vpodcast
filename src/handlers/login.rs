@@ -1,4 +1,3 @@
-use serde_json::{json, Value};
 use actix_web::{
     Responder,
     http::StatusCode,
@@ -10,18 +9,18 @@ use actix_web::{
 use actix_session::Session;
 use tracing::{info, error};
 
+use crate::models::CResponse;
+
 use super::{
     Credentials,
     AppState,
     super::{
-        models::{
-            User,
-            CustomResponse,
-        },
+        models::User,
         utils::{
             USER_ID_KEY,
             USER_NAME_KEY,
             USER_ROLE_KEY,
+            USER_ACTIVE_KEY,
         }
     }
 };
@@ -31,18 +30,7 @@ pub async fn get_session(
 ) -> impl Responder{
     info!("get_session");
     info!("Session status: {:?}", session.status());
-    let id = session.get(USER_ID_KEY).unwrap().unwrap_or(0);
-    let name = session.get(USER_NAME_KEY).unwrap().unwrap_or("".to_string());
-    let role = session.get(USER_ROLE_KEY).unwrap().unwrap_or("".to_string());
-                Json(CustomResponse::new(
-                    StatusCode::OK,
-                    "Authorized",
-                    Some(json!({
-                        "id": id,
-                        "name": name,
-                        "role": role,
-                    }))),
-                )
+    CResponse::ok(session, "")
 }
 
 pub async fn post_login(
@@ -62,32 +50,14 @@ pub async fn post_login(
                     .expect("`user_name` cannot be inserted into session");
                 session.insert(USER_ROLE_KEY, &user.role)
                     .expect("`user_role` cannot be inserted into session");
-                Json(CustomResponse::new(
-                    StatusCode::OK,
-                    "Authorized",
-                    Some(json!({
-                        "id": user.id,
-                        "name": user.name,
-                        "role": user.role,
-                        "active": user.active,
-                    }))),
-                )
+                session.insert(USER_ACTIVE_KEY, user.active)
+                    .expect("`user_active` cannot be inserted into session");
+                CResponse::ok(session, "")
             }else{
-                let response: CustomResponse<Option<Value>> = CustomResponse::new(
-                        StatusCode::UNAUTHORIZED,
-                        "Authorized",
-                        None);
                 error!("Unauthorized");
-                Json(response)
+                CResponse::ko(StatusCode::UNAUTHORIZED, session)
             }
         },
-        Err(e) => {
-                let response: CustomResponse<Option<Value>> = CustomResponse::new(
-                        StatusCode::UNAUTHORIZED,
-                        &format!("Authorized: {e}"),
-                        None);
-                error!("Not found");
-                Json(response)
-        }
+        Err(_) => CResponse::ko(StatusCode::UNAUTHORIZED, session)
     }
 }

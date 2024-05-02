@@ -7,7 +7,6 @@ use actix_web::{
         Query,
         Json,
     },
-    http::StatusCode,
     get,
     put,
     post,
@@ -23,7 +22,7 @@ use tracing::{
 use super::{
     AppState,
     super::models::{
-        CustomResponse,
+        CResponse,
         Channel,
         NewChannel,
         UpdateChannel,
@@ -53,13 +52,12 @@ async fn read_with_pagination(
     let page = page.page.unwrap_or(1);
     let per_page = data.config.per_page;
     match Channel::read_with_pagination(&data.pool, page, per_page).await{
-        Ok(channel) => Ok(Json(CustomResponse::new(
-            StatusCode::OK,
-            "Ok",
-            session,
-            channel,
-        ))),
-        Err(e) => Err(e),
+        Ok(channels) => Ok(CResponse::ok(session, channels)),
+        Err(mut e) => {
+            error!("Error: {e}");
+            e.set_session(session);
+            Err(e)
+        },
     }
 }
 
@@ -71,13 +69,12 @@ async fn create(
 ) -> impl Responder {
     info!("create");
     match Channel::new(&data.pool, channel.into_inner()).await{
-            Ok(channel) => Ok(Json(CustomResponse::new(
-            StatusCode::OK,
-            "Ok",
-            session,
-            channel,
-        ))),
-            Err(e) => Err(e),
+            Ok(channel) => Ok(CResponse::ok(session, channel)),
+            Err(mut e) => {
+                error!("Error: {e}");
+                e.set_session(session);
+                Err(e)
+            },
         }
 }
 
@@ -89,8 +86,12 @@ async fn update(
 ) -> impl Responder {
     info!("update");
     match Channel::update(&data.pool, &channel.into_inner()).await{
-            Ok(channel) => Ok(CustomResponse::ok(session, channel)),
-            Err(e) => Err(e),
+            Ok(channel) => Ok(CResponse::ok(session, channel)),
+            Err(mut e) => {
+                error!("Error: {e}");
+                e.set_session(session);
+                Err(e)
+            },
         }
 }
 
@@ -103,8 +104,12 @@ async fn read(
 ) -> impl Responder{
     info!("read");
     match Channel::read(&data.pool, path.channel_id).await{
-            Ok(channel) => Ok(CustomResponse::ok(session, channel)),
-            Err(e) => Err(e),
+            Ok(channel) => Ok(CResponse::ok(session, channel)),
+            Err(mut e) => {
+                error!("Error: {e}");
+                e.set_session(session);
+                Err(e)
+            },
         }
 }
 #[delete("/channels/")]
@@ -122,8 +127,12 @@ async fn delete(
                     Ok(_) => debug!("Removed directorio {}/{}", FOLDER, &channel.id),
                     Err(e) => error!("Can't remove directory {}/{}: {}", FOLDER, &channel.id, e),
                 };
-                Ok(CustomResponse::ok(session, channel))
+                Ok(CResponse::ok(session, channel))
         },
-        Err(e) => Err(e),
+        Err(mut e) => {
+            error!("Error: {e}");
+            e.set_session(session);
+            Err(e)
+            },
     }
 }

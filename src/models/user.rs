@@ -11,12 +11,8 @@ use sqlx::{
 use actix_session::Session;
 use actix_web::http::StatusCode;
 use tracing::{
-    info,
     debug,
-};
-use base64::{
-    engine::general_purpose::STANDARD,
-    Engine as _,
+    info,
 };
 
 use crate::utils::token_utils::{verify_password, self};
@@ -25,7 +21,6 @@ use super::{
     Error,
     role::Role,
     default_datetime,
-    config::Config,
     super::utils::{
             USER_ID_KEY,
             USER_NAME_KEY,
@@ -44,18 +39,19 @@ pub struct SessionUser{
 
 
 pub fn from_session(session: Session) -> Result<SessionUser, Error> {
+    info!("from_session");
     let id = session.get(USER_ID_KEY)
-        .map_err(|e| Error::new("Not user_id"))?
-        .ok_or(Error::new("Not user_id"))?;
+        .map_err(|_| Error::new("Not user_id", &session))?
+        .ok_or(Error::new("Not user_id", &session))?;
     let name = session.get(USER_NAME_KEY)
-        .map_err(|e| Error::new("Not user_id"))?
-        .ok_or(Error::new("Not user_id"))?;
+        .map_err(|_| Error::new("Not user_id", &session))?
+        .ok_or(Error::new("Not user_id", &session))?;
     let role = session.get(USER_ROLE_KEY)
-        .map_err(|e| Error::new("Not user_id"))?
-        .ok_or(Error::new("Not user_id"))?;
+        .map_err(|_| Error::new("Not user_id", &session))?
+        .ok_or(Error::new("Not user_id", &session))?;
     let active = session.get(USER_ACTIVE_KEY)
-        .map_err(|e| Error::new("Not user_id"))?
-        .ok_or(Error::new("Not user_id"))?;
+        .map_err(|_| Error::new("Not user_id", &session))?
+        .ok_or(Error::new("Not user_id", &session))?;
     Ok(SessionUser {
         id,
         name,
@@ -142,6 +138,7 @@ impl User{
             role: Role::Admin,
             active: true,
         };
+        debug!("{:?}", new_user);
         Self::new(pool, new_user).await
 
     }
@@ -232,8 +229,6 @@ impl User{
         .map_err(|e| e.into())
     }
 
-
-
     pub async fn get_by_name(pool: &SqlitePool, name: &str) -> Result<User, Error>{
         let sql = "SELECT * FROM users WHERE name = $1";
         query(sql)
@@ -242,10 +237,6 @@ impl User{
             .fetch_one(pool)
             .await
             .map_err(|e| e.into())
-    }
-
-    pub async fn exists(pool: &SqlitePool, name: &str) -> bool{
-        Self::get_by_name(pool, name).await.is_ok()
     }
 
     pub async fn read_with_pagination(
