@@ -17,13 +17,25 @@ use actix_web::{
     http::StatusCode,
     ResponseError,
 };
+use actix_session::Session;
 
 use super::CustomResponse;
 
-#[derive(Debug)]
+type OptionSession = Session;
+
 pub struct Error{
     details: String,
+    session: Option<Session>,
     status_code: Option<StatusCode>,
+}
+
+impl std::fmt::Debug for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result{
+        f.debug_struct("Error")
+            .field("details", &self.details)
+            .field("status_code", &self.status_code)
+            .finish()
+    }
 }
 
 impl Serialize for Error {
@@ -39,17 +51,26 @@ impl Serialize for Error {
 }
 
 impl Error{
-    pub fn new(msg: &str) -> Self{
+    pub fn default(msg: &str) -> Self{
         Error{
             details: msg.to_string(),
             status_code: None,
+            session: None,
+        }
+    }
+    pub fn new(msg: &str, session: Session) -> Self{
+        Error{
+            details: msg.to_string(),
+            status_code: None,
+            session: Some(session),
         }
     }
 
-    pub fn new_with_status_code(msg: &str, status_code: StatusCode) -> Self{
+    pub fn new_with_status_code(msg: &str, status_code: StatusCode, session: Session) -> Self{
         Error{
             details: msg.to_string(),
             status_code: Some(status_code),
+            session: Some(session),
         }
     }
 
@@ -61,20 +82,6 @@ impl Error{
 
     }
 }
-
-impl ResponseError for Error{
-    fn error_response(&self) -> HttpResponse {
-        let response: CustomResponse<Option<String>> = CustomResponse::new(
-            self.status_code(),
-            &self.details,
-            None
-        );
-        HttpResponse::build(self.status_code())
-            .json(response)
-    }
-}
-
-
 
 impl Display for Error{
     fn fmt(&self, f: &mut Formatter) -> Result{
@@ -91,36 +98,49 @@ impl StdError for Error {
 
 impl From<SQLxError> for Error{
     fn from(error: SQLxError) -> Self{
-        Error::new(&error.to_string())
+        Error::default(&error.to_string())
     }
 }
 
 impl From<IoError> for Error{
     fn from(error: IoError) -> Self{
-        Error::new(&error.to_string())
+        Error::default(&error.to_string())
     }
 }
 
 impl From<ParseIntError> for Error{
     fn from(error: ParseIntError) -> Self{
-        Error::new(&error.to_string())
+        Error::default(&error.to_string())
     }
 }
 
 impl From<Utf8Error> for Error{
     fn from(error: Utf8Error) -> Self{
-        Error::new(&error.to_string())
+        Error::default(&error.to_string())
     }
 }
 
 impl From<MigrateError> for Error{
     fn from(error: MigrateError) -> Self{
-        Error::new(&error.to_string())
+        Error::default(&error.to_string())
     }
 }
 
 impl From<ActixError> for Error{
     fn from(error: ActixError) -> Self{
-        Error::new(&error.to_string())
+        Error::default(&error.to_string())
+    }
+}
+
+impl ResponseError for Error {
+     fn error_response(&self) -> HttpResponse {
+        let response: CustomResponse<Option<String>> = CustomResponse::new(
+            self.status_code(),
+            &self.details,
+            self.session.unwrap(),
+            None
+        );
+        HttpResponse::build(self.status_code())
+            .json(response)
     }
 }

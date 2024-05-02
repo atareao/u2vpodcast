@@ -1,5 +1,9 @@
-use actix_web::http::StatusCode;
-use serde::{Deserialize, Serialize};
+use actix_web::{
+    http::StatusCode,
+    web::Json,
+    HttpResponse,
+};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use actix_session::Session;
 
 use super::user::SessionUser;
@@ -26,5 +30,23 @@ impl<T> CustomResponse<T> {
             user,
             data,
         }
+    }
+    pub fn ok(session: Session, data: T) -> Json<CustomResponse<T>>{
+        let user = from_session(session).ok();
+        Json(Self{
+            status: true,
+            status_code: 200,
+            message: "Ok".to_string(),
+            user,
+            data,
+        })
+    }
+}
+
+impl<T> Into<HttpResponse> for CustomResponse<T>
+where T: DeserializeOwned + Serialize{
+    fn into(self) -> HttpResponse {
+        HttpResponse::build(StatusCode::from_u16(self.status_code).unwrap())
+            .json(self)
     }
 }
