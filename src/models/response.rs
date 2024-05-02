@@ -29,6 +29,18 @@ impl CResponse {
             .json(response)
     }
 
+    pub fn purge() -> HttpResponse{
+        let response : CustomResponse<String> = CustomResponse {
+            status: true,
+            status_code: 200,
+            message: "Ok".to_string(),
+            user: None,
+            data: None,
+        };
+        HttpResponse::build(StatusCode::OK)
+            .json(response)
+    }
+
     pub fn ko(status_code: StatusCode, session: Session) -> HttpResponse{
         let user = from_session(session).ok();
         let response = CustomResponse::<Value>{

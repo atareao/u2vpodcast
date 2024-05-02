@@ -13,7 +13,9 @@ pub async fn get_logout(session: Session) -> impl Responder{
     match session_user_id(&session).await{
         Ok(_) => {
             info!("Logout");
-            CResponse::ok(session, "")
+            session.clear();
+            session.purge();
+            CResponse::purge()
         },
         Err(e) => {
             error!("Error: {}", e);
