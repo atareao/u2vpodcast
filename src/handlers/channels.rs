@@ -89,12 +89,7 @@ async fn update(
 ) -> impl Responder {
     info!("update");
     match Channel::update(&data.pool, &channel.into_inner()).await{
-            Ok(channel) => Ok(Json(CustomResponse::new(
-            StatusCode::OK,
-            "Ok",
-            session,
-            channel,
-        ))),
+            Ok(channel) => Ok(CustomResponse::ok(session, channel)),
             Err(e) => Err(e),
         }
 }
@@ -108,12 +103,7 @@ async fn read(
 ) -> impl Responder{
     info!("read");
     match Channel::read(&data.pool, path.channel_id).await{
-            Ok(channel) => Ok(Json(CustomResponse::new(
-            StatusCode::OK,
-            "Ok",
-            session,
-            channel,
-        ))),
+            Ok(channel) => Ok(CustomResponse::ok(session, channel)),
             Err(e) => Err(e),
         }
 }
@@ -132,12 +122,7 @@ async fn delete(
                     Ok(_) => debug!("Removed directorio {}/{}", FOLDER, &channel.id),
                     Err(e) => error!("Can't remove directory {}/{}: {}", FOLDER, &channel.id, e),
                 };
-                Ok(Json(CustomResponse::new(
-                    StatusCode::OK,
-                    "Ok",
-                    session,
-                    channel,
-                )))
+                Ok(CustomResponse::ok(session, channel))
         },
         Err(e) => Err(e),
     }
