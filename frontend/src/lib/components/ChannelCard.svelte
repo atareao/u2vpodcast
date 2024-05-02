@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { type Channel, } from '$lib/channel';
+    import { type Channel, } from '$lib/utils/types';
     export let channel: Channel;
 </script>
 

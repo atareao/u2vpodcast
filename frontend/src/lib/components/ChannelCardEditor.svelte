@@ -3,13 +3,14 @@
 	import type { PageData, ActionData } from './$types';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 
-	let isFormOpen: boolean;
-	let showConfirmDialog: boolean;
-	export let data: PageData;
-	export let form: ActionData;
 	import { GradientButton, Modal, Button, Label, Input, Toggle } from 'flowbite-svelte';
 	import { EditSolid, TrashBinSolid } from 'flowbite-svelte-icons';
-	import { type Channel } from '$lib/channel';
+	import type { Channel } from '$lib/utils/types';
+
+	export let data: PageData;
+	export let form: ActionData;
+	let isFormOpen: boolean;
+	let showConfirmDialog: boolean;
 	let nodeRef: any;
 	export let channel: Channel;
 
