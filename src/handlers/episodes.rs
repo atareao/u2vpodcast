@@ -2,12 +2,14 @@ use serde::Deserialize;
 use actix_web::{
     Responder,
     get,
+    http::StatusCode,
     web::{
         Path,
         Data,
         Query, Json,
     },
 };
+use actix_session::Session;
 use tracing::{
     info,
     error,
@@ -16,7 +18,10 @@ use tracing::{
 
 use super::{
     AppState,
-    super::models::Episode,
+    super::models::{
+        Episode,
+        CustomResponse,
+    },
 };
 
 #[derive(Deserialize)]
@@ -32,6 +37,7 @@ struct Info{
 #[get("/channels/{channel_id}/episodes/")]
 async fn read_with_pagination(
     data: Data<AppState>,
+    session: Session,
     params: Query<Page>,
     path: Path<Info>
 ) -> impl Responder{
@@ -41,10 +47,12 @@ async fn read_with_pagination(
     let channel_id = path.channel_id;
     let page = params.page.unwrap_or(1);
     match Episode::read_with_pagination(&data.pool, channel_id, page, per_page).await{
-        Ok(episodes) => {
-            debug!("{:?}", episodes);
-            Ok(Json(episodes))
-        },
+        Ok(episodes) => Ok(Json(CustomResponse::new(
+            StatusCode::OK,
+            "Ok",
+            session,
+            episodes,
+        ))),
         Err(e) => {
             error!("{e}");
             Err(e)
