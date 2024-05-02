@@ -8,6 +8,7 @@ use sqlx::{
     query,
     Row,
 };
+use actix_session::Session;
 use actix_web::http::StatusCode;
 use tracing::{
     info,
@@ -25,7 +26,44 @@ use super::{
     role::Role,
     default_datetime,
     config::Config,
+    super::utils::{
+            USER_ID_KEY,
+            USER_NAME_KEY,
+            USER_ROLE_KEY,
+            USER_ACTIVE_KEY,
+    }
 };
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SessionUser{
+    pub id: i64,
+    pub name: String,
+    pub role: Role,
+    pub active: bool,
+}
+
+
+pub fn from_session(session: Session) -> Result<SessionUser, Error> {
+    let id = session.get(USER_ID_KEY)
+        .map_err(|e| Error::new("Not user_id"))?
+        .ok_or(Error::new("Not user_id"))?;
+    let name = session.get(USER_NAME_KEY)
+        .map_err(|e| Error::new("Not user_id"))?
+        .ok_or(Error::new("Not user_id"))?;
+    let role = session.get(USER_ROLE_KEY)
+        .map_err(|e| Error::new("Not user_id"))?
+        .ok_or(Error::new("Not user_id"))?;
+    let active = session.get(USER_ACTIVE_KEY)
+        .map_err(|e| Error::new("Not user_id"))?
+        .ok_or(Error::new("Not user_id"))?;
+    Ok(SessionUser {
+        id,
+        name,
+        role,
+        active,
+    })
+}
+
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct User{
@@ -93,10 +131,7 @@ impl User{
 
     pub async fn check_password(&self, password: &str) -> bool{
         info!("check_password");
-        match verify_password(password, &self.hashed_password).await{
-            Ok(_) => true,
-            Err(_) => false
-        }
+        verify_password(password, &self.hashed_password).await.is_ok()
     }
 
     pub async fn default(pool: &SqlitePool, name: &str,

@@ -8,6 +8,7 @@ services:
       - audios:/app/audios
       - db:/app/db
       - ./cookies.txt:/app/cookies.txt:ro
+      - ./config.yml:/app/config.yml:ro
     ports:
       - 6996:6996
     environment:

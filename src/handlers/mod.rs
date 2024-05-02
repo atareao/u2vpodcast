@@ -44,6 +44,9 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
                                     .service(
                                         web::resource("/login/")
                                             .route(web::post().to(login::post_login)))
+                                    .service(
+                                        web::resource("/session/")
+                                            .route(web::get().to(login::get_session)))
                                     .service(channels::read)
                                     .service(channels::read_with_pagination)
                                     .service(episodes::read_with_pagination)

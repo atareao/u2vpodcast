@@ -13,6 +13,7 @@ use actix_web::{
     post,
     delete,
 };
+use actix_session::Session;
 use tracing::{
     info,
     debug,
@@ -45,13 +46,19 @@ struct Info{
 #[get("/channels/")]
 async fn read_with_pagination(
     data: Data<AppState>,
+    session: Session,
     page: Query<Page>,
 ) -> impl Responder{
     info!("read_all");
     let page = page.page.unwrap_or(1);
     let per_page = data.config.per_page;
     match Channel::read_with_pagination(&data.pool, page, per_page).await{
-        Ok(channel) => Ok(Json(channel)),
+        Ok(channel) => Ok(Json(CustomResponse::new(
+            StatusCode::OK,
+            "Ok",
+            session,
+            channel,
+        ))),
         Err(e) => Err(e),
     }
 }
@@ -59,6 +66,7 @@ async fn read_with_pagination(
 #[post("/channels/")]
 async fn create(
     data: Data<AppState>,
+    session: Session,
     channel: Json<NewChannel>,
 ) -> impl Responder {
     info!("create");
@@ -66,6 +74,7 @@ async fn create(
             Ok(channel) => Ok(Json(CustomResponse::new(
             StatusCode::OK,
             "Ok",
+            session,
             channel,
         ))),
             Err(e) => Err(e),
@@ -75,6 +84,7 @@ async fn create(
 #[put("/channels/")]
 async fn update(
     data: Data<AppState>,
+    session: Session,
     channel: Json<UpdateChannel>,
 ) -> impl Responder {
     info!("update");
@@ -82,6 +92,7 @@ async fn update(
             Ok(channel) => Ok(Json(CustomResponse::new(
             StatusCode::OK,
             "Ok",
+            session,
             channel,
         ))),
             Err(e) => Err(e),
@@ -90,15 +101,28 @@ async fn update(
 
 
 #[get("/channels/{channel_id}/")]
-async fn read( data: Data<AppState>, path: Path<Info>,) -> impl Responder{
+async fn read(
+    data: Data<AppState>,
+    session: Session,
+    path: Path<Info>,
+) -> impl Responder{
     info!("read");
     match Channel::read(&data.pool, path.channel_id).await{
-        Ok(channel) => Ok(Json(channel)),
-        Err(e) => Err(e),
-    }
+            Ok(channel) => Ok(Json(CustomResponse::new(
+            StatusCode::OK,
+            "Ok",
+            session,
+            channel,
+        ))),
+            Err(e) => Err(e),
+        }
 }
 #[delete("/channels/")]
-async fn delete( data: Data<AppState>, path: Query<Info>,) -> impl Responder{
+async fn delete(
+    data: Data<AppState>,
+    session: Session,
+    path: Query<Info>,
+) -> impl Responder{
     info!("delete");
     match Channel::delete(&data.pool, path.channel_id).await{
             Ok(channel) => {
@@ -111,6 +135,7 @@ async fn delete( data: Data<AppState>, path: Query<Info>,) -> impl Responder{
                 Ok(Json(CustomResponse::new(
                     StatusCode::OK,
                     "Ok",
+                    session,
                     channel,
                 )))
         },

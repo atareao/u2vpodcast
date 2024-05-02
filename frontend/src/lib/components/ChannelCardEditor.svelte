@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { base_endpoint } from '$lib/global';
 	import type { PageData, ActionData } from './$types';
-    import ConfirmDialog from './ConfirmDialog.svelte';
+	import ConfirmDialog from './ConfirmDialog.svelte';
 
 	let isFormOpen: boolean;
-    let showConfirmDialog: boolean;
+	let showConfirmDialog: boolean;
 	export let data: PageData;
 	export let form: ActionData;
 	import { GradientButton, Modal, Button, Label, Input, Toggle } from 'flowbite-svelte';
@@ -15,10 +15,10 @@
 
 	const endPoint = `${base_endpoint}/api/1.0/channels/`;
 	function deleteChannel() {
-        console.log("deleteChannel");
+		console.log('deleteChannel');
 		nodeRef.parentNode.removeChild(nodeRef);
-        console.log(nodeRef);
-        console.log("deleted");
+		console.log(nodeRef);
+		console.log('deleted');
 	}
 	function editChannel() {
 		isFormOpen = true;
@@ -82,7 +82,7 @@
 			<GradientButton class="mb-2" color="cyanToBlue" on:click={editChannel} pill>
 				<EditSolid class="w-6 h-6" />
 			</GradientButton>
-			<GradientButton color="pinkToOrange" on:click={()=>showConfirmDialog=true} pill>
+			<GradientButton color="pinkToOrange" on:click={() => (showConfirmDialog = true)} pill>
 				<TrashBinSolid class="w-6 h-6" />
 			</GradientButton>
 		</div>
@@ -130,10 +130,11 @@
 </Modal>
 
 <ConfirmDialog
-    bind:open={showConfirmDialog}
-    title="Warning"
-    message="Are you sure?"
-    okFunction={deleteChannel}
-    on:close={() => console.log('closed')}>
+	bind:open={showConfirmDialog}
+	title="Warning"
+	message="Are you sure?"
+	okFunction={deleteChannel}
+	on:close={() => console.log('closed')}
+>
 	Are you sure?
 </ConfirmDialog>

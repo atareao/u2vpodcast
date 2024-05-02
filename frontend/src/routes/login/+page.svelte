@@ -1,77 +1,128 @@
 <script lang="ts">
-	import { applyAction, enhance, type SubmitFunction } from '$app/forms';
-	import { loading } from '$lib/stores/loading.store';
-	import { notification } from '$lib/stores/notification.store';
-	import { happyEmoji } from '$lib/utils/constant';
-	import type { ActionData } from './$types';
-	import { receive, send } from '$lib/utils/helpers/animate.crossfade';
-	import { page } from '$app/stores';
+    import { goto } from '$app/navigation';
+    import { page } from '$app/stores';
+    import { loading } from '$lib/stores/loading.store';
+    import { notification } from '$lib/stores/notification.store';
+    import { isAuthenticated, loggedInUser } from '$lib/stores/user.store';
+    import { BASE_API_URI, happyEmoji } from '$lib/utils/constant';
+    import type { CustomError, User } from '$lib/utils/types';
+    import { flip } from 'svelte/animate';
+    import { scale } from 'svelte/transition';
+    import { base_endpoint } from '$lib/global';
+    let username = '',
+        password = '',
+        errors: Array<CustomError> = [];
+    const handleLogin = async () => {
+        console.log("handleLogin");
+        loading.setLoading(true, 'Please wait while we log you in...');
+        try {
+            const response = await fetch(`${base_endpoint}/api/1.0/login/`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password,
+                })
 
-	export let form: ActionData;
-
-	const handleLogin: SubmitFunction = async () => {
-		loading.setLoading(true, 'Please wait while we log you in...');
-
-		return async ({ result }) => {
-			loading.setLoading(false);
-			if (result.type === 'success' || result.type === 'redirect') {
-				$notification = {
-					message: `Login successfull ${happyEmoji}...`,
-					colorName: `emerald`
-				};
-			}
-			await applyAction(result);
-		};
-	};
-
-	let message = '';
-
-	if ($page.url.search) {
-		message = $page.url.search.split('=')[1].replaceAll('%20', ' ');
-	}
-
-	if (message) {
-		$notification = {
-			message: `${message} ${happyEmoji}...`,
-			colorName: 'emerald'
-		};
-	}
+            });
+            const content = await response.json();
+            loading.setLoading(false);
+            console.log(content);
+            if (content.status){
+                const response: User = content.data as User;
+                $loggedInUser = {
+                    id: response.id,
+                    name: response.name,
+                    role: response.role,
+                    active: response.active,
+                };
+                $isAuthenticated = true;
+                $notification = {
+                    message: `Login successfull ${happyEmoji}...`,
+                    colorName: `green`
+                };
+                console.log($page.url);
+                console.log($page.url.hash);
+                let nextPage = $page.url.search.split('=')[1];
+                if ($page.url.hash) {
+                    nextPage = `${nextPage}${$page.url.hash}`;
+                }
+                await goto(nextPage || '/', { noScroll: true });
+            }else{
+                $notification = {
+                    message: `Erro successfull ${happyEmoji}...`,
+                    colorName: `red`
+                };
+            }
+        } catch(error) {
+            console.log(error);
+            loading.setLoading(false);
+            $notification = {
+                message: `Erro successfull ${happyEmoji}...`,
+                colorName: `red`
+            };
+            errors = error;
+        }
+    };
 </script>
 
 <svelte:head>
-	<title>Auth - Login | Auth Systems with SvelteKit</title>
+    <title>Auth - Login | Actix Web & SvelteKit</title>
 </svelte:head>
 
-<form class="form" method="POST" action="?/login" use:enhance={handleLogin}>
-	<h1 style="text-align:center">Login</h1>
+<div class="flex items-center justify-center h-[60vh]">
+    <form
+        class="w-11/12 md:w-2/3 lg:w-1/3 rounded-xl flex flex-col items-center align-middle bg-slate-800 py-4"
+        on:submit|preventDefault={handleLogin}
+    >
+        <h1 class="text-center text-2xl font-bold text-sky-400 mb-6">Login</h1>
 
-	{#if form?.errors}
-		{#each form?.errors as error (error.id)}
-			<p
-				class="text-center text-rose-600"
-				in:receive={{ key: error.id }}
-				out:send={{ key: error.id }}
-			>
-				{error.error}
-			</p>
-		{/each}
-	{/if}
+        {#if errors}
+            {#each errors as error (error.id)}
+                <p
+                    class="text-center text-rose-600"
+                    transition:scale|local={{ start: 0.7 }}
+                    animate:flip={{ duration: 200 }}
+                >
+                    {error.error}
+                </p>
+            {/each}
+        {/if}
 
-	<input type="hidden" name="next" value={$page.url.searchParams.get('next')} />
+        <div class="w-3/4 mb-2">
+            <input
+                type="text"
+                name="username"
+                id="username"
+                bind:value={username}
+                class="w-full text-sky-500 placeholder:text-slate-600 border-none focus:ring-0 bg-main-color focus:outline-none py-2 px-3 rounded"
+                placeholder="User name"
+                required
+            />
+        </div>
 
-	<input type="email" name="email" id="email" placeholder="Email address" required />
+        <div class="w-3/4 mb-6">
+            <input
+                type="password"
+                name="password"
+                id="password"
+                bind:value={password}
+                class="w-full text-sky-500 placeholder:text-slate-600 border-none focus:ring-0 bg-main-color focus:outline-none py-2 px-3 rounded"
+                placeholder="Password"
+                required
+            />
+        </div>
 
-	<input type="password" name="password" id="password" placeholder="Password" required />
-
-	<p style="text-align: right; margin-bottom: 0.5rem">
-		<a href="/auth/password/request-change" class="text-sm text-slate-400"> Forgot password? </a>
-	</p>
-
-	<button type="submit" class="btn"> Login </button>
-
-	<p class="text-sm text-sky-400" style="text-align: center; margin-top: 0.5rem">
-		No account?
-		<a href="/auth/register" class="ml-2 text-slate-400">Create an account.</a>
-	</p>
-</form>
-
+        <div class="w-3/4 mt-4">
+            <button
+                type="submit"
+                class="py-2 bg-sky-800 w-full rounded text-blue-50 font-bold hover:bg-sky-700"
+            >
+                Login
+            </button>
+        </div>
+    </form>
+</div>

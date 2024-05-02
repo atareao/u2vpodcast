@@ -1,4 +1,5 @@
 <script lang="ts">
+
 	import { onMount } from 'svelte';
 	import type { PageData, ActionData } from './$types';
     import { type Channel, } from '$lib/channel';
@@ -12,6 +13,11 @@
 	export let newForm: ActionData;
     let isNewFormOpen: boolean;
 	let channels: Channel[] = [];
+
+	export let data: PageData;
+    console.log("==== start data ====");
+    console.log(data);
+    console.log("==== end data ====");
 
     async function getChannels(): Promise<Channel[]>{
         const request = await fetch(endpoint);
@@ -50,10 +56,20 @@
 		</h3>
 		<!--
         active: boolean
+        url: string
         first: date
         max: number
         -->
 		<Toggle>Active</Toggle>
+		<Label class="space-y-2">
+			<span>Url</span>
+			<Input
+				type="url"
+				name="url"
+				placeholder="url"
+				required
+			/>
+		</Label>
 		<Label class="space-y-2">
 			<span>Max number of episodes</span>
 			<Input

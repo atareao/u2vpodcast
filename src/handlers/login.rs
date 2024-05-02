@@ -1,4 +1,3 @@
-use serde::{Serialize, Deserialize};
 use serde_json::{json, Value};
 use actix_web::{
     Responder,
@@ -11,18 +10,40 @@ use actix_web::{
 use actix_session::Session;
 use tracing::{info, error};
 
-use crate::models::{User, CustomResponse};
-
 use super::{
     Credentials,
     AppState,
-    super::utils::{
-        USER_ID_KEY,
-        USER_NAME_KEY,
-        USER_ROLE_KEY,
+    super::{
+        models::{
+            User,
+            CustomResponse,
+        },
+        utils::{
+            USER_ID_KEY,
+            USER_NAME_KEY,
+            USER_ROLE_KEY,
+        }
     }
 };
 
+pub async fn get_session(
+    session: Session,
+) -> impl Responder{
+    info!("get_session");
+    info!("Session status: {:?}", session.status());
+    let id = session.get(USER_ID_KEY).unwrap().unwrap_or(0);
+    let name = session.get(USER_NAME_KEY).unwrap().unwrap_or("".to_string());
+    let role = session.get(USER_ROLE_KEY).unwrap().unwrap_or("".to_string());
+                Json(CustomResponse::new(
+                    StatusCode::OK,
+                    "Authorized",
+                    Some(json!({
+                        "id": id,
+                        "name": name,
+                        "role": role,
+                    }))),
+                )
+}
 
 pub async fn post_login(
     data: Data<AppState>,

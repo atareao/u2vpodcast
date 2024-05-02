@@ -14,10 +14,17 @@
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
 	import '../app.css';
 	import logo from '$lib/assets/favicon/favicon-48x48.png';
+    import { isAuthenticated, loggedInUser } from '$lib/stores/user.store';
+    import { get } from 'svelte/store';
 	import LoginForm from '$lib/components/LoginForm.svelte';
 
 	let btnClass = 'text-primary-500 dark:text-primary-600 border dark:border-gray-800';
 	let loginFormShow = false;
+    console.log("===========================");
+    console.log($isAuthenticated);
+    console.log(isAuthenticated);
+    console.log(get(isAuthenticated));
+    console.log("===========================");
 </script>
 
 <Navbar class="mb-8" let:hidden let:toggle>
@@ -30,6 +37,7 @@
 	<NavHamburger on:click={toggle} />
 	<NavUl {hidden}>
 		<NavLi href="/" active={true}>Home</NavLi>
+        {#if $loggedInUser }
 		<NavLi class="cursor-pointer">
 			Configuration<ChevronDownOutline
 				class="w-3 h-3 ms-2 text-primary-800 dark:text-white inline"
@@ -40,6 +48,7 @@
 				<DropdownItem href="/app/configure/general">General</DropdownItem>
 			</Dropdown>
 		</NavLi>
+        {/if}
 		<Button on:click={() => (loginFormShow = true)}>Login</Button>
 		<DarkMode {btnClass} />
 	</NavUl>

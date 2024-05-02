@@ -10,10 +10,9 @@ pub struct Config{
     pub port: u16,
     pub sleep_time: u64,
     pub per_page: i64,
-    pub jwt_secret: String,
-    pub jwt_expires_in: String,
-    pub jwt_maxage: i64,
     pub secret_key: String,
+    pub admin_username: String,
+    pub admin_password: String,
 }
 
 impl Config {

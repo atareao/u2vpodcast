@@ -89,6 +89,8 @@ async fn main() -> Result<(), Error> {
 
     info!("Log level: {log_level}");
 
+    let config = Config::load().await;
+
     let db_url = if var("RUST_ENV") == Ok("production".to_string()){
         std::env::current_exe()?
             .parent()
@@ -132,9 +134,15 @@ async fn main() -> Result<(), Error> {
         .run(&pool)
         .await?;
 
-    let config = Config::load().await;
     let sleep_time = config.sleep_time;
     let port = config.port;
+
+    if !db_exists {
+        User::default(&pool, &config.admin_username, &config.admin_password)
+            .await
+            .expect("Cant create admin user");
+    }
+
 
     let pool2 = pool.clone();
     spawn(async move{
@@ -185,7 +193,6 @@ async fn main() -> Result<(), Error> {
                 Cors::default() // allowed_origin return access-control-allow-origin: * by default
                     //.allowed_origin(&url)
                     .allow_any_origin()
-                    .send_wildcard()
                     .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
                     .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
                     .allowed_header(header::CONTENT_TYPE)

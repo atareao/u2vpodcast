@@ -15,7 +15,7 @@ export interface CustomError {
 }
 
 export interface RegenerateTokenRequestBody {
-    email: string;
+    username: string;
 }
 
 export interface LoginRequestBody extends RegenerateTokenRequestBody {
@@ -23,8 +23,7 @@ export interface LoginRequestBody extends RegenerateTokenRequestBody {
 }
 
 export interface RegisterRequestBody extends LoginRequestBody {
-    first_name: string;
-    last_name: string;
+    username: string;
 }
 export interface PasswordChange {
     token: string;
@@ -40,14 +39,10 @@ interface UserProfile {
 }
 
 export interface User {
-    email: string;
-    first_name: string;
-    last_name: string;
-    id: string;
-    is_staff: boolean;
-    thumbnail: string;
-    is_superuser: boolean;
-    profile: UserProfile;
+    id: number;
+    name: string;
+    role: string;
+    active: boolean;
 }
 
 type Status = 'IDLE' | 'LOADING' | 'NAVIGATING';
