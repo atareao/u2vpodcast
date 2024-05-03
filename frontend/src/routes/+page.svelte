@@ -8,26 +8,22 @@
     import type { Channel } from '$lib/utils/types';
     export const showConfirmDialog: boolean = false;
 	export let newForm: ActionData;
-    let isNewFormOpen: boolean;
+    let isFormOpen: boolean;
 
 	export let data: PageData;
 
 	let channels: Channel[] = data.channels;
 
     function onNewChannelClicked(){
-        isNewFormOpen = true;
+        isFormOpen = true;
     }
 </script>
 
 <div class="grid justify-items-center">
-    <GradientButton
-        on:click={onNewChannelClicked}
-        class="mb-4">
-        <CirclePlusSolid/>
-    </GradientButton>
     {#each channels as channel}
         <ChannelCardEditor {channel} />
     {/each}
+
+    <NewChannelDialog/>
 </div>
 
-<NewChannelDialog {isNewFormOpen}/>
