@@ -17,8 +17,11 @@
 	const endPoint = `${base_endpoint}/api/1.0/channels/`;
 	async function deleteChannel(channel_id: number) {
 		console.log('deleteChannel');
-		nodeRef.parentNode.removeChild(nodeRef);
 		console.log(nodeRef);
+        const toRemove = nodeRef.parentNode.parentNode;
+        toRemove.parentNode.removeChild(toRemove);
+        return;
+		nodeRef.parentNode.parentNode.removeChild(nodeRef);
 		console.log('deleted');
 		const request = await fetch(
             `${base_endpoint}/api/1.0/channels/?channel_id=${channel_id}`,
