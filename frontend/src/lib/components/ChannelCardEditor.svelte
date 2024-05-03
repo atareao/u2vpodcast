@@ -63,32 +63,40 @@
 	$: channel.firstDate = channel.first.split('T')[0];
 </script>
 
-<div>
-	<div
-		class="flex flex-col items-center {channel.active
-			? activeClass
-			: inactiveClass} border rounded-lg shadow md:flex-row md:max-w-xl"
-		bind:this={nodeRef}
-	>
-		<img
-			class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-s-lg"
-			alt={channel.title}
-			src={channel.image}
-		/>
-		<div class="flex flex-col justify-between p-4 leading-normal">
-			<h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-				{channel.title}
-			</h5>
-			<p class="mb-3 font-normal text-center">{channel.description}</p>
-			<GradientButton class="mb-2" color="cyanToBlue" on:click={editChannel} pill>
-				<EditSolid class="w-6 h-6" />
-			</GradientButton>
-			<GradientButton color="pinkToOrange" on:click={() => (showConfirmDialog = true)} pill>
-				<TrashBinSolid class="w-6 h-6" />
-			</GradientButton>
-		</div>
-	</div>
-</div>
+<a href="/app/{channel.id}">
+    <div class="border rounded-lg shadow m-2 p-4">
+        <div
+            class="flex flex-col items-center {channel.active
+                ? activeClass
+                : inactiveClass}  rounded-lg shadow md:flex-row md:max-w-xl"
+            bind:this={nodeRef}
+        >
+            <img
+                class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-s-lg"
+                alt={channel.title}
+                src={channel.image}
+            />
+            <div class="flex flex-col justify-between p-4 leading-normal">
+                <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                    {channel.title}
+                </h5>
+                <p class="mb-3 font-normal text-center line-clamp-5">
+                    {channel.description}
+                </p>
+            </div>
+        </div>
+        <div>
+            <div>
+                <GradientButton class="mb-2" color="cyanToBlue" on:click={editChannel} pill>
+                    <EditSolid class="w-6 h-6" />
+                </GradientButton>
+                <GradientButton color="pinkToOrange" on:click={() => (showConfirmDialog = true)} pill>
+                    <TrashBinSolid class="w-6 h-6" />
+                </GradientButton>
+            </div>
+        </div>
+    </div>
+</a>
 
 <Modal bind:open={isFormOpen} autoclose outsideclose size="xs" class="w-full">
 	<form class="flex flex-col space-y-6" action={endPoint} method="POST">
