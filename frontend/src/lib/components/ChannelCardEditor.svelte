@@ -15,12 +15,28 @@
 	export let channel: Channel;
 
 	const endPoint = `${base_endpoint}/api/1.0/channels/`;
-	function deleteChannel() {
+	async function deleteChannel(channel_id: number) {
 		console.log('deleteChannel');
 		nodeRef.parentNode.removeChild(nodeRef);
 		console.log(nodeRef);
 		console.log('deleted');
+		const request = await fetch(
+            `${base_endpoint}/api/1.0/channels/?channel_id=${channel_id}`,
+            {
+			method: 'DELETE',
+			headers: {
+				Accept: 'application/json',
+			},
+        });
+		const response = await request.json();
+        console.log(response);
 	}
+
+    function handleDeleteChannel(channel_id: number){
+        const promise = deleteChannel(channel_id);
+        console.log(promise);
+    }
+
 	function editChannel() {
 		isFormOpen = true;
 	}
@@ -35,7 +51,7 @@
 			url: channel.url,
 			active: channel.active,
 			first: new Date(channel.first),
-			max: parseInt(channel.max)
+			max: channel.max
 		};
 		console.log(data);
 		const config = {
@@ -60,40 +76,40 @@
 		'bg-red-500 border-red-500 hover:bg-red-700 dark:border-red-700 dark:bg-red-800 dark:hover:bg-red-700';
 	const activeClass =
 		'bg-white border-gray-200 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700';
-	$: channel.firstDate = channel.first.split('T')[0];
+	$: firstDate = channel.first.split('T')[0];
 </script>
 
 <div class="border rounded-lg shadow m-2 p-2 border-gray-500 dark:border-white">
-    <a href="/app/{channel.id}">
-        <div
-            class="flex flex-col items-center p-2 m-2 {channel.active
-                ? activeClass
-                : inactiveClass}  rounded-lg shadow md:flex-row md:max-w-xl"
-            bind:this={nodeRef}
-        >
-            <img
-                class="object-cover w-full rounded-lg h-96 md:h-auto md:w-48"
-                alt={channel.title}
-                src={channel.image}
-            />
-            <div class="flex flex-col justify-between p-4 leading-normal">
-                <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                    {channel.title}
-                </h5>
-                <p class="mb-3 font-normal text-center line-clamp-5 dark:text-gray-100">
-                    {channel.description}
-                </p>
-            </div>
-        </div>
-    </a>
-    <div>
-        <GradientButton class="mb-2" color="cyanToBlue" on:click={editChannel} pill>
-            <EditSolid class="w-6 h-6" />
-        </GradientButton>
-        <GradientButton color="pinkToOrange" on:click={() => (showConfirmDialog = true)} pill>
-            <TrashBinSolid class="w-6 h-6" />
-        </GradientButton>
-    </div>
+	<a href="/app/{channel.id}">
+		<div
+			class="flex flex-col items-center p-2 m-2 {channel.active
+				? activeClass
+				: inactiveClass}  rounded-lg shadow md:flex-row md:max-w-xl"
+			bind:this={nodeRef}
+		>
+			<img
+				class="object-cover w-full rounded-lg h-96 md:h-auto md:w-48"
+				alt={channel.title}
+				src={channel.image}
+			/>
+			<div class="flex flex-col justify-between p-4 leading-normal">
+				<h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+					{channel.title}
+				</h5>
+				<p class="mb-3 font-normal text-center line-clamp-5 dark:text-gray-100">
+					{channel.description}
+				</p>
+			</div>
+		</div>
+	</a>
+	<div>
+		<GradientButton class="mb-2" color="cyanToBlue" on:click={editChannel} pill>
+			<EditSolid class="w-6 h-6" />
+		</GradientButton>
+		<GradientButton color="pinkToOrange" on:click={() => handleDeleteChannel(channel.id)} pill>
+			<TrashBinSolid class="w-6 h-6" />
+		</GradientButton>
+	</div>
 </div>
 
 <Modal bind:open={isFormOpen} autoclose outsideclose size="xs" class="w-full">
@@ -126,9 +142,13 @@
 				type="date"
 				name="first"
 				placeholder="first"
-				bind:value={channel.firstDate}
+				bind:value={firstDate}
 				on:change={onChangeFirst}
-				on:input={(e) => (channel.first = e.target.value)}
+				on:input={(e) => {
+					if (e.target != null && e.target.value != null) {
+						channel.first = new Date(e.target.value);
+					}
+				}}
 				required
 			/>
 		</Label>
@@ -141,7 +161,7 @@
 	title="Warning"
 	message="Are you sure?"
 	okFunction={deleteChannel}
-	on:close={() => console.log('closed')}
+	on:close={() => deleteChannel(channel.id)}
 >
 	Are you sure?
 </ConfirmDialog>
