@@ -18,9 +18,7 @@
 	async function deleteChannel(channel_id: number) {
 		console.log('deleteChannel');
 		console.log(nodeRef);
-        const toRemove = nodeRef.parentNode.parentNode;
-        toRemove.parentNode.removeChild(toRemove);
-		nodeRef.parentNode.parentNode.removeChild(nodeRef);
+        nodeRef.parentNode.removeChild(nodeRef);
 		console.log('deleted');
 		const request = await fetch(
             `${base_endpoint}/api/1.0/channels/?channel_id=${channel_id}`,
@@ -81,13 +79,15 @@
 	$: firstDate = channel.first.split('T')[0];
 </script>
 
-<div class="border rounded-lg shadow m-2 p-2 border-gray-500 dark:border-white">
+<div
+    bind:this={nodeRef}
+    class="border rounded-lg shadow m-2 p-2 border-gray-500 dark:border-white">
+
 	<a href="/app/{channel.id}">
 		<div
 			class="flex flex-col items-center p-2 m-2 {channel.active
 				? activeClass
 				: inactiveClass}  rounded-lg shadow md:flex-row md:max-w-xl"
-			bind:this={nodeRef}
 		>
 			<img
 				class="object-cover w-full rounded-lg h-96 md:h-auto md:w-48"

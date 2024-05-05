@@ -3,6 +3,7 @@
     import { base_endpoint } from '$lib/global';
 	import { GradientButton, Modal, Button, Toggle, Label, Input } from 'flowbite-svelte';
 	import { CirclePlusSolid } from 'flowbite-svelte-icons';
+	import ChannelCardEditor from './ChannelCardEditor.svelte';
 
 	let isDialogOpen: boolean = false;
 
@@ -32,9 +33,8 @@
 
 	async function onNewChannelButtonClicked(e: any) {
 		console.log(e);
+        console.log(nodeRefFB.parentNode);
 		console.log(channel);
-        console.log(nodeRef);
-        return;
 		const request = await fetch(`${base_endpoint}/api/1.0/channels/`, {
 			method: 'POST',
 			headers: {
@@ -47,6 +47,10 @@
 		console.log(response);
 		if (response.status) {
 			channel = response.data;
+            new ChannelCardEditor({
+                target: nodeRefFB.parentNode,
+                data: {channel: channel}
+                });
 		}
 
 		//channel = newChannel();
@@ -55,14 +59,16 @@
 
 	export let channel = newChannel();
 	console.log(channel);
-    let nodeRef: any;
+    let nodeRefFB: any;
 
 	$: firstDate = channel.first.toISOString().split('T')[0];
 </script>
 
-<GradientButton on:click={onOpendialogClicked} bind:thist={nodeRef} class="mb-4">
+<div bind:this={nodeRefFB}>
+<GradientButton on:click={onOpendialogClicked} class="mb-4">
 	<CirclePlusSolid />
 </GradientButton>
+</div>
 
 <Modal bind:open={isDialogOpen} autoclose outsideclose size="xs" class="w-full">
 	<form class="flex flex-col space-y-6" action="">

@@ -20,10 +20,9 @@
 </script>
 
 <div class="grid justify-items-center">
+    <NewChannelDialog/>
     {#each channels as channel}
         <ChannelCardEditor {channel} />
     {/each}
-
-    <NewChannelDialog/>
 </div>
 
