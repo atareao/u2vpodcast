@@ -122,7 +122,7 @@ async fn delete(
     match Channel::delete(&data.pool, path.channel_id).await{
             Ok(channel) => {
                 info!("Remove directory {}/{}", FOLDER, &channel.id);
-                match tokio::fs::remove_dir(format!("{}/{}", FOLDER, &channel.id))
+                match tokio::fs::remove_dir_all(format!("{}/{}", FOLDER, &channel.id))
                     .await {
                     Ok(_) => debug!("Removed directorio {}/{}", FOLDER, &channel.id),
                     Err(e) => error!("Can't remove directory {}/{}: {}", FOLDER, &channel.id, e),
