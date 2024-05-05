@@ -30,7 +30,7 @@ pub async fn get_session(
 ) -> impl Responder{
     info!("get_session");
     info!("Session status: {:?}", session.status());
-    CResponse::ok(session, "")
+    CResponse::ok(session, "", None)
 }
 
 pub async fn post_login(
@@ -52,7 +52,7 @@ pub async fn post_login(
                     .expect("`user_role` cannot be inserted into session");
                 session.insert(USER_ACTIVE_KEY, user.active)
                     .expect("`user_active` cannot be inserted into session");
-                CResponse::ok(session, "")
+                CResponse::ok(session, "", None)
             }else{
                 error!("Unauthorized");
                 CResponse::ko(StatusCode::UNAUTHORIZED, session)

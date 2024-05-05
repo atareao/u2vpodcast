@@ -10,21 +10,29 @@ use super::user::SessionUser;
 use super::user::from_session;
 
 #[derive(Debug, Deserialize, Serialize)]
+pub struct Pagination{
+    pub page: i64,
+    pub total: i64,
+    pub per_page: i64,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CustomResponse<T> {
     pub status: bool,
     pub status_code: u16,
     pub message: String,
     pub user: Option<SessionUser>,
     pub data: Option<T>,
+    pub pagination: Option<Pagination>,
 }
 
 pub struct CResponse;
 
 impl CResponse {
-    pub fn ok(session: Session, data: impl Serialize) -> HttpResponse{
+    pub fn ok(session: Session, data: impl Serialize, pagination: Option<Pagination>) -> HttpResponse{
         let content = serde_json::to_value(data).unwrap();
         let response: CustomResponse<Value> = CustomResponse::new(
-            StatusCode::OK, "Ok", session, Some(content));
+            StatusCode::OK, "Ok", session, Some(content), pagination);
         HttpResponse::build(StatusCode::OK)
             .json(response)
     }
@@ -36,6 +44,7 @@ impl CResponse {
             message: "Ok".to_string(),
             user: None,
             data: None,
+            pagination: None,
         };
         HttpResponse::build(StatusCode::OK)
             .json(response)
@@ -49,6 +58,7 @@ impl CResponse {
             message: status_code.as_str().to_string(),
             user,
             data: None::<Value>,
+            pagination: None,
         };
         HttpResponse::build(StatusCode::OK)
             .json(response)
@@ -56,7 +66,7 @@ impl CResponse {
 }
 
 impl<T> CustomResponse<T> {
-    pub fn new(status_code: StatusCode, message: &str, session: Session, data: Option<T>) -> CustomResponse<T>{
+    pub fn new(status_code: StatusCode, message: &str, session: Session, data: Option<T>, pagination: Option<Pagination>) -> CustomResponse<T>{
         let status_code =  status_code.as_u16();
         let status = status_code < 300;
         let user = from_session(session).ok();
@@ -66,6 +76,7 @@ impl<T> CustomResponse<T> {
             message: message.to_string(),
             user,
             data,
+            pagination,
         }
     }
 }

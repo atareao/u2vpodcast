@@ -21,7 +21,8 @@ pub use config::Config;
 pub use param::Param;
 pub use response::{
     CResponse,
-    CustomResponse
+    CustomResponse,
+    Pagination,
 };
 pub use ytdlp::{
     Ytdlp,

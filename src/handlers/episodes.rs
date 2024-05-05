@@ -20,6 +20,7 @@ use super::{
     super::models::{
         Episode,
         CResponse,
+        Pagination,
     },
 };
 
@@ -48,7 +49,13 @@ async fn read_with_pagination(
     match Episode::read_with_pagination(&data.pool, channel_id, page, per_page).await{
         Ok(episodes) => {
             debug!("{:?}", episodes);
-            Ok(CResponse::ok(session, episodes))
+            let total = Episode::count(&data.pool, channel_id).await;
+            let pagination = Pagination{
+                page,
+                total,
+                per_page,
+            };
+            Ok(CResponse::ok(session, episodes, Some(pagination)))
         },
         Err(e) => {
             error!("{e}");

@@ -135,6 +135,7 @@ async fn main() -> Result<(), Error> {
         .await?;
 
     let sleep_time = config.sleep_time;
+    let url = config.url.clone();
     let port = config.port;
 
     if !db_exists {
@@ -196,15 +197,27 @@ async fn main() -> Result<(), Error> {
                 }
             )
             .wrap(
-                Cors::default() // allowed_origin return access-control-allow-origin: * by default
-                    //.allowed_origin(&url)
-                    .allow_any_origin()
-                    .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
-                    .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
-                    .allowed_header(header::CONTENT_TYPE)
-                    .expose_headers(&[header::CONTENT_DISPOSITION])
-                    .supports_credentials()
-                    .max_age(3600),
+                if config.production{
+                    Cors::default() // allowed_origin return access-control-allow-origin: * by default
+                        .allowed_origin(&url)
+                        .allow_any_origin()
+                        .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
+                        .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
+                        .allowed_header(header::CONTENT_TYPE)
+                        .expose_headers(&[header::CONTENT_DISPOSITION])
+                        .supports_credentials()
+                        .max_age(3600)
+                }else{
+                    Cors::default() // allowed_origin return access-control-allow-origin: * by default
+                        .allow_any_origin()
+                        .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
+                        .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
+                        .allowed_header(header::CONTENT_TYPE)
+                        .expose_headers(&[header::CONTENT_DISPOSITION])
+                        .supports_credentials()
+                        .max_age(3600)
+
+                }
             )
             .app_data(Data::clone(&data))
             .service(af::Files::new("/media", "./audios"))

@@ -23,6 +23,7 @@ use super::{
     AppState,
     super::models::{
         CResponse,
+        Pagination,
         Channel,
         NewChannel,
         UpdateChannel,
@@ -52,7 +53,15 @@ async fn read_with_pagination(
     let page = page.page.unwrap_or(1);
     let per_page = data.config.per_page;
     match Channel::read_with_pagination(&data.pool, page, per_page).await{
-        Ok(channels) => Ok(CResponse::ok(session, channels)),
+        Ok(channels) => {
+            let total = Channel::count(&data.pool).await;
+            let pagination = Pagination{
+                page,
+                total,
+                per_page,
+            };
+            Ok(CResponse::ok(session, channels, Some(pagination)))
+        },
         Err(mut e) => {
             error!("Error: {e}");
             e.set_session(session);
@@ -69,7 +78,7 @@ async fn create(
 ) -> impl Responder {
     info!("create");
     match Channel::new(&data.pool, channel.into_inner()).await{
-            Ok(channel) => Ok(CResponse::ok(session, channel)),
+            Ok(channel) => Ok(CResponse::ok(session, channel, None)),
             Err(mut e) => {
                 error!("Error: {e}");
                 e.set_session(session);
@@ -86,7 +95,7 @@ async fn update(
 ) -> impl Responder {
     info!("update");
     match Channel::update(&data.pool, &channel.into_inner()).await{
-            Ok(channel) => Ok(CResponse::ok(session, channel)),
+            Ok(channel) => Ok(CResponse::ok(session, channel, None)),
             Err(mut e) => {
                 error!("Error: {e}");
                 e.set_session(session);
@@ -104,7 +113,7 @@ async fn read(
 ) -> impl Responder{
     info!("read");
     match Channel::read(&data.pool, path.channel_id).await{
-            Ok(channel) => Ok(CResponse::ok(session, channel)),
+            Ok(channel) => Ok(CResponse::ok(session, channel, None)),
             Err(mut e) => {
                 error!("Error: {e}");
                 e.set_session(session);
@@ -127,7 +136,7 @@ async fn delete(
                     Ok(_) => debug!("Removed directorio {}/{}", FOLDER, &channel.id),
                     Err(e) => error!("Can't remove directory {}/{}: {}", FOLDER, &channel.id, e),
                 };
-                Ok(CResponse::ok(session, channel))
+                Ok(CResponse::ok(session, channel, None))
         },
         Err(mut e) => {
             error!("Error: {e}");

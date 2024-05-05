@@ -137,6 +137,23 @@ impl Episode {
         }
     }
 
+    pub async fn count(pool: &SqlitePool, channel_id: i64) -> i64 {
+        let sql = "SELECT count(*) FROM episodes WHERE channel_id = $1";
+        match query(sql)
+            .bind(channel_id)
+            .map(|row: SqliteRow| -> i64 { row.get(0) })
+            .fetch_one(pool)
+            .await
+        {
+            Ok(value) => value,
+            Err(e) => {
+                tracing::info!("Error on count {}", e);
+                0
+            }
+        }
+    }
+
+
     pub async fn read_with_pagination(
         pool: &SqlitePool,
         channel_id: i64,

@@ -150,6 +150,22 @@ impl Channel{
             .map_err(|e| e.into())
     }
 
+    pub async fn count(pool: &SqlitePool) -> i64 {
+        let sql = "SELECT count(*) FROM channels";
+        match query(sql)
+            .map(|row: SqliteRow| -> i64 { row.get(0) })
+            .fetch_one(pool)
+            .await
+        {
+            Ok(value) => value,
+            Err(e) => {
+                tracing::info!("Error on count {}", e);
+                0
+            }
+        }
+    }
+
+
     pub async fn update(pool: &SqlitePool, channel: &UpdateChannel) -> Result<Self, Error>{
         info!("update");
         debug!("{:?}", channel);

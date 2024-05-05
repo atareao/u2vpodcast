@@ -139,6 +139,7 @@ impl ResponseError for Error {
             self.status_code(),
             &self.details,
             self.session.clone().unwrap(),
+            None,
             None
         );
         HttpResponse::build(self.status_code())
