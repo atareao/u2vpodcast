@@ -18,8 +18,14 @@
             <h6 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white line-clamp-2">
                 {episode.title}
             </h6>
+            <p class="dark:text-gray-400 text-center">
+                {new Date(episode.published_at).toLocaleString('es-ES', {year: "numeric", month: "numeric", day: "numeric"})}
+            </p>
             <p class=" max-w-80 line-clamp-5 dark:text-gray-100">
                 {episode.description}
+            </p>
+            <p class="dark:text-gray-400 text-center underline">
+            <a href="{episode.webpage_url}">YouTube</a>
             </p>
         </div>
     </div>

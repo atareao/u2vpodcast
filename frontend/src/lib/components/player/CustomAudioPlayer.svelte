@@ -58,9 +58,9 @@
   </div>
 
   <div class="mt-4 w-full flex items-center space-x-2">
-    <span class="text-sm text-800">{toHHMMSS($currentTime)}</span>
+    <span class="text-sm text-800 dark:text-gray-100">{toHHMMSS($currentTime)}</span>
     <RangeSlider max={$duration} bind:value={$currentTime} />
-    <span class="text-sm text-800">{toHHMMSS($duration)}</span>
+    <span class="text-sm text-800 dark:text-gray-100">{toHHMMSS($duration)}</span>
     <VolumeControl />
   </div>
 </div>

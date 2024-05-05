@@ -20,7 +20,6 @@
 		console.log(nodeRef);
         const toRemove = nodeRef.parentNode.parentNode;
         toRemove.parentNode.removeChild(toRemove);
-        return;
 		nodeRef.parentNode.parentNode.removeChild(nodeRef);
 		console.log('deleted');
 		const request = await fetch(
@@ -102,6 +101,9 @@
 				<p class="mb-3 font-normal text-center line-clamp-5 dark:text-gray-100">
 					{channel.description}
 				</p>
+                <p class="text-center dark:text-gray-100 underline">
+                    <a href={channel.url}>YouTube</a>
+                </p>
 			</div>
 		</div>
 	</a>

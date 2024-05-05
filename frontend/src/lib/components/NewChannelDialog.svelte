@@ -33,6 +33,8 @@
 	async function onNewChannelButtonClicked(e: any) {
 		console.log(e);
 		console.log(channel);
+        console.log(nodeRef);
+        return;
 		const request = await fetch(`${base_endpoint}/api/1.0/channels/`, {
 			method: 'POST',
 			headers: {
@@ -53,11 +55,12 @@
 
 	export let channel = newChannel();
 	console.log(channel);
+    let nodeRef: any;
 
 	$: firstDate = channel.first.toISOString().split('T')[0];
 </script>
 
-<GradientButton on:click={onOpendialogClicked} class="mb-4">
+<GradientButton on:click={onOpendialogClicked} bind:thist={nodeRef} class="mb-4">
 	<CirclePlusSolid />
 </GradientButton>
 
