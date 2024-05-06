@@ -52,6 +52,7 @@ async fn read_with_pagination(
     info!("read_all");
     let page = page.page.unwrap_or(1);
     let per_page = data.config.per_page;
+    debug!("page: {page}, per_page: {per_page}");
     match Channel::read_with_pagination(&data.pool, page, per_page).await{
         Ok(channels) => {
             let total = Channel::count(&data.pool).await;
@@ -60,6 +61,7 @@ async fn read_with_pagination(
                 total,
                 per_page,
             };
+            debug!("pagination: {:?}", pagination);
             Ok(CResponse::ok(session, channels, Some(pagination)))
         },
         Err(mut e) => {
