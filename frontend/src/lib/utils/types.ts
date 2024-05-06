@@ -30,12 +30,19 @@ export interface PasswordChange {
     password: string;
 }
 
+export interface PaginationData {
+    page: number;
+    total: number;
+    per_page: number;
+}
+
 export interface Response {
     status: boolean;
     status_code: number;
     message: string;
     user: User | null;
-    data: Channel | Array<Channel> | Episode | Array<Episode> | null
+    data: Channel | Array<Channel> | Episode | Array<Episode> | null;
+    pagination: PaginationData | null;
 }
 
 export interface Channel {
