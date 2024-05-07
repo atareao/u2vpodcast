@@ -3,12 +3,13 @@
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ChannelDialog from '$lib/components/ChannelDialog.svelte';
 	import ChannelCard from '$lib/components/ChannelCard.svelte';
-    import { page } from '$app/stores';
-    import { Pagination } from 'flowbite-svelte';
-    import { ChevronLeftOutline, ChevronRightOutline } from 'flowbite-svelte-icons';
+	import { Pagination, PaginationItem } from 'flowbite-svelte';
+	import { page } from '$app/stores';
+	import { ChevronLeftOutline, ChevronRightOutline } from 'flowbite-svelte-icons';
 	import { GradientButton } from 'flowbite-svelte';
 	import { CirclePlusSolid } from 'flowbite-svelte-icons';
-	import type { Channel, Response, PaginationData } from '$lib/utils/types';
+	import type { Channel } from '$lib/types';
+	import { per_page } from '$lib/global';
 	import { base_endpoint } from '$lib/global';
 	export let showConfirmDialog = false;
 	export let showChannelDialog = false;
@@ -17,33 +18,30 @@
 	let channel: Channel;
 	let onDialogButtonClicked: any;
 
-    let response: Response = data.response;
-	let channels: Channel[] = response.data as Channel[];
-    let paginationData: PaginationData = response.pagination as PaginationData;
+	let channels: Channel[] = data.channels as Channel[];
 
 	async function deleteChannel(channelToDelete: any) {
 		console.log('deleteChannel');
 		console.log(channelToDelete);
 		const request = await fetch(
-            `${base_endpoint}/api/1.0/channels/?channel_id=${channelToDelete.id}`,
-            {
-			method: 'DELETE',
-			headers: {
-				Accept: 'application/json',
-			},
-        });
+			`${base_endpoint}/api/1.0/channels/?channel_id=${channelToDelete.id}`,
+			{
+				method: 'DELETE',
+				headers: {
+					Accept: 'application/json'
+				}
+			}
+		);
 		const response = await request.json();
-        if(response.status){
-            channels = channels.filter((item) => item.id != channelToDelete.id)
-        }
+		if (response.status) {
+			channels = channels.filter((item) => item.id != channelToDelete.id);
+		}
 	}
 
 	async function updateChannel(channelToUpdate: Channel) {
 		console.log('updateChannel');
 		console.log(channelToUpdate);
-		const request = await fetch(
-            `${base_endpoint}/api/1.0/channels/`,
-		    {
+		const request = await fetch(`${base_endpoint}/api/1.0/channels/`, {
 			method: 'PUT',
 			headers: {
 				Accept: 'application/json',
@@ -60,9 +58,7 @@
 	async function newChannel(newChannel: Channel) {
 		console.log('newChannel');
 		console.log(newChannel);
-		const request = await fetch(
-            `${base_endpoint}/api/1.0/channels/`,
-            {
+		const request = await fetch(`${base_endpoint}/api/1.0/channels/`, {
 			method: 'POST',
 			headers: {
 				Accept: 'application/json',
@@ -74,8 +70,8 @@
 		console.log(response);
 		if (response.status) {
 			channel = response.data as Channel;
-            console.log(channel);
-            channels = [...channels, channel];
+			console.log(channel);
+			channels = [...channels, channel];
 		}
 	}
 
@@ -86,8 +82,8 @@
 		showChannelDialog = true;
 	}
 	function onDeleteChannelButtonClicked(channel: Channel) {
-        console.log("onDeleteChannelButtonClicked");
-        deleteChannel(channel);
+		console.log('onDeleteChannelButtonClicked');
+		deleteChannel(channel);
 	}
 	function onNewChannelButtonClicked() {
 		console.log('onNewChannelButtonClicked');
@@ -106,83 +102,71 @@
 		onDialogButtonClicked = () => newChannel(channel);
 		showChannelDialog = true;
 	}
-    $: activeUrl = $page.url.searchParams.get("page");
-    let current_page = 1;
-    if ($page.url.searchParams.get("page") != null) {
-        current_page = parseInt($page.url.searchParams.get("page"));
-    }
-    let total_pages = Math.round(paginationData.total / paginationData.per_page) + 1;
-    if(current_page > total_pages) {
-        current_page = total_pages;
-    }else if(current_page < 1){
-        current_page = 1;
-    }
-    console.log(`current_page=${current_page}`);
-    let pages = [];
-    console.log(`total pages=${total_pages}`);
-    if (total_pages > 1){
-        let p_2 = current_page - 2;
-        if(p_2 > 0) {
-            pages.push({name: p_2, href: `/app/?page=${p_2}`})
-        }
-        let p_1 = current_page - 1;
-        if(p_1 > 0) {
-            pages.push({name: p_1, href: `/app/?page=${p_1}`})
-        }
-        let n_1 = current_page + 1;
-        if(n_1 < total_pages) {
-            pages.push({name: n_1, href: `/app/?page=${n_1}`})
-        }
-        let n_2 = current_page + 2;
-        if(n_2 < total_pages) {
-            pages.push({name: n_2, href: `/app/?page=${n_2}`})
-        }
-    }
-    $: {
-    pages.forEach((page) => {
-      let splitUrl = page.href.split('?');
-      let queryString = splitUrl.slice(1).join('?');
-      const hrefParams = new URLSearchParams(queryString);
-      let hrefValue = hrefParams.get('page');
-      if (hrefValue === activeUrl) {
-        page.active = true;
-      } else {
-        page.active = false;
-      }
-    });
-    pages = pages;
-  }
 
-  const previous = () => {
-    alert('Previous btn clicked. Make a call to your server to fetch data.');
-  };
-  const next = () => {
-    alert('Next btn clicked. Make a call to your server to fetch data.');
-  };
+	function getCurrentPage() {
+		let currentPage = 1;
+		const currentPageString = $page.url.searchParams.get('page');
+		if (currentPageString != null) {
+			currentPage = parseInt(currentPageString);
+		}
+		console.log(`currentPage: ${currentPage}`);
+		return currentPage;
+	}
+
+	function getPaginatedChannels() {
+		const total = channels.length;
+		let start = (currentPage - 1) * per_page;
+		if (start > total - 1) {
+			start = total - 1;
+		}
+		let end = start + per_page;
+		if (end > total) {
+			end = total;
+		}
+		console.log(`start: ${start}, end: ${end}, total: ${total}`);
+		return channels.slice(start, end);
+	}
+
+	function getPages() {
+		const path = $page.url.pathname;
+		console.log(`url: ${path}`);
+		const pages = [];
+		const max_page = channels.length / per_page;
+		for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+			if (i > 0 && i <= max_page) {
+				console.log(`page ${i}`);
+				pages.push({ name: `${i}`, href: `${path}?page=${i}` });
+			}
+		}
+		console.log(pages);
+		return pages;
+	}
+	$: currentPage = getCurrentPage();
+	$: paginatedChannels = getPaginatedChannels();
+	$: pages = getPages();
 </script>
 
 <div id="channels" class="grid justify-items-center">
 	<GradientButton on:click={onNewChannelButtonClicked} class="mb-4">
 		<CirclePlusSolid />
 	</GradientButton>
-	{#each channels as channel}
+	{#each paginatedChannels as channel}
 		<ChannelCard {channel} {onUpdateChannelButtonClicked} {onDeleteChannelButtonClicked} />
 	{/each}
 </div>
-{#if total_pages > 1}
+
 <div class="grid justify-items-center">
-    <Pagination {pages} large on:previous={previous} on:next={next} icon>
-      <svelte:fragment slot="prev">
-        <span class="sr-only">Previous</span>
-        <ChevronLeftOutline class="w-6 h-6" />
-      </svelte:fragment>
-      <svelte:fragment slot="next">
-        <span class="sr-only">Next</span>
-        <ChevronRightOutline class="w-6 h-6" />
-      </svelte:fragment>
-    </Pagination>
+	<Pagination {pages} large>
+		<svelte:fragment slot="prev">
+			<span class="sr-only">Previous</span>
+			<ChevronLeftOutline class="w-6 h-6" />
+		</svelte:fragment>
+		<svelte:fragment slot="next">
+			<span class="sr-only">Next</span>
+			<ChevronRightOutline class="w-6 h-6" />
+		</svelte:fragment>
+	</Pagination>
 </div>
-{/if}
 
 <ChannelDialog bind:open={showChannelDialog} {channel} onOkButtonClicked={onDialogButtonClicked} />
 
@@ -192,5 +176,4 @@
 	message="Are you sure?"
 	onOkButtonClicked={deleteChannel}
 	on:close={() => deleteChannel(channel.id)}
->
-</ConfirmDialog>
+></ConfirmDialog>
