@@ -133,6 +133,7 @@ impl Channel{
             .map_err(|e| e.into())
     }
 
+    #[allow(unused)]
     pub async fn read_with_pagination(
         pool: &SqlitePool,
         page: i64,
@@ -149,22 +150,6 @@ impl Channel{
             .await
             .map_err(|e| e.into())
     }
-
-    pub async fn count(pool: &SqlitePool) -> i64 {
-        let sql = "SELECT count(*) FROM channels";
-        match query(sql)
-            .map(|row: SqliteRow| -> i64 { row.get(0) })
-            .fetch_one(pool)
-            .await
-        {
-            Ok(value) => value,
-            Err(e) => {
-                tracing::info!("Error on count {}", e);
-                0
-            }
-        }
-    }
-
 
     pub async fn update(pool: &SqlitePool, channel: &UpdateChannel) -> Result<Self, Error>{
         info!("update");
@@ -248,8 +233,8 @@ impl Channel{
     }
 }
 
-impl Into<Value> for Channel {
-    fn into(self) -> Value {
-        serde_json::to_value(self).unwrap()
+impl From<Channel> for Value {
+    fn from(channel: Channel) -> Value {
+        channel.into()
     }
 }

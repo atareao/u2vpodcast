@@ -39,7 +39,7 @@ async fn update(
 ) -> impl Responder {
     info!("update");
     match do_the_work(&data.pool).await{
-        Ok(()) => Ok(CResponse::ok(session, "", None)),
+        Ok(()) => Ok(CResponse::ok(session, "")),
         Err(e) => Err(e),
     }
 }
@@ -72,5 +72,5 @@ async fn post_options(
             }
         }
     }
-    CResponse::ok(session, response_pairs, None)
+    CResponse::ok(session, response_pairs)
 }

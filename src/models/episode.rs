@@ -137,6 +137,7 @@ impl Episode {
         }
     }
 
+    #[allow(unused)]
     pub async fn count(pool: &SqlitePool, channel_id: i64) -> i64 {
         let sql = "SELECT count(*) FROM episodes WHERE channel_id = $1";
         match query(sql)
@@ -154,6 +155,7 @@ impl Episode {
     }
 
 
+    #[allow(unused)]
     pub async fn read_with_pagination(
         pool: &SqlitePool,
         channel_id: i64,
@@ -230,8 +232,8 @@ impl Episode {
     }
 }
 
-impl Into<Value> for Episode {
-    fn into(self) -> Value {
-        serde_json::to_value(self).unwrap()
+impl From<Episode> for Value {
+    fn from(episode: Episode) -> Value{
+        episode.into()
     }
 }

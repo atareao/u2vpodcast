@@ -200,6 +200,7 @@ async fn main() -> Result<(), Error> {
                 if config.production{
                     Cors::default() // allowed_origin return access-control-allow-origin: * by default
                         .allowed_origin(&url)
+                        .allowed_origin("https://yt3.googleusercontent.com/")
                         .allow_any_origin()
                         .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
                         .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])

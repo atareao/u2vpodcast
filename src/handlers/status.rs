@@ -13,6 +13,6 @@ struct Response {
 pub async fn get_status(
     session: Session
 ) -> impl Responder{
-    CResponse::ok(session, "Up and running", None)
+    CResponse::ok(session, "Up and running")
 }
 

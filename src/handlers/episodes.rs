@@ -5,7 +5,6 @@ use actix_web::{
     web::{
         Path,
         Data,
-        Query
     },
 };
 use actix_session::Session;
@@ -20,14 +19,8 @@ use super::{
     super::models::{
         Episode,
         CResponse,
-        Pagination,
     },
 };
-
-#[derive(Deserialize)]
-struct Page{
-    page: Option<i64>,
-}
 
 #[derive(Deserialize)]
 struct Info{
@@ -38,24 +31,14 @@ struct Info{
 async fn read_with_pagination(
     data: Data<AppState>,
     session: Session,
-    params: Query<Page>,
     path: Path<Info>
 ) -> impl Responder{
     info!("read_api_channels");
-    let config = &data.config;
-    let per_page = config.per_page;
     let channel_id = path.channel_id;
-    let page = params.page.unwrap_or(1);
-    match Episode::read_with_pagination(&data.pool, channel_id, page, per_page).await{
+    match Episode::read_episodes_for_channel(&data.pool, channel_id).await{
         Ok(episodes) => {
             debug!("{:?}", episodes);
-            let total = Episode::count(&data.pool, channel_id).await;
-            let pagination = Pagination{
-                page,
-                total,
-                per_page,
-            };
-            Ok(CResponse::ok(session, episodes, Some(pagination)))
+            Ok(CResponse::ok(session, episodes))
         },
         Err(e) => {
             error!("{e}");

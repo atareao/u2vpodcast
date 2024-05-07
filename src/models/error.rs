@@ -19,13 +19,12 @@ use actix_web::{
 };
 use actix_session::Session;
 
-use super::CustomResponse;
-
 pub struct Error{
     details: String,
     session: Option<Session>,
     status_code: Option<StatusCode>,
 }
+use super::super::models::CustomResponse;
 
 impl std::fmt::Debug for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result{
@@ -140,7 +139,6 @@ impl ResponseError for Error {
             &self.details,
             self.session.clone().unwrap(),
             None,
-            None
         );
         HttpResponse::build(self.status_code())
             .json(response)

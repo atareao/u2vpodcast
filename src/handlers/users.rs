@@ -75,7 +75,7 @@ async fn create(
 ) -> impl Responder {
     info!("create");
     match User::new(&data.pool, user.into_inner()).await{
-        Ok(user) => Ok(CResponse::ok(session, user, None)),
+        Ok(user) => Ok(CResponse::ok(session, user)),
         Err(e) => {
             error!("Error: {e}");
             Err(e)
@@ -91,7 +91,7 @@ async fn read(
 ) -> impl Responder{
     info!("read");
     match User::read(&data.pool, path.user_id).await{
-        Ok(user) => Ok(CResponse::ok(session, user, None)),
+        Ok(user) => Ok(CResponse::ok(session, user)),
         Err(e) => {
             error!("Error: {e}");
             Err(e)
@@ -107,7 +107,7 @@ async fn delete(
 ) -> impl Responder{
     info!("delete");
     match User::delete(&data.pool, path.user_id).await{
-        Ok(user) => Ok(CResponse::ok(session, user, None)),
+        Ok(user) => Ok(CResponse::ok(session, user)),
         Err(e) => {
             error!("Error: {e}");
             Err(e)

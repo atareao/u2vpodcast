@@ -20,9 +20,8 @@ pub use error::Error;
 pub use config::Config;
 pub use param::Param;
 pub use response::{
-    CResponse,
     CustomResponse,
-    Pagination,
+    CResponse
 };
 pub use ytdlp::{
     Ytdlp,
