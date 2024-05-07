@@ -1,13 +1,12 @@
 import type { PageLoad } from './$types';
 import { base_endpoint } from '$lib/global';
-import type { Response } from '$lib/utils/types';
+import type { Response, Channel } from '$lib/types';
 import { redirect } from '@sveltejs/kit';
 import { base } from '$app/paths';
 import { isAuthenticated, loggedInUser} from '$lib/stores/user.store';
 
-export const load: PageLoad = async ({ fetch, route, url }) => {
-    const page = url.searchParams.get("page");
-    const ans = await fetch(`${base_endpoint}/api/1.0/channels/?page=${page}`);
+export const load: PageLoad = async ({ fetch, route }) => {
+    const ans = await fetch(`${base_endpoint}/api/1.0/channels/`);
     const response: Response = await ans.json();
     if (response.user == null) {
         const redirectUrl = `${base}/login?next=${base}${route.id}`; 
@@ -18,7 +17,6 @@ export const load: PageLoad = async ({ fetch, route, url }) => {
         loggedInUser.set(response.user);
     }
     return {
-        response: response,
+        channels: response.data as Channel[],
     };
 };
-

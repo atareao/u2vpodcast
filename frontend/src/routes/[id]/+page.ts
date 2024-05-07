@@ -1,6 +1,6 @@
 import type { PageLoad } from './$types';
 import { base_endpoint } from '$lib/global';
-import type { Response, Episode } from '$lib/utils/types';
+import type { Response, Episode } from '$lib/types';
 import { redirect } from '@sveltejs/kit';
 import { base } from '$app/paths';
 import { isAuthenticated, loggedInUser} from '$lib/stores/user.store';

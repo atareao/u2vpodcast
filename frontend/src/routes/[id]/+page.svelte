@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { PageData } from "./$types";
-    import { type Episode, } from '$lib/episode';
+    import type { Response, Episode } from '$lib/types';
     import EpisodeCard from '$lib/components/EpisodeCard.svelte';
     export let data: Episode[];
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { base_endpoint } from '$lib/global';
-    import { type Episode, } from '$lib/episode';
+    import { type Episode } from '$lib/types';
     import CustomAudioPlayer from '$lib/components/player/CustomAudioPlayer.svelte';
     import AudioPlayer from '$lib/components/player/AudioPlayer.svelte';
     export let episode: Episode;
