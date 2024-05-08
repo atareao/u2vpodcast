@@ -3,7 +3,7 @@
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ChannelDialog from '$lib/components/ChannelDialog.svelte';
 	import ChannelCard from '$lib/components/ChannelCard.svelte';
-	import { Pagination, PaginationItem } from 'flowbite-svelte';
+	import { Button, Pagination, PaginationItem } from 'flowbite-svelte';
 	import { page } from '$app/stores';
 	import { ChevronLeftOutline, ChevronRightOutline } from 'flowbite-svelte-icons';
 	import { GradientButton } from 'flowbite-svelte';
@@ -129,13 +129,16 @@
 
 	function getPages() {
 		const path = $page.url.pathname;
+		const href = $page.url.href;
 		console.log(`url: ${path}`);
 		const pages = [];
 		const max_page = channels.length / per_page;
 		for (let i = currentPage - 2; i <= currentPage + 2; i++) {
 			if (i > 0 && i <= max_page) {
 				console.log(`page ${i}`);
-				pages.push({ name: `${i}`, href: `${path}?page=${i}` });
+                console.log($page.url);
+				console.log(`${href}?page=${i}`);
+				pages.push({ name: `${i}`, href: `${href}?page=${i}`, page: i });
 			}
 		}
 		console.log(pages);
@@ -153,6 +156,17 @@
 	{#each paginatedChannels as channel}
 		<ChannelCard {channel} {onUpdateChannelButtonClicked} {onDeleteChannelButtonClicked} />
 	{/each}
+</div>
+<div class="grid justify-items-center">
+    {#each pages as page}
+        <Button on:click={
+            () => {
+                currentPage = page.page;
+                console.log(currentPage);
+                paginatedChannels = getPaginatedChannels();
+            }
+        }>{page.name}</Button>
+    {/each}
 </div>
 
 <div class="grid justify-items-center">
