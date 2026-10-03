@@ -260,7 +260,10 @@ fn episode_item(
         .description(Some(description))
         .enclosure(Some(enclosure))
         .guid(Some(
-            GuidBuilder::default().value(episode.yt_id.clone()).build(),
+            GuidBuilder::default()
+                .value(episode.yt_id.clone())
+                .permalink(false)
+                .build(),
         ))
         .pub_date(Some(episode.published_at.to_rfc2822()))
         .itunes_ext(Some(itunes))
@@ -547,6 +550,16 @@ mod tests {
         assert_eq!(xml.matches("<podcast:chapters ").count(), 2);
         let parsed = rss::Channel::read_from(xml.as_bytes()).unwrap();
         assert_eq!(parsed.namespaces()["podcast"], PODCAST_NAMESPACE);
+        // The guid is the episode's stable public id, not a URL: it must be
+        // declared as a non-permalink so podcatchers key episodes by that id
+        // instead of falling back to the (previously changing) enclosure URL.
+        assert!(xml.contains(r#"<guid isPermaLink="false">"#));
+        for item in parsed.items() {
+            assert!(
+                !item.guid().unwrap().is_permalink(),
+                "guid must not be a permalink"
+            );
+        }
         std::fs::remove_dir_all(root).unwrap();
     }
 
